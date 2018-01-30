@@ -12,7 +12,4 @@ Flask-WTF==0.14.2
 psycopg2==2.7.3.2
 PyYAML==3.12
 GeoAlchemy2==0.4.2
-#protobuf==3.3.0
 imposm.parser==1.0.7
-#osmread==0.2
-#grpcio-tools==1.9.0rc1
