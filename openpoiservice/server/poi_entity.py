@@ -22,12 +22,12 @@ class PoiEntity(object):
                 self.name = value
 
             elif tag == 'wheelchair':
-
                 self.wheelchair_access = 'yes' if value == 'true' else 'no'
+                self.wheelchair_access = value
 
             elif tag == 'smoking':
-
                 self.smoking = 'yes' if value == 'true' else 'no'
+                self.smoking = value
 
             elif tag == 'fee':
                 self.fee = value

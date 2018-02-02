@@ -9,10 +9,11 @@ class CategoryTools(object):
     def __init__(self, categories_file):
         self.basedir = os.path.abspath(os.path.dirname(__file__))
         categories_object = yaml.safe_load(open(os.path.join(self.basedir, categories_file)))
-        self.category_index = self.generate_category_index(categories_object);
+        self.category_group_ids = []
+        self.category_ids = []
+        self.category_index = self.generate_category_index(categories_object)
 
-    @staticmethod
-    def generate_category_index(categories_object):
+    def generate_category_index(self, categories_object):
 
         category_index = {}
 
@@ -20,6 +21,7 @@ class CategoryTools(object):
 
             group_name = k
             group_id = v['id']
+            self.category_group_ids.append(str(group_id))
             group_children = v['children']
 
             for tag_name, pois in group_children.iteritems():
@@ -28,6 +30,10 @@ class CategoryTools(object):
                     category_index[tag_name].update(pois)
                 else:
                     category_index[tag_name] = pois
+
+                for poi, cat_id in pois.iteritems():
+                    self.category_ids.append(str(cat_id))
+
         return category_index
 
     def get_category(self, tags):

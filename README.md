@@ -1,6 +1,6 @@
-# Flask Skeleton
+# Openpoiservice (WIP)
 
-Flask starter project...
+Openpoiservice is a flask application which hosts a POI database derived from openstreetmap data.
 
 [![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
 
@@ -9,7 +9,7 @@ Flask starter project...
 ### Basics
 
 1. Create and activate a virtualenv
-1. Install the requirements
+1. Install the requirements via pip
 
 ### Set Environment Variables
 
@@ -29,10 +29,17 @@ $ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig"
 
 ```sh
 $ python manage.py create_db
-$ python manage.py db init
-$ python manage.py db migrate
-$ python manage.py create_admin
-$ python manage.py create_data
+```
+### Drop DB
+
+```sh
+$ python manage.py drop_db
+```
+
+### Import OSM data
+
+```sh
+$ python manage.py import_data
 ```
 
 ### Run the Application
@@ -48,6 +55,10 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > ```sh
 > $ python manage.py runserver -h 0.0.0.0 -p 8080
 > ```
+
+### Documentation
+
+...
 
 ### Testing
 

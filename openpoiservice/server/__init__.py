@@ -3,15 +3,17 @@
 
 import os
 
-from flask import Flask, render_template
-from flask_bcrypt import Bcrypt
+from flask import Flask, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
+from openpoiservice.server.categories import CategoryTools
 
 # instantiate the extensions
-bcrypt = Bcrypt()
 toolbar = DebugToolbarExtension()
 db = SQLAlchemy()
+
+# load categories
+categories_tools = CategoryTools('categories.yml')
 
 
 def create_app():
@@ -25,7 +27,6 @@ def create_app():
     app.config.from_object(app_settings)
 
     # set up extensions
-    bcrypt.init_app(app)
     toolbar.init_app(app)
     db.init_app(app)
 
@@ -36,18 +37,18 @@ def create_app():
     # error handlers
     @app.errorhandler(401)
     def unauthorized_page(error):
-        return render_template('errors/401.html'), 401
+        return jsonify({"error_message": 401})
 
     @app.errorhandler(403)
     def forbidden_page(error):
-        return render_template('errors/403.html'), 403
+        return jsonify({"error_message": 403})
 
     @app.errorhandler(404)
     def page_not_found(error):
-        return render_template('errors/404.html'), 404
+        return jsonify({"error_message": 404})
 
     @app.errorhandler(500)
     def server_error_page(error):
-        return render_template('errors/500.html'), 500
+        return jsonify({"error_message": 500})
 
     return app

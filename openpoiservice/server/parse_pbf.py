@@ -1,46 +1,67 @@
 # openpoiservice/server/parse_pbf.py
 
 from openpoiservice.server import db
+from openpoiservice.server import categories_tools
 from openpoiservice.server.models import Pois
-from openpoiservice.server.categories import CategoryTools
 from openpoiservice.server.poi_entity import PoiEntity
 
 
 class LatLng(object):
+    """ Class that creates a latlng object. """
 
     def __init__(self, lat, lng):
+        """
+        Initializes latlng object
+        :param lat: latitude of coordinate
+        :param lng: longitude of coordinate
+        """
         self.lat = lat
         self.lng = lng
 
 
 class WayObject(object):
+    """ Class that creates a way object. """
 
     def __init__(self, osm_id, tags, refs, cat_id):
+        """
+        Initializes way object
+        :param osm_id: osmid
+        :param tags: osm tags
+        :param refs: references to nodes in this way
+        :param cat_id: category derived
+        """
         self.osm_id = osm_id
         self.tags = tags
         self.refs = refs
         self.cat_id = cat_id
 
 
-# simple class that handles the parsed OSM data.
 class PbfImporter(object):
+    """ Class that handles the parsed OSM data. """
 
-    def __init__(self, categories_file):
-
+    def __init__(self):
+        """
+        Initializes pbf importer class with necessary counters
+        :param categories_file: this is the parsed yml file containing categories
+        """
         self.relations_cnt = 0
         self.entity_cnt = 0
         self.ways_cnt = 0
         self.nodes_cnt = 0
         self.global_cnt = 0
         self.pois_cnt = 0
-        self.categories_tools = CategoryTools(categories_file)
         self.relation_ways = {}
         self.nodes = {}
         self.process_ways = []
         self.poi_objects = []
 
     def parse_relations(self, relations):
-
+        """
+        Callback function called by imposm after relations are parsed. The idea is to extract polygons which may
+        contain poi tags of interested. For this we are currently using osm_type=multipolygon.
+        The osm ids of the found objects are then used in parse_ways.
+        :param relations: osm relations objects
+        """
         for osmid, tags, refs in relations:
             skip_relation = True
 
@@ -52,7 +73,7 @@ class PbfImporter(object):
                     break
 
             if not skip_relation:
-                category_id = self.categories_tools.get_category(tags)
+                category_id = categories_tools.get_category(tags)
 
                 if category_id > 0:
 
@@ -72,9 +93,15 @@ class PbfImporter(object):
             self.entity_cnt += 1
 
     def parse_ways(self, ways):
-
+        """
+        Callback function called by imposm after ways are parsed. If a category can't be found it may likely
+        be that the osmid of this way can be found in self.relation_ways which will contain additional tags
+        and therefor eventually a category. A way object is added to a list process_ways which at this point
+        is lacking coordinates -> next step.
+        :param ways: osm way objects
+        """
         for osmid, tags, refs in ways:
-            category_id = self.categories_tools.get_category(tags)
+            category_id = categories_tools.get_category(tags)
 
             if category_id == 0:
 
@@ -91,7 +118,7 @@ class PbfImporter(object):
 
                         #        rel_id = tag_value
                         #        break
-                        category_id = self.categories_tools.get_category(tags)
+                        category_id = categories_tools.get_category(tags)
 
             if category_id > 0:
 
@@ -108,7 +135,10 @@ class PbfImporter(object):
                     self.process_ways.append(ways_obj)
 
     def store_poi(self, poi_entity):
-
+        """
+        Appends poi object to storage objects which are bulk saved to database.
+        :param poi_entity: poi object
+        """
         self.pois_cnt += 1
         self.poi_objects.append(Pois(osm_id=poi_entity.osmid,
                                      osm_type=poi_entity.type,
@@ -128,7 +158,7 @@ class PbfImporter(object):
                                      ))
 
         if self.pois_cnt % 1000 == 0:
-            print 'bulk', self.pois_cnt
+            print 'bulk: {}'.format(self.pois_cnt)
             db.session.bulk_save_objects(self.poi_objects)
             db.session.commit()
             self.poi_objects = []
@@ -138,7 +168,14 @@ class PbfImporter(object):
                                                                  self.global_cnt * 100 / self.entity_cnt, 1)
 
     def create_poi(self, tags, osmid, lat_lng, osm_type, category=0):
-
+        """
+        Creates a poi entity if a category is found. Stored afterwards
+        :param tags: osm tags of poi
+        :param osmid: osmid
+        :param lat_lng: coordinates
+        :param osm_type: 1 for node, 2 for way
+        :param category: category id
+        """
         if category == 0:
             category = self.categories_tools.get_category(tags)
 
@@ -149,7 +186,11 @@ class PbfImporter(object):
             self.store_poi(poi_entity)
 
     def parse_coords(self, coords):
-
+        """
+        Callback function called by imposm after coordinates are parsed. Saves coordinates to nodes dictionary for
+        way nodes that so far don't comprise coordinates.
+        :param coords: osm coordinate objects
+        """
         for osmid, lat, lng in coords:
 
             # populate missing coords of ways, will be used later
@@ -157,7 +198,10 @@ class PbfImporter(object):
                 self.nodes[osmid] = LatLng(lat, lng)
 
     def parse_nodes(self, osm_nodes):
-
+        """
+        Callback function called by imposm after nodes are parsed.
+        :param osm_nodes: osm node objects
+        """
         osm_type = 1
 
         for osmid, tags, refs in osm_nodes:
@@ -166,7 +210,11 @@ class PbfImporter(object):
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
     def parse_nodes_of_ways(self):
-
+        """
+        Loops through list process_ways. Each way in this list has a tag which corresponds to a category.
+        It tries to find coordinates of these nodes and creates a simple average position of these which is the
+        poi. Saved to DB afterwards.
+        """
         osm_type = 2
         for way in self.process_ways:
 
@@ -194,5 +242,6 @@ class PbfImporter(object):
 
                     self.create_poi(way.tags, way.osm_id, lat_lng, osm_type, way.cat_id)
 
+        # save the remainder
         db.session.bulk_save_objects(self.poi_objects)
         db.session.commit()

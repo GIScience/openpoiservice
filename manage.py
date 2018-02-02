@@ -8,6 +8,7 @@ from openpoiservice.server.parse_pbf import PbfImporter
 from imposm.parser import OSMParser
 from timeit import Timer
 
+
 # code coverage
 # COV = coverage.coverage(
 #    branch=True,
@@ -65,7 +66,8 @@ def drop_db():
 @manager.command
 def import_data():
     """Imports osm pbf data to postgis."""
-    pbf_importer = PbfImporter('categories.yml')
+    pbf_importer = PbfImporter()
+
     relations = OSMParser(concurrency=4, relations_callback=pbf_importer.parse_relations)
     t = Timer(lambda: relations.parse('/Users/neilmccauley/Workspaces/openpoiservice/bremen-latest.osm.pbf'))
     print 'Time passed: {}s'.format(t.timeit(number=1))
@@ -87,12 +89,6 @@ def import_data():
     t = Timer(lambda: pbf_importer.parse_nodes_of_ways())
     print 'Time passed total: {}s'.format(t.timeit(number=1))
     print 'Found {} pois'.format(pbf_importer.pois_cnt)
-
-
-@manager.command
-def create_data():
-    """Creates sample data."""
-    pass
 
 
 if __name__ == '__main__':
