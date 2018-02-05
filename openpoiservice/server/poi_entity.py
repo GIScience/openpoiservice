@@ -5,9 +5,9 @@ class PoiEntity(object):
 
     def __init__(self, category, osmid, tags, lat_lng, osm_type):
 
-        self.osmid = osmid
-        self.type = osm_type
-        self.category = category
+        self.osmid = int(osmid)
+        self.type = int(osm_type)
+        self.category = int(category)
         self.latitude = lat_lng.lat
         self.longitude = lat_lng.lng
         self.name = None

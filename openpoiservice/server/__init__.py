@@ -7,6 +7,7 @@ from flask import Flask, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from openpoiservice.server.categories import CategoryTools
+from openpoiservice.server import api_exceptions
 
 # instantiate the extensions
 toolbar = DebugToolbarExtension()
@@ -50,5 +51,11 @@ def create_app():
     @app.errorhandler(500)
     def server_error_page(error):
         return jsonify({"error_message": 500})
+
+    @app.errorhandler(api_exceptions.InvalidUsage)
+    def handle_invalid_usage(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        return response
 
     return app

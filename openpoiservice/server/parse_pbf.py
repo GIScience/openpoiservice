@@ -153,8 +153,8 @@ class PbfImporter(object):
                                      address=poi_entity.address,
                                      geom='SRID={};POINT({} {})'.format(4326, str(poi_entity.latitude),
                                                                         str(poi_entity.longitude)),
-                                     location='SRID={};POINT({} {})'.format(4326, str(poi_entity.latitude),
-                                                                            str(poi_entity.longitude))
+                                     #location='SRID={};POINT({} {})'.format(4326, str(poi_entity.latitude),
+                                     #                                       str(poi_entity.longitude))
                                      ))
 
         if self.pois_cnt % 1000 == 0:
@@ -177,7 +177,7 @@ class PbfImporter(object):
         :param category: category id
         """
         if category == 0:
-            category = self.categories_tools.get_category(tags)
+            category = categories_tools.get_category(tags)
 
         if category > 0:
             self.nodes[osmid] = lat_lng

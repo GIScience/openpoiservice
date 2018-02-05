@@ -21,7 +21,7 @@ class CategoryTools(object):
 
             group_name = k
             group_id = v['id']
-            self.category_group_ids.append(str(group_id))
+            self.category_group_ids.append(int(group_id))
             group_children = v['children']
 
             for tag_name, pois in group_children.iteritems():
@@ -32,7 +32,7 @@ class CategoryTools(object):
                     category_index[tag_name] = pois
 
                 for poi, cat_id in pois.iteritems():
-                    self.category_ids.append(str(cat_id))
+                    self.category_ids.append(int(cat_id))
 
         return category_index
 

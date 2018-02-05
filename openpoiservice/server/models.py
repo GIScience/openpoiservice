@@ -5,8 +5,9 @@ from openpoiservice.server import db
 from openpoiservice import ops_settings
 from geoalchemy2 import Geometry, Geography
 
+
 class Pois(db.Model):
-    SRID = '4326'
+    SRID = 4326
 
     if 'table_name' in ops_settings['provider_parameters']:
         __table_name__ = ops_settings['provider_parameters']['table_name']
@@ -15,7 +16,7 @@ class Pois(db.Model):
 
     osm_id = db.Column(db.BigInteger, primary_key=True)
     osm_type = db.Column(db.SmallInteger, nullable=False)
-    category = db.Column(db.Text, index=True, nullable=False)
+    category = db.Column(db.SmallInteger, index=True, nullable=False)
     name = db.Column(db.Text, index=True, nullable=True)
     website = db.Column(db.Text, nullable=True)
     phone = db.Column(db.Text, nullable=True)
