@@ -2,13 +2,15 @@
 
 from openpoiservice.server import api_exceptions, db
 from openpoiservice import ops_settings
+from openpoiservice.server import categories_tools
 import geoalchemy2.functions as geo_func
-import geoalchemy2.elements as elements
 from geoalchemy2.types import Geography
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
+from shapely import wkb
 from openpoiservice.server.models import Pois
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func
+import geojson as geojson
 
 
 class QueryBuilder(object):
@@ -16,7 +18,10 @@ class QueryBuilder(object):
 
     def __init__(self, payload):
 
-        if payload['request'] == 'pois':
+        if payload['request'] == 'pois' or payload['request'] == 'category_stats':
+
+            # merge category group ids and category ids
+            payload['category_ids'] = categories_tools.unify_categories(payload)
 
             # parse radius
             if 'radius' in payload:
@@ -35,8 +40,8 @@ class QueryBuilder(object):
                         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
                     point = self.parse_geometry(payload['geometry'])[0]
-                    geojson = Point((point[0], point[1]))
-                    payload['geometry'] = self.check_validity(geojson)
+                    geojson_obj = Point((point[0], point[1]))
+                    payload['geometry'] = self.check_validity(geojson_obj)
 
                 if payload['geometry_type'].lower() == 'linestring':
 
@@ -47,8 +52,8 @@ class QueryBuilder(object):
                                                 ops_settings['maximum_search_radius_for_linestrings']):
                         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
-                    geojson = LineString(self.parse_geometry(payload['geometry']))
-                    payload['geometry'] = self.check_validity(geojson)
+                    geojson_obj = LineString(self.parse_geometry(payload['geometry']))
+                    payload['geometry'] = self.check_validity(geojson_obj)
 
                 if payload['geometry_type'].lower() == 'polygon':
 
@@ -56,21 +61,19 @@ class QueryBuilder(object):
                                                 ops_settings['maximum_search_radius_for_polygons']):
                         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
-                    geojson = Polygon([self.parse_geometry(payload['geometry'])])
-                    payload['geometry'] = self.check_validity(geojson)
+                    print self.parse_geometry(payload['geometry'])
+                    geojson_obj = Polygon(self.parse_geometry(payload['geometry']))
+                    print geojson
+                    payload['geometry'] = self.check_validity(geojson_obj)
 
             # parse bbox
             if 'bbox' in payload:
-                geojson = MultiPoint(self.parse_geometry(payload['bbox']))
-                payload['bbox'] = self.check_validity(geojson).envelope
+                geojson_obj = MultiPoint(self.parse_geometry(payload['bbox']))
+                payload['bbox'] = self.check_validity(geojson_obj).envelope
 
             self.query_type = 0
 
-        elif payload['request'] == 'category_stats':
-
-            self.query_type = 1
-
-            pass
+            payload['stats'] = True if payload['request'] == 'category_stats' else False
 
         elif payload['request'] == 'category_list':
 
@@ -108,11 +111,15 @@ class QueryBuilder(object):
 
     @staticmethod
     def request_pois(query):
-        # if query["geometry_type"] ==
 
-        # case a: point and buffer around, query within
-        # case b: linestring and buffer around, query within
-        # case c: polygon and buffer around, query within
+        def generate_properties(poi, poi_dist, columns):
+            properties = dict(distance=poi_dist)
+
+            for column_name in columns:
+                if getattr(poi, column_name) is not None and column_name != 'geom':
+                    properties[column_name] = getattr(poi, column_name)
+
+            return properties
 
         if 'radius' in query:
             radius = query['radius']
@@ -127,6 +134,11 @@ class QueryBuilder(object):
         # https://github.com/geoalchemy/geoalchemy2/issues/90
         # query_intersects = db.session.query(Pois).filter(
         #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
+
+        if query['stats']:
+            # group by and count!
+
+            pass
 
         if 'bbox' in query and 'geometry' not in query:
             geom = query['bbox'].wkt
@@ -150,9 +162,6 @@ class QueryBuilder(object):
         if 'category_ids' in query:
             filter_group.append(Pois.category.in_(query['category_ids']))
 
-        # if 'category_group_ids' in query:
-        #    filter_group.append(Pois.category_group_id.in_(query['category_group_ids']))
-
         if 'name' in query:
             filter_group.append(func.lower(Pois.name).like(query['name'].lower()))
 
@@ -174,31 +183,25 @@ class QueryBuilder(object):
             elif query['sortby'] == 'category':
                 sortby.append(Pois.category)
 
-        query_dwithin = db.session.query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography))).filter(
+        pg_query = db.session.query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography))).filter(
             *filter_group).order_by(*sortby).limit(query['limit'])
 
-        print str(query_dwithin)
+        print str(pg_query)
 
-        for poi_object, distance in query_dwithin:
-            # create geojson object..
+        # response as geojson feature collection
+        poi_features = []
+        for poi_object, poi_distance in pg_query:
+            point = wkb.loads(str(poi_object.geom), hex=True)
+            geojson_point = geojson.Point((point.y, point.x))
+            geojson_feature = geojson.Feature(geometry=geojson_point,
+                                              properties=generate_properties(poi_object, poi_distance,
+                                                                             Pois.__table__.columns.keys()))
+            poi_features.append(geojson_feature)
 
-            print poi_object, distance
+            print poi_object, poi_distance
 
-        # filters.append(Pois.wheelchair.in_(query['wheelchair']))
-
-        # filter_group = list(Column.in_('a', 'b'), Pois.like('%'))
-
-        # filters = (
-        #    Transaction.amount > 10,
-        #    Transaction.amount < 100,
-        # )
-
-        # polygon
-
-        # User.firstname.like(search_var1),
-        # User.lastname.like(search_var2)
-
-        return query
+        feature_collection = geojson.FeatureCollection(poi_features)
+        return feature_collection
 
     @staticmethod
     def check_validity(geojson):
@@ -206,7 +209,7 @@ class QueryBuilder(object):
         if geojson.is_valid:
             return geojson
         else:
-            raise api_exceptions.InvalidUsage(geojson.errors(), status_code=401)
+            raise api_exceptions.InvalidUsage('{} {}'.format("geojson", geojson.is_valid), status_code=401)
 
     @staticmethod
     def validate_limits(radius, limit):

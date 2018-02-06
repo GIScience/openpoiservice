@@ -37,7 +37,7 @@ main_blueprint = Blueprint('main', __name__, )
 def places():
     if request.method == 'POST':
 
-        #prepare_request(all_args)
+        # prepare_request(all_args)
 
         pass
 
@@ -48,7 +48,8 @@ def places():
         if 'category_ids' in all_args:
             all_args['category_ids'] = [int(cat_id) for cat_id in all_args['category_ids'].split(',')]
         if 'category_group_ids' in all_args:
-            all_args['category_group_ids'] = [int(cat_group_id) for cat_group_id in all_args['category_group_ids'].split(',')]
+            all_args['category_group_ids'] = [int(cat_group_id) for cat_group_id in
+                                              all_args['category_group_ids'].split(',')]
         if 'geometry' in all_args and 'geometry_type' in all_args:
             all_args['geometry'] = all_args['geometry'].split('|')
             if 'bbox' in all_args:
@@ -63,7 +64,7 @@ def places():
 
         print all_args
 
-        return prepare_request(all_args)
+        return request_pois(all_args)
 
         # public class LocationsErrorCodes
         # {
@@ -76,8 +77,7 @@ def places():
         # }
 
 
-def prepare_request(all_args):
-
+def request_pois(all_args):
     # validate json schema
     try:
         schema_get(all_args)
@@ -90,28 +90,21 @@ def prepare_request(all_args):
     query_type, query = query_builder.get_query()
     if query_type == 0:
 
-        print query
         response = query_builder.request_pois(query)
-
-    elif query_type == 1:
-
-        pass
+        return jsonify(response)
 
     elif query_type == 2:
 
         pass
 
-    #return response
+    # return response
 
-    #elif query_builder.query_type == 'STATS':
+    # elif query_builder.query_type == 'STATS':
     #    response = query_builder.request_category_stats()
 
-    #elif query_builder.query_type == 'LIST':
+    # elif query_builder.query_type == 'LIST':
     #    response = query_builder.request_category_list()
 
     return jsonify(True)
 
     return jsonify(all_args)
-
-
-
