@@ -31,7 +31,6 @@ class QueryBuilder(object):
             if 'geometry' in payload and 'geometry_type' in payload:
 
                 if payload['geometry_type'].lower() == 'point':
-
                     if 'radius' not in payload:
                         raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
 
@@ -44,7 +43,7 @@ class QueryBuilder(object):
                     payload['geometry'] = self.check_validity(geojson_obj)
 
                 if payload['geometry_type'].lower() == 'linestring':
-
+                    # RESTRICT?
                     if 'radius' not in payload:
                         raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
 
@@ -53,10 +52,11 @@ class QueryBuilder(object):
                         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
                     geojson_obj = LineString(self.parse_geometry(payload['geometry']))
+                    # simplify? https://github.com/GIScience/openrouteservice/blob/master/openrouteservice/docs/services/locations/providers/postgresql/scripts/functions.sql
                     payload['geometry'] = self.check_validity(geojson_obj)
 
                 if payload['geometry_type'].lower() == 'polygon':
-
+                    # RESTRICT?
                     if not self.validate_limits(int(payload['radius']),
                                                 ops_settings['maximum_search_radius_for_polygons']):
                         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
@@ -71,15 +71,7 @@ class QueryBuilder(object):
                 geojson_obj = MultiPoint(self.parse_geometry(payload['bbox']))
                 payload['bbox'] = self.check_validity(geojson_obj).envelope
 
-            self.query_type = 0
-
             payload['stats'] = True if payload['request'] == 'category_stats' else False
-
-        elif payload['request'] == 'category_list':
-
-            self.query_type = 2
-
-            pass
 
         self.query_object = payload
 
@@ -92,14 +84,13 @@ class QueryBuilder(object):
         """
         geom = []
         for coords in geometry:
-            coords = coords.split(',')
             geom.append((float(coords[1]), float(coords[0])))
 
         return geom
 
     def get_query(self):
 
-        return self.query_type, self.query_object
+        return self.query_object
 
     def request_category_stats(self):
 
@@ -109,24 +100,13 @@ class QueryBuilder(object):
 
         pass
 
-    @staticmethod
-    def request_pois(query):
-
-        def generate_properties(poi, poi_dist, columns):
-            properties = dict(distance=poi_dist)
-
-            for column_name in columns:
-                if getattr(poi, column_name) is not None and column_name != 'geom':
-                    properties[column_name] = getattr(poi, column_name)
-
-            return properties
+    @classmethod
+    def request_pois(cls, query):
 
         if 'radius' in query:
             radius = query['radius']
         else:
             radius = 0
-
-        print query
 
         # https://github.com/geoalchemy/geoalchemy2/issues/61
         # q1 = db.session.query(Pois).filter(Pois.geom.ST_Distance(type_coerce(geom.wkt, Geography)) < radius)
@@ -134,11 +114,6 @@ class QueryBuilder(object):
         # https://github.com/geoalchemy/geoalchemy2/issues/90
         # query_intersects = db.session.query(Pois).filter(
         #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
-
-        if query['stats']:
-            # group by and count!
-
-            pass
 
         if 'bbox' in query and 'geometry' not in query:
             geom = query['bbox'].wkt
@@ -174,34 +149,86 @@ class QueryBuilder(object):
         if 'fee' in query:
             filter_group.append(Pois.wheelchair == query['fee'])
 
-        sortby = []
+        if query['stats']:
+            pg_query = db.session \
+                .query(Pois.category, func.count(Pois.category).label("count")) \
+                .filter(*filter_group) \
+                .group_by(Pois.category) \
+                .all()
+
+            places_json = cls.generate_category_stats(pg_query)
+
+            return places_json
+
         if 'sortby' in query:
 
-            if query['sortby'] == 'distance':
-                sortby.append(geo_func.ST_Distance(type_coerce(geom, Geography), Pois.geom))
+            sortby = []
+            if 'sortby' in query:
 
-            elif query['sortby'] == 'category':
-                sortby.append(Pois.category)
+                if query['sortby'] == 'distance':
+                    sortby.append(geo_func.ST_Distance(type_coerce(geom, Geography), Pois.geom))
 
-        pg_query = db.session.query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography))).filter(
-            *filter_group).order_by(*sortby).limit(query['limit'])
+                elif query['sortby'] == 'category':
+                    sortby.append(Pois.category)
+
+        pg_query = db.session \
+            .query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography))) \
+            .filter(*filter_group) \
+            .order_by(*sortby) \
+            .limit(query['limit']) \
+            .all()
 
         print str(pg_query)
 
         # response as geojson feature collection
-        poi_features = []
-        for poi_object, poi_distance in pg_query:
-            point = wkb.loads(str(poi_object.geom), hex=True)
-            geojson_point = geojson.Point((point.y, point.x))
-            geojson_feature = geojson.Feature(geometry=geojson_point,
-                                              properties=generate_properties(poi_object, poi_distance,
-                                                                             Pois.__table__.columns.keys()))
-            poi_features.append(geojson_feature)
+        features = cls.generate_geojson_features(pg_query)
 
-            print poi_object, poi_distance
+        return features
 
-        feature_collection = geojson.FeatureCollection(poi_features)
-        return feature_collection
+    @classmethod
+    def generate_category_stats(cls, query):
+
+        places_dict = {
+            "places": {
+                "total_count": 0
+            }
+        }
+
+        for poi_group in query:
+            # get the group of this category
+            category_group = categories_tools.category_to_group_index[poi_group.category]
+            group_id = category_group["group_id"]
+            group_name = category_group["group_name"]
+            category_obj = {
+                poi_group.category: poi_group.count
+            }
+
+            if group_id not in places_dict:
+
+                places_dict["places"][group_id] = {
+                    "name": group_name,
+                    "categories": category_obj,
+                    "total_count": poi_group.count
+                }
+
+            elif group_id in places_dict:
+
+                places_dict["places"][group_id]['categories'].update(category_obj)
+                places_dict["places"][group_id]['total_count'] += poi_group.count
+
+            places_dict["places"]["total_count"] += poi_group.count
+
+        return places_dict
+
+    @staticmethod
+    def generate_properties(poi, poi_dist, columns):
+        properties = dict(distance=poi_dist)
+
+        for column_name in columns:
+            if getattr(poi, column_name) is not None and column_name != 'geom':
+                properties[column_name] = getattr(poi, column_name)
+
+        return properties
 
     @staticmethod
     def check_validity(geojson):
@@ -218,3 +245,22 @@ class QueryBuilder(object):
             return True
 
         return False
+
+    @classmethod
+    def generate_geojson_features(cls, query):
+
+        features = []
+        i = 0
+        for poi_object, poi_distance in query:
+            point = wkb.loads(str(poi_object.geom), hex=True)
+            geojson_point = geojson.Point((point.y, point.x))
+            geojson_feature = geojson.Feature(geometry=geojson_point,
+                                              properties=cls.generate_properties(poi_object, poi_distance,
+                                                                                 Pois.__table__.columns.keys()))
+            features.append(geojson_feature)
+
+            print i, poi_object, poi_distance
+            i += 1
+        feature_collection = geojson.FeatureCollection(features)
+
+        return feature_collection
