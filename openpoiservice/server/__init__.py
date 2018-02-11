@@ -1,13 +1,11 @@
 # openpoiservice/server/__init__.py
 
-
-import os
-
 from flask import Flask, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
-from openpoiservice.server.categories import CategoryTools
-from openpoiservice.server import api_exceptions
+from openpoiservice.server.categories.categories import CategoryTools
+from openpoiservice.server.api import api_exceptions
+import os
 
 # instantiate the extensions
 toolbar = DebugToolbarExtension()
@@ -32,7 +30,7 @@ def create_app():
     db.init_app(app)
 
     # register blueprints
-    from openpoiservice.server.main.views import main_blueprint
+    from openpoiservice.server.api.views import main_blueprint
     app.register_blueprint(main_blueprint)
 
     # error handlers

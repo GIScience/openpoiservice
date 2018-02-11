@@ -1,13 +1,11 @@
-# openpoiservice/server/main/query_builder.py
+# openpoiservice/server/query_builder.py
 
-from openpoiservice.server import api_exceptions, db
-from openpoiservice import ops_settings
+from openpoiservice.server import db
 from openpoiservice.server import categories_tools
 import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography
-from shapely.geometry import Point, Polygon, LineString, MultiPoint
 from shapely import wkb
-from openpoiservice.server.models import Pois
+from openpoiservice.server.db_import.models import Pois
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func
 import geojson as geojson
@@ -17,92 +15,24 @@ class QueryBuilder(object):
     """ Class that creates the query."""
 
     def __init__(self, payload):
-
-        if payload['request'] == 'pois' or payload['request'] == 'category_stats':
-
-            # merge category group ids and category ids
-            payload['category_ids'] = categories_tools.unify_categories(payload)
-
-            # parse radius
-            if 'radius' in payload:
-                payload['radius'] = int(payload['radius'])
-
-            # parse geom
-            if 'geometry' in payload and 'geometry_type' in payload:
-
-                if payload['geometry_type'].lower() == 'point':
-                    if 'radius' not in payload:
-                        raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
-
-                    if not self.validate_limits(int(payload['radius']),
-                                                ops_settings['maximum_search_radius_for_points']):
-                        raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
-
-                    point = self.parse_geometry(payload['geometry'])[0]
-                    geojson_obj = Point((point[0], point[1]))
-                    payload['geometry'] = self.check_validity(geojson_obj)
-
-                if payload['geometry_type'].lower() == 'linestring':
-                    # RESTRICT?
-                    if 'radius' not in payload:
-                        raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
-
-                    if not self.validate_limits(int(payload['radius']),
-                                                ops_settings['maximum_search_radius_for_linestrings']):
-                        raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
-
-                    geojson_obj = LineString(self.parse_geometry(payload['geometry']))
-                    # simplify? https://github.com/GIScience/openrouteservice/blob/master/openrouteservice/docs/services/locations/providers/postgresql/scripts/functions.sql
-                    payload['geometry'] = self.check_validity(geojson_obj)
-
-                if payload['geometry_type'].lower() == 'polygon':
-                    # RESTRICT?
-                    if not self.validate_limits(int(payload['radius']),
-                                                ops_settings['maximum_search_radius_for_polygons']):
-                        raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
-
-                    print self.parse_geometry(payload['geometry'])
-                    geojson_obj = Polygon(self.parse_geometry(payload['geometry']))
-                    print geojson
-                    payload['geometry'] = self.check_validity(geojson_obj)
-
-            # parse bbox
-            if 'bbox' in payload:
-                geojson_obj = MultiPoint(self.parse_geometry(payload['bbox']))
-                payload['bbox'] = self.check_validity(geojson_obj).envelope
-
-            payload['stats'] = True if payload['request'] == 'category_stats' else False
-
-        self.query_object = payload
-
-    @staticmethod
-    def parse_geometry(geometry):
         """
-        GeoJSON order is [longitude, latitude, elevation]
-        :param geometry:
-        :return:
+        Initializes the query builder.
+
+        :param payload: processed GET or POST parameters
+        :type payload: dict
         """
-        geom = []
-        for coords in geometry:
-            geom.append((float(coords[1]), float(coords[0])))
 
-        return geom
+        self.payload = payload
 
-    def get_query(self):
+    def request_pois(self):
+        """
+        Queries pois or statistics from the database
 
-        return self.query_object
+        :return: Will either return a feature collection of pois or poi statistics.
+        :type: dict
+        """
 
-    def request_category_stats(self):
-
-        pass
-
-    def request_category_list(self):
-
-        pass
-
-    @classmethod
-    def request_pois(cls, query):
-
+        query = self.payload
         if 'radius' in query:
             radius = query['radius']
         else:
@@ -156,7 +86,7 @@ class QueryBuilder(object):
                 .group_by(Pois.category) \
                 .all()
 
-            places_json = cls.generate_category_stats(pg_query)
+            places_json = self.generate_category_stats(pg_query)
 
             return places_json
 
@@ -181,12 +111,21 @@ class QueryBuilder(object):
         print str(pg_query)
 
         # response as geojson feature collection
-        features = cls.generate_geojson_features(pg_query)
+        features = self.generate_geojson_features(pg_query)
 
         return features
 
     @classmethod
     def generate_category_stats(cls, query):
+        """
+        Generates the json object from group by query.
+
+        :param query: response from the database
+        :type query: list of objects
+
+        :return: returns a dictionary with poi statistics
+        :type: dict
+        """
 
         places_dict = {
             "places": {
@@ -222,6 +161,22 @@ class QueryBuilder(object):
 
     @staticmethod
     def generate_properties(poi, poi_dist, columns):
+        """
+        Generic method to generate properties from db response.
+
+        :param poi: the sqlalchemy poi object
+        :type poi: object
+
+        :param poi_dist: the distance to the queried geometry
+        :type poi_dist: int
+
+        :param columns: the columns of the database
+        :type columns: list
+
+        :return: returns properties for geojson feature
+        :type: dict
+        """
+
         properties = dict(distance=poi_dist)
 
         for column_name in columns:
@@ -230,24 +185,16 @@ class QueryBuilder(object):
 
         return properties
 
-    @staticmethod
-    def check_validity(geojson):
-
-        if geojson.is_valid:
-            return geojson
-        else:
-            raise api_exceptions.InvalidUsage('{} {}'.format("geojson", geojson.is_valid), status_code=401)
-
-    @staticmethod
-    def validate_limits(radius, limit):
-
-        if 0 < radius <= limit:
-            return True
-
-        return False
-
     @classmethod
     def generate_geojson_features(cls, query):
+        """
+        Generates a GeoJSON feature collection from the response.
+        :param query: the response from the database
+        :type query: list of objects
+
+        :return: GeoJSON feature collection containing properties
+        :type: list
+        """
 
         features = []
         i = 0

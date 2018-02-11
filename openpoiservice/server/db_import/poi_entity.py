@@ -17,6 +17,7 @@ class PoiEntity(object):
         self.opening_hours = None
         self.phone = None
         self.website = None
+
         for tag, value in tags.iteritems():
             if tag == 'name':
                 self.name = value

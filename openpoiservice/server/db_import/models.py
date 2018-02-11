@@ -1,8 +1,7 @@
 # openpoiservice/server/models.py
 
-import datetime
 from openpoiservice.server import db
-from openpoiservice import ops_settings
+from openpoiservice.server.config import ops_settings
 from geoalchemy2 import Geometry, Geography
 
 

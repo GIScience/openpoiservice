@@ -1,13 +1,11 @@
 # manage.py
 
 import unittest
-# import coverage
 from flask_script import Manager
 from openpoiservice.server import create_app, db
-from openpoiservice.server.parse_pbf import PbfImporter
+from openpoiservice.server.db_import.parse_pbf import PbfImporter
 from imposm.parser import OSMParser
 from timeit import Timer
-
 
 # code coverage
 # COV = coverage.coverage(
@@ -65,6 +63,7 @@ def drop_db():
 
 @manager.command
 def import_data():
+
     """Imports osm pbf data to postgis."""
     pbf_importer = PbfImporter()
 
