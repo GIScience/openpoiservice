@@ -4,15 +4,14 @@ from flask import Blueprint, request, jsonify
 from openpoiservice.server import categories_tools
 from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
-from openpoiservice.server import api_exceptions
-from openpoiservice.server.config import ops_settings
+from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limits
 
 # json get/post schema for raw request
 schema_get = Schema({
     Required('request'): Required(Any('pois', 'category_stats', 'category_list')),
-    'geometry': Required(Any(list, Length(min=1, max=30))),
+    'geometry': Required(Any(list, Length(min=1, max=1000))),
     'geometry_type': Required(Any('point', 'linestring', 'polygon')),
     'bbox': Required(All(list, Length(min=2, max=2))),
     'category_group_ids': Required(
@@ -77,6 +76,9 @@ def places():
         are_required_keys_present(all_args)
         are_required_geom_present(all_args)
 
+        # merge category group ids and category ids
+        all_args['category_ids'] = categories_tools.unify_categories(all_args)
+
         # check restrictions and parse geometry
         all_args = parse_geometries(all_args)
 
@@ -86,10 +88,10 @@ def places():
 
 def split_get_values(all_args):
     """
-    Splits values of the get request into lists.
-    :param all_args: params parsed in get or post request
+    Splits values of the get request into lists
     :return: params with processed values
     """
+
     if 'category_ids' in all_args:
         all_args['category_ids'] = [int(cat_id) for cat_id in all_args['category_ids'].split(',')]
     if 'category_group_ids' in all_args:
@@ -157,8 +159,6 @@ def parse_geometries(args):
     :param args: Request parameters from get or post request
     :return: returns processed request parameters
     """
-    # merge category group ids and category ids
-    args['category_ids'] = categories_tools.unify_categories(args)
 
     # parse radius
     if 'radius' in args:

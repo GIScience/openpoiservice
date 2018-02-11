@@ -5,17 +5,22 @@ from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
+import yaml
 import os
 
 # instantiate the extensions
-toolbar = DebugToolbarExtension()
 db = SQLAlchemy()
 
 # load categories
 categories_tools = CategoryTools('categories.yml')
 
 
-def create_app():
+"""load custom settings for openpoiservice"""
+basedir = os.path.abspath(os.path.dirname(__file__))
+ops_settings = yaml.safe_load(open(os.path.join(basedir, 'ops_settings.yml')))
+
+
+def create_app(script_info=None):
     # instantiate the app
     app = Flask(
         __name__
@@ -26,7 +31,7 @@ def create_app():
     app.config.from_object(app_settings)
 
     # set up extensions
-    toolbar.init_app(app)
+    #toolbar.init_app(app)
     db.init_app(app)
 
     # register blueprints
@@ -55,5 +60,8 @@ def create_app():
         response = jsonify(error.to_dict())
         response.status_code = error.status_code
         return response
+
+    # shell context for flask cli
+    app.shell_context_processor({'app': app, 'db': db})
 
     return app

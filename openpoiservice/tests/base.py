@@ -3,8 +3,8 @@
 
 from flask_testing import TestCase
 
-from project.server import db, create_app
-from project.server.models import User
+from openpoiservice.server import db, create_app
+from openpoiservice.server.db_import.models import Pois
 
 app = create_app()
 

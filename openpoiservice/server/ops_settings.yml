@@ -6,6 +6,7 @@ maximum_feature_length: 10000000
 maximum_search_radius_for_linestrings: 1000
 maximum_search_radius_for_points: 20000
 maximum_search_radius_for_polygons: 1000
+osm_file: bremen-latest.osm.pbf
 provider_parameters:
   table_name: ops_planet_pois
   db_name: gis

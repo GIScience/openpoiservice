@@ -9,34 +9,38 @@ Openpoiservice is a flask application which hosts a POI database derived from op
 ### Basics
 
 1. Create and activate a virtualenv
-1. Install the requirements via pip
+2. Install the requirements via pip
+3. Make sure protoc is installed on your host system (needed to parse the osm pbf files, `$ protoc --version`
 
 ### Set Environment Variables
 
-Update *openpoiservice/server/config.py*, and then run:
-
-```sh
-$ export APP_SETTINGS="openpoiservice.server.config.DevelopmentConfig"
-```
-
-or
+Update *openpoiservice/server/ops_settings.yml* with your database, and then run:
 
 ```sh
 $ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig"
 ```
 
-### Create DB
+(or
+
+```sh
+$ export APP_SETTINGS="openpoiservice.server.config.DevelopmentConfig"
+```
+)
+
+
+
+### Create the POI DB
 
 ```sh
 $ python manage.py create_db
 ```
-### Drop DB
+### Drop the POI DB
 
 ```sh
 $ python manage.py drop_db
 ```
 
-### Import OSM data
+### Parse and import the OSM data
 
 ```sh
 $ python manage.py import_data
@@ -45,7 +49,7 @@ $ python manage.py import_data
 ### Run the Application
 
 ```sh
-$ python manage.py runserver
+$ python manage.py run
 ```
 
 Access the application at the address [http://localhost:5000/](http://localhost:5000/)
@@ -53,7 +57,7 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > Want to specify a different port?
 
 > ```sh
-> $ python manage.py runserver -h 0.0.0.0 -p 8080
+> $ python manage.py run -h 0.0.0.0 -p 8080
 > ```
 
 ### Documentation
@@ -62,14 +66,7 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 
 ### Testing
 
-Without coverage:
-
 ```sh
 $ python manage.py test
 ```
 
-With coverage:
-
-```sh
-$ python manage.py cov
-```
