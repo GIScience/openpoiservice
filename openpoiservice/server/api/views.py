@@ -2,33 +2,51 @@
 
 from flask import Blueprint, request, jsonify
 from openpoiservice.server import categories_tools
-from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA
+from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Optional
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limits
 
 # json get/post schema for raw request
-schema_get = Schema({
+schema = Schema({
     Required('request'): Required(Any('pois', 'category_stats', 'category_list')),
-    'geometry': Required(Any(list, Length(min=1, max=1000))),
-    'geometry_type': Required(Any('point', 'linestring', 'polygon')),
-    'bbox': Required(All(list, Length(min=2, max=2))),
-    'category_group_ids': Required(
+    Optional('geometry'): Required(Any(list, Length(min=1, max=1000))),
+    Optional('geometry_type'): Required(Any('point', 'linestring', 'polygon')),
+    Optional('bbox'): Required(All(list, Length(min=2, max=2))),
+    Optional('category_group_ids'): Required(
         All(categories_tools.category_group_ids, Length(max=ops_settings['maximum_categories']))),
-    'category_ids': Required(All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories']))),
-    'name': Required(Coerce(str)),
-    'wheelchair': Required(Any('true', 'false', 'limited')),
-    'smoking': Required(Any('true', 'false')),
-    'fee': Required(Any('true', 'false')),
-    'radius': Required(All(Coerce(int), Range(min=1, max=ops_settings['maximum_search_radius_for_points']))),
-    'limit': Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit']))),
-    'sortby': Required(Any('distance', 'category')),
-    'details': Required(All(['address', 'contact', 'attributes'], Length(min=1, max=3))),
-    'id': Required(Coerce(str))
+    Optional('category_ids'): Required(
+        All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories']))),
+    Optional('radius'): Required(All(Coerce(int), Range(min=1, max=ops_settings['maximum_search_radius_for_points']))),
+    Optional('limit'): Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit']))),
+    Optional('sortby'): Required(Any('distance', 'category')),
+    Optional('details'): Required(All(['address', 'contact', 'attributes'], Length(min=1, max=3))),
+    Optional('id'): Required(Coerce(str))
 }, extra=ALLOW_EXTRA)
 
 
+def custom_schema():
+    custom_dict = {}
+
+    for tag, settings in ops_settings['column_mappings'].iteritems():
+        possible_values = []
+
+        for value in settings['common_values']:
+
+            if value == 'str':
+                possible_values.append(Coerce(str))
+
+            else:
+                possible_values.append(value)
+
+        custom_dict[tag] = Required(Any(*possible_values))
+
+    return custom_dict
+
+
+schema = schema.extend(custom_schema())
+print schema
 main_blueprint = Blueprint('main', __name__, )
 
 
@@ -62,8 +80,9 @@ def places():
             raise api_exceptions.InvalidUsage('HTTP request not supported.', status_code=499)
 
         # validate json schema
+
         try:
-            schema_get(all_args)
+            schema(all_args)
         except MultipleInvalid as e:
             exc = e
             raise api_exceptions.InvalidUsage(str(exc), status_code=401)
@@ -173,7 +192,7 @@ def parse_geometries(args):
                 raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
 
             if not validate_limits(int(args['radius']),
-                                                  ops_settings['maximum_search_radius_for_points']):
+                                   ops_settings['maximum_search_radius_for_points']):
                 raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
             point = parse_geometry(args['geometry'])[0]
@@ -186,7 +205,7 @@ def parse_geometries(args):
                 raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
 
             if not validate_limits(int(args['radius']),
-                                                  ops_settings['maximum_search_radius_for_linestrings']):
+                                   ops_settings['maximum_search_radius_for_linestrings']):
                 raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
             geojson_obj = LineString(parse_geometry(args['geometry']))
@@ -196,7 +215,7 @@ def parse_geometries(args):
         if args['geometry_type'].lower() == 'polygon':
             # RESTRICT?
             if not validate_limits(int(args['radius']),
-                                                  ops_settings['maximum_search_radius_for_polygons']):
+                                   ops_settings['maximum_search_radius_for_polygons']):
                 raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
             geojson_obj = Polygon(parse_geometry(args['geometry']))
@@ -223,5 +242,3 @@ def check_validity(geojson):
         return geojson
     else:
         raise api_exceptions.InvalidUsage('{} {}'.format("geojson", geojson.is_valid), status_code=401)
-
-

@@ -1,9 +1,9 @@
 # openpoiservice/server/parse_pbf.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools
-from openpoiservice.server.db_import.models import Pois
-from openpoiservice.server.db_import.poi_entity import PoiEntity
+from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server.db_import.models import Pois, Tags
+from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 
 
 class LatLng(object):
@@ -61,10 +61,12 @@ class PbfImporter(object):
         self.nodes_cnt = 0
         self.global_cnt = 0
         self.pois_cnt = 0
+        self.tags_cnt = 0
         self.relation_ways = {}
         self.nodes = {}
         self.process_ways = []
         self.poi_objects = []
+        self.tags_objects = []
 
     def parse_relations(self, relations):
         """
@@ -151,41 +153,47 @@ class PbfImporter(object):
                     ways_obj = WayObject(osmid, tags, refs, category_id)
                     self.process_ways.append(ways_obj)
 
-    def store_poi(self, poi_entity):
+    def store_poi(self, poi_object):
         """
         Appends poi object to storage objects which are bulk saved to database.
 
-        :param poi_entity: poi object
-        :type poi_entity: object
+        :param poi_object: poi object
+        :type poi_object: object
         """
 
         self.pois_cnt += 1
-        self.poi_objects.append(Pois(osm_id=poi_entity.osmid,
-                                     osm_type=poi_entity.type,
-                                     category=poi_entity.category,
-                                     name=poi_entity.name,
-                                     website=poi_entity.website,
-                                     phone=poi_entity.phone,
-                                     opening_hours=poi_entity.opening_hours,
-                                     wheelchair=poi_entity.wheelchair_access,
-                                     smoking=poi_entity.smoking,
-                                     fee=poi_entity.fee,
-                                     address=poi_entity.address,
-                                     geom='SRID={};POINT({} {})'.format(4326, str(poi_entity.latitude),
-                                                                        str(poi_entity.longitude)),
-                                     # location='SRID={};POINT({} {})'.format(4326, str(poi_entity.latitude),
-                                     #                                       str(poi_entity.longitude))
+
+        self.poi_objects.append(Pois(osm_id=poi_object.osmid,
+                                     osm_type=poi_object.type,
+                                     category=poi_object.category,
+                                     geom=poi_object.geom
                                      ))
 
         if self.pois_cnt % 1000 == 0:
-            print 'bulk: {}'.format(self.pois_cnt)
-            db.session.bulk_save_objects(self.poi_objects)
+            print 'Pois: {}, tags: {}'.format(self.pois_cnt, self.tags_cnt)
+            db.session.add_all(self.poi_objects)
+            db.session.add_all(self.tags_objects)
             db.session.commit()
-            self.poi_objects = []
+            self.poi_objects, self.tags_objects = [], []
 
         if self.pois_cnt % 50000 == 0:
             print 'POIs found: {} ({} % parsed, type= {}'.format(self.pois_cnt,
                                                                  self.global_cnt * 100 / self.entity_cnt, 1)
+
+    def store_tags(self, tags_object):
+        """
+        Appends tags object to storage objects which are bulk saved to database.
+
+        :param tags_object: tags object
+        :type tags_object: object
+        """
+
+        self.tags_cnt += 1
+
+        self.tags_objects.append(Tags(osm_id=tags_object.osmid,
+                                      key=tags_object.key,
+                                      value=tags_object.value
+                                      ))
 
     def create_poi(self, tags, osmid, lat_lng, osm_type, category=0):
         """
@@ -213,8 +221,15 @@ class PbfImporter(object):
         if category > 0:
             self.nodes[osmid] = lat_lng
 
-            poi_entity = PoiEntity(category, osmid, tags, lat_lng, osm_type)
-            self.store_poi(poi_entity)
+            # create dynamically from settings yml
+            for tag, value in tags.iteritems():
+
+                if tag in ops_settings['column_mappings']:
+                    tags_object = TagsObject(osmid, tag, value)
+                    self.store_tags(tags_object)
+
+            poi_object = PoiObject(category, osmid, lat_lng, osm_type)
+            self.store_poi(poi_object)
 
     def parse_coords(self, coords):
         """
@@ -281,4 +296,5 @@ class PbfImporter(object):
 
         # save the remainder
         db.session.bulk_save_objects(self.poi_objects)
+        db.session.bulk_save_objects(self.tags_objects)
         db.session.commit()

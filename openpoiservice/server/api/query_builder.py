@@ -1,14 +1,15 @@
 # openpoiservice/server/query_builder.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools
+from openpoiservice.server import categories_tools, ops_settings
 import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography
 from shapely import wkb
-from openpoiservice.server.db_import.models import Pois
+from openpoiservice.server.db_import.models import Pois, Tags
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func
 import geojson as geojson
+from itertools import tee, islice, chain, izip
 
 
 class QueryBuilder(object):
@@ -67,17 +68,19 @@ class QueryBuilder(object):
         if 'category_ids' in query:
             filter_group.append(Pois.category.in_(query['category_ids']))
 
-        if 'name' in query:
-            filter_group.append(func.lower(Pois.name).like(query['name'].lower()))
+        # custom filters
+        for tag, settings in ops_settings['column_mappings'].iteritems():
 
-        if 'wheelchair' in query:
-            filter_group.append(Pois.wheelchair == query['wheelchair'])
+            if tag in query:
 
-        if 'smoking' in query:
-            filter_group.append(Pois.smoking == query['smoking'])
+                # STUCK HERE!
+                if settings['query_type'] == 'like':
+                    print query[tag]
+                    filter_group.append(func.lower(Tags.value).like('%' + query[tag].lower() + '%'))
 
-        if 'fee' in query:
-            filter_group.append(Pois.wheelchair == query['fee'])
+                # DOES THIS WORK?
+                if settings['query_type'] == 'equals':
+                    filter_group.append(func.lower(Tags.value) == query[tag].lower())
 
         if query['stats']:
             pg_query = db.session \
@@ -102,13 +105,14 @@ class QueryBuilder(object):
                     sortby.append(Pois.category)
 
         pg_query = db.session \
-            .query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography))) \
+            .query(Pois, Pois.geom.ST_Distance(type_coerce(geom, Geography)), Tags) \
+            .join(Tags) \
             .filter(*filter_group) \
             .order_by(*sortby) \
             .limit(query['limit']) \
             .all()
 
-        print str(pg_query)
+        print 'Tim', str(pg_query)
 
         # response as geojson feature collection
         features = self.generate_geojson_features(pg_query)
@@ -159,32 +163,6 @@ class QueryBuilder(object):
 
         return places_dict
 
-    @staticmethod
-    def generate_properties(poi, poi_dist, columns):
-        """
-        Generic method to generate properties from db response.
-
-        :param poi: the sqlalchemy poi object
-        :type poi: object
-
-        :param poi_dist: the distance to the queried geometry
-        :type poi_dist: int
-
-        :param columns: the columns of the database
-        :type columns: list
-
-        :return: returns properties for geojson feature
-        :type: dict
-        """
-
-        properties = dict(distance=poi_dist)
-
-        for column_name in columns:
-            if getattr(poi, column_name) is not None and column_name != 'geom':
-                properties[column_name] = getattr(poi, column_name)
-
-        return properties
-
     @classmethod
     def generate_geojson_features(cls, query):
         """
@@ -197,17 +175,50 @@ class QueryBuilder(object):
         """
 
         features = []
-        i = 0
-        for poi_object, poi_distance in query:
-            point = wkb.loads(str(poi_object.geom), hex=True)
-            geojson_point = geojson.Point((point.y, point.x))
-            geojson_feature = geojson.Feature(geometry=geojson_point,
-                                              properties=cls.generate_properties(poi_object, poi_distance,
-                                                                                 Pois.__table__.columns.keys()))
-            features.append(geojson_feature)
 
-            print i, poi_object, poi_distance
-            i += 1
+        query = iter(query)
+
+        properties = dict()
+
+        for previous, item, nxt in cls.previous_and_next(query):
+            print item, nxt
+            osm_id = item[0].osm_id
+            poi_distance = item[1]
+
+            if nxt is not None:
+                next_osm_id = nxt[0].osm_id
+
+            if next_osm_id == osm_id:
+                properties[item[2].key] = item[2].value
+
+            elif next_osm_id != osm_id or nxt is None:
+
+                properties['distance'] = poi_distance
+                properties['osm_id'] = osm_id
+                properties[item[2].key] = item[2].value
+                point = wkb.loads(str(item[0].geom), hex=True)
+                geojson_point = geojson.Point((point.y, point.x))
+                geojson_feature = geojson.Feature(geometry=geojson_point,
+                                                  properties=properties
+                                                  )
+                features.append(geojson_feature)
+
+                properties = dict()
+
         feature_collection = geojson.FeatureCollection(features)
 
         return feature_collection
+
+    @staticmethod
+    def previous_and_next(some_iterable):
+        """
+        Gets previous, current and next in iterable list
+
+        :param some_iterable: a list
+        :return: returns the previous, current and next in the list
+        """
+
+        prevs, items, nexts = tee(some_iterable, 3)
+        prevs = chain([None], prevs)
+        nexts = chain(islice(nexts, 1, None), [None])
+        return izip(prevs, items, nexts)

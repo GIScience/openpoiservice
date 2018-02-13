@@ -14,4 +14,77 @@ provider_parameters:
   password: admin
   host: localhost
   port: 5433
+column_mappings:
+  # https://wiki.openstreetmap.org/wiki/Key:name
+  name:
+    common_values: ['str']
+    query_type: 'like'
+  # https://wiki.openstreetmap.org/wiki/Key:wheelchair
+  wheelchair:
+    common_values: ['yes', 'limited', 'no', 'designated']
+    query_type: 'equals'
+  # https://wiki.openstreetmap.org/wiki/Key:smoking
+  smoking:
+    common_values: ['dedicated','yes','separated','isolated', 'no', 'outside']
+    query_type: 'equals'
+  # https://wiki.openstreetmap.org/wiki/Key:fee
+  fee:
+    common_values: ['yes','no', 'str']
+    query_type: 'any'
+  # https://wiki.openstreetmap.org/wiki/Key:opening_hours
+  opening_hours:
+    common_values: ['str']
+    query_type: 'any'
+  # https://wiki.openstreetmap.org/wiki/Key:phone
+  phone:
+    common_values: ['str']
+    query_type: 'any'
+  # https://wiki.openstreetmap.org/wiki/Key:website
+  website:
+    common_values: ['str']
+    query_type: 'any'
+
+
 response_limit: 1000
+
+
+             #   if tag == 'name':
+             #   self.name = value
+
+           # elif tag == 'wheelchair':
+            #    self.wheelchair_access = 'yes' if value == 'true' else 'no'
+            #    self.wheelchair_access = value
+
+           # elif tag == 'smoking':
+           #     self.smoking = 'yes' if value == 'true' else 'no'
+           #     self.smoking = value
+
+           # elif tag == 'fee':
+           #     self.fee = value
+
+           # elif tag == 'opening_hours':
+           #     self.opening_hours = value
+
+           # elif tag == 'phone' or tag == 'contact:phone':
+           #     self.phone = value
+
+           # elif tag == 'website':
+           #    self.website = value
+
+       #self.name = None
+       # self.wheelchair_access = None
+       # self.smoking = None
+       # self.fee = None
+       # self.opening_hours = None
+       # self.phone = None
+       # self.website = None
+       # self.address = None
+
+       #name = db.Column(db.Text, index=True, nullable=True)
+   # website = db.Column(db.Text, nullable=True)
+    #phone = db.Column(db.Text, nullable=True)
+   # opening_hours = db.Column(db.Text, nullable=True)
+    #wheelchair = db.Column(db.Text, nullable=True)
+    #smoking = db.Column(db.Text, nullable=True)
+    #fee = db.Column(db.Text, nullable=True)
+    #address = db.Column(db.Text, nullable=True)
