@@ -1,11 +1,12 @@
 # openpoiservice/server/__init__.py
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
 import yaml
 import os
+import time
 
 # instantiate the extensions
 db = SQLAlchemy()
@@ -35,6 +36,15 @@ def create_app(script_info=None):
     # register blueprints
     from openpoiservice.server.api.views import main_blueprint
     app.register_blueprint(main_blueprint)
+
+    @app.before_request
+    def before_request():
+        g.start = time.time()
+
+    @app.teardown_request
+    def teardown_request(exception=None):
+        diff = time.time() - g.start
+        print "Request took: {} seconds".format(diff)
 
     # error handlers
     @app.errorhandler(401)

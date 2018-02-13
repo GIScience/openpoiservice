@@ -15,7 +15,8 @@ class Pois(db.Model):
     category = db.Column(db.Integer, index=True, nullable=False)
     geom = db.Column(Geography(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False)
 
-    tags = db.relationship("Tags", backref='{}'.format(ops_settings['provider_parameters']['table_name']), lazy='dynamic')
+    tags = db.relationship("Tags", backref='{}'.format(ops_settings['provider_parameters']['table_name']),
+                           lazy='dynamic')
 
     def __repr__(self):
         return '<osm id %r>' % self.osm_id
@@ -28,9 +29,11 @@ class Tags(db.Model):
         __tablename__ = "ops_planet_pois_tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    osm_id = db.Column(db.BigInteger, db.ForeignKey('{}.osm_id'.format(ops_settings['provider_parameters']['table_name'])), nullable=False)
-    key = db.Column(db.Text, nullable=True)
-    value = db.Column(db.Text, nullable=True)
+    osm_id = db.Column(db.BigInteger,
+                       db.ForeignKey('{}.osm_id'.format(ops_settings['provider_parameters']['table_name'])),
+                       nullable=False)
+    key = db.Column(db.Text, nullable=True, index=True)
+    value = db.Column(db.Text, nullable=True, index=True)
 
     def __repr__(self):
         return '<osm id %r>' % self.osm_id
