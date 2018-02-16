@@ -27,6 +27,15 @@ $ export APP_SETTINGS="openpoiservice.server.config.DevelopmentConfig"
 ```
 )
 
+### Configuration
+
+##### *ops_settings.yml*
+
+...
+
+##### *categories.yml*
+
+...
 
 
 ### Create the POI DB
@@ -40,7 +49,7 @@ $ python manage.py create_db
 $ python manage.py drop_db
 ```
 
-### Parse and import the OSM data
+### Parse and import OSM data
 
 ```sh
 $ python manage.py import_data
@@ -60,9 +69,11 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > $ python manage.py run -h 0.0.0.0 -p 8080
 > ```
 
-### Documentation
+### API Documentation
 
-...
+... /places..
+
+parameters
 
 ### Testing
 

@@ -11,7 +11,7 @@ class PoiObject(object):
         self.geom = 'SRID={};POINT({} {})'.format(4326, float(lat_lng.lat),
                                                   float(lat_lng.lng))
 
-        # add geocoder connector here
+        # add geocoder connector here...
         self.address = None
 
 

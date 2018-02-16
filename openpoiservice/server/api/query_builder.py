@@ -34,9 +34,9 @@ class QueryBuilder(object):
         :type: dict
         """
 
-        query = self.payload
-        if 'radius' in query:
-            radius = query['radius']
+        params = self.payload
+        if 'radius' in params:
+            radius = params['radius']
         else:
             radius = 0
 
@@ -47,55 +47,23 @@ class QueryBuilder(object):
         # query_intersects = db.session.query(Pois).filter(
         #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
 
-        geom_group = []
-        if 'bbox' in query and 'geometry' not in query:
-            geom = query['bbox'].wkt
-            geom_group.append(
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
+        geom_filters, geom = self.generate_geom_filters(params, radius, Pois)
 
-        elif 'bbox' in query and 'geometry' in query:
-            geom_bbox = query['bbox'].wkt
-            geom = query['geometry'].wkt
-            geom_group.append(  # in bbox
-                geo_func.ST_DWithin(
-                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), radius),
-                                             type_coerce(geom_bbox, Geography)), Pois.geom, 0))
-
-        elif 'bbox' not in query and 'geometry' in query:
-
-            geom = query['geometry'].wkt
-            geom_group.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
-
-        if 'category_ids' in query:
-            geom_group.append(Pois.category.in_(query['category_ids']))
+        if 'category_ids' in params:
+            geom_filters.append(Pois.category.in_(params['category_ids']))
 
         bbox_query = db.session \
             .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
-            .filter(*geom_group) \
+            .filter(*geom_filters) \
             .join(Tags) \
             .subquery()
 
-        custom_filter_group = []
-        # custom filters
-        for tag, settings in ops_settings['column_mappings'].iteritems():
+        custom_filters = self.generate_custom_filters(params, bbox_query)
 
-            if tag in query:
-
-                custom_filter_group.append(bbox_query.c.key == tag.lower())
-
-                # STUCK HERE!
-                if settings['query_type'] == 'like':
-                    custom_filter_group.append(bbox_query.c.value.like('%' + query[tag].lower() + '%'))
-
-                # DOES THIS WORK?
-                if settings['query_type'] == 'equals':
-                    custom_filter_group.append(bbox_query.c.value == query[tag].lower())
-
-        if query['stats']:
+        if params['stats']:
             stats_query = db.session \
                 .query(bbox_query.c.category, func.count(bbox_query.c.category).label("count")) \
-                .filter(*custom_filter_group) \
+                .filter(*custom_filters) \
                 .group_by(bbox_query.c.category) \
                 .all()
 
@@ -103,26 +71,21 @@ class QueryBuilder(object):
 
             return places_json
 
-        if 'sortby' in query:
-            sortby = []
-            if 'sortby' in query:
+        sortby_group = []
+        if 'sortby' in params:
 
-                if query['sortby'] == 'distance':
-                    sortby.append(geo_func.ST_Distance(type_coerce(geom, Geography), bbox_query.c.geom))
-
-                elif query['sortby'] == 'category':
-                    sortby.append(bbox_query.c.category)
+            sortby_group = self.generate_sortby(params, geom, bbox_query)
 
         pois_query = db.session \
             .query(bbox_query.c.osm_id, bbox_query.c.category,
                    bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
                    bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
-            .filter(*custom_filter_group) \
-            .order_by(*sortby) \
-            .limit(query['limit']) \
+            .filter(*custom_filters) \
+            .order_by(*sortby_group) \
+            .limit(params['limit']) \
             .all()
 
-        #print str(pois_query.statement.compile(
+        # print str(pois_query.statement.compile(
         #    dialect=dialects.postgresql.dialect(),
         #    compile_kwargs={"literal_binds": True}))
 
@@ -130,6 +93,81 @@ class QueryBuilder(object):
         features = self.generate_geojson_features(pois_query)
 
         return features
+
+    @staticmethod
+    def generate_sortby(params, geom, query):
+        """
+
+        :param params:
+        :param query:
+        :param geom:
+        :return:
+        """
+
+        sortby = []
+        if 'sortby' in params:
+
+            if params['sortby'] == 'distance':
+                sortby.append(geo_func.ST_Distance(type_coerce(geom, Geography), query.c.geom))
+
+            elif params['sortby'] == 'category':
+                sortby.append(query.c.category)
+
+        return sortby
+
+    @staticmethod
+    def generate_geom_filters(params, radius, Pois):
+
+        filters, geom = [], None
+
+        if 'bbox' in params and 'geometry' not in params:
+            geom = params['bbox'].wkt
+            filters.append(
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
+
+        elif 'bbox' in params and 'geometry' in params:
+            geom_bbox = params['bbox'].wkt
+            geom = params['geometry'].wkt
+            filters.append(  # in bbox
+                geo_func.ST_DWithin(
+                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), radius),
+                                             type_coerce(geom_bbox, Geography)), Pois.geom, 0))
+
+        elif 'bbox' not in params and 'geometry' in params:
+
+            geom = params['geometry'].wkt
+            filters.append(  # buffer around geom
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
+
+        return filters, geom
+
+    @staticmethod
+    def generate_custom_filters(params, query):
+        """
+        Generates a list of custom filters used for query.
+
+        :param params:
+        :param query: sqlalchemy flask query
+        :return: returns sqlalchemy filters
+        :type: list
+        """
+
+        filters = []
+        for tag, settings in ops_settings['column_mappings'].iteritems():
+
+            if tag in params:
+
+                filters.append(query.c.key == tag.lower())
+
+                # STUCK HERE!
+                if settings['query_type'] == 'like':
+                    filters.append(query.c.value.like('%' + params[tag].lower() + '%'))
+
+                # DOES THIS WORK?
+                if settings['query_type'] == 'equals':
+                    filters.append(query.c.value == params[tag].lower())
+
+        return filters
 
     @classmethod
     def generate_category_stats(cls, query):

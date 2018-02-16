@@ -2,28 +2,45 @@
 
 from flask import Blueprint, request, jsonify
 from openpoiservice.server import categories_tools
-from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Optional
+from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Invalid, \
+    Optional, Boolean
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limits
+from flasgger.utils import swag_from
+from flasgger import validate
+
 
 # json get/post schema for raw request
+# bool: http://nullege.com/codes/search/voluptuous.Boolean
 schema = Schema({
-    Required('request'): Required(Any('pois', 'category_stats', 'category_list')),
-    Optional('geometry'): Required(Any(list, Length(min=1, max=1000))),
-    Optional('geometry_type'): Required(Any('point', 'linestring', 'polygon')),
-    Optional('bbox'): Required(All(list, Length(min=2, max=2))),
+    Required('request'): Required(Any('pois', 'category_stats', 'category_list'),
+                                  msg='pois, category_stats or category_list missing'),
+    Optional('geometry'): Required(Any(list, Length(min=1, max=1000)),
+                                   msg='Maximum length reached of {}'.format(1000)),
+    Optional('geometry_type'): Required(Any('point', 'linestring', 'polygon'),
+                                        msg='must be point, linestring or polygon'),
+    Optional('bbox'): Required(All(list, Length(min=2, max=2)),
+                               msg='must be length of {}'.format(2)),
     Optional('category_group_ids'): Required(
-        All(categories_tools.category_group_ids, Length(max=ops_settings['maximum_categories']))),
+        All(categories_tools.category_group_ids, Length(max=ops_settings['maximum_categories'])),
+        msg='must be one of {}'.format(
+            categories_tools.category_group_ids)),
     Optional('category_ids'): Required(
-        All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories']))),
-    Optional('radius'): Required(All(Coerce(int), Range(min=1, max=ops_settings['maximum_search_radius_for_points']))),
-    Optional('limit'): Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit']))),
-    Optional('sortby'): Required(Any('distance', 'category')),
-    Optional('details'): Required(All(['address', 'contact', 'attributes'], Length(min=1, max=3))),
-    Optional('id'): Required(Coerce(str))
-}, extra=ALLOW_EXTRA)
+        All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories'])),
+        msg='must be one of {}'.format(categories_tools.category_ids)),
+    Optional('radius'): Required(
+        All(Coerce(int), Range(min=1, max=ops_settings['maximum_search_radius_for_points'])),
+        msg='must be between 1 and {}'.format(
+            ops_settings['maximum_search_radius_for_points'])),
+    Optional('limit'): Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit'])),
+                                msg='must be between 1 and {}'.format(
+                                    ops_settings['response_limit'])),
+    Optional('sortby'): Required(Any('distance', 'category'), msg='must be distance or category'),
+    Optional('address'): Required(Boolean(Coerce(str)), msg='must be true or false'),
+    Optional('id'): Required(Coerce(str), msg='must be a string')
+})
 
 
 def custom_schema():
@@ -39,8 +56,7 @@ def custom_schema():
 
             else:
                 possible_values.append(value)
-
-        custom_dict[tag] = Required(Any(*possible_values))
+        custom_dict[tag] = Required(Any(*possible_values), msg='must be one of {}'.format(possible_values))
 
     return custom_dict
 
@@ -51,6 +67,8 @@ main_blueprint = Blueprint('main', __name__, )
 
 
 @main_blueprint.route('/places', methods=['GET', 'POST'])
+@swag_from('places_get.yml', methods=['GET'])
+@swag_from('places_post.yml', methods=['POST'])
 def places():
     """
     Function called when user posts or gets to /places.
@@ -75,18 +93,13 @@ def places():
             all_args = request.args.to_dict()
             all_args = split_get_values(all_args)
 
-        else:
-
-            raise api_exceptions.InvalidUsage('HTTP request not supported.', status_code=499)
-
         # validate json schema
 
+        # validate(data, 'User', "test_validation.yml")
         try:
             schema(all_args)
-        except MultipleInvalid as e:
-            exc = e
-            raise api_exceptions.InvalidUsage(str(exc), status_code=401)
-
+        except MultipleInvalid as error:
+            raise api_exceptions.InvalidUsage(str(error), status_code=401)
         # query stats
         if all_args['request'] == 'category_list':
             return jsonify(categories_tools.categories_object)
@@ -103,6 +116,10 @@ def places():
 
         # query pois
         return jsonify(request_pois(all_args))
+
+    else:
+
+        raise api_exceptions.InvalidUsage('HTTP request not supported.', status_code=499)
 
 
 def split_get_values(all_args):
@@ -197,7 +214,7 @@ def parse_geometries(args):
 
             point = parse_geometry(args['geometry'])[0]
             geojson_obj = Point((point[0], point[1]))
-            args['geometry'] = api_exceptions.check_validity(geojson_obj)
+            args['geometry'] = check_validity(geojson_obj)
 
         if args['geometry_type'].lower() == 'linestring':
             # RESTRICT?

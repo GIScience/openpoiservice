@@ -2,6 +2,7 @@
 
 from flask import Flask, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
 import yaml
@@ -10,6 +11,7 @@ import time
 
 # instantiate the extensions
 db = SQLAlchemy()
+
 
 # load categories
 categories_tools = CategoryTools('categories.yml')
@@ -26,6 +28,11 @@ def create_app(script_info=None):
         __name__
     )
 
+    app.config['SWAGGER'] = {
+        'title': 'openpoiservice',
+        'uiversion': 3
+    }
+
     # set config
     app_settings = os.getenv('APP_SETTINGS', 'openpoiservice.server.config.ProductionConfig')
     app.config.from_object(app_settings)
@@ -36,6 +43,8 @@ def create_app(script_info=None):
     # register blueprints
     from openpoiservice.server.api.views import main_blueprint
     app.register_blueprint(main_blueprint)
+
+    Swagger(app)
 
     @app.before_request
     def before_request():

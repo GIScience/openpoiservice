@@ -13,6 +13,7 @@ class Pois(db.Model):
     osm_id = db.Column(db.BigInteger, primary_key=True)
     osm_type = db.Column(db.Integer, nullable=False)
     category = db.Column(db.Integer, index=True, nullable=False)
+    #address = db.Column(db.Text, nullable=True)
     geom = db.Column(Geography(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False)
 
     tags = db.relationship("Tags", backref='{}'.format(ops_settings['provider_parameters']['table_name']),
