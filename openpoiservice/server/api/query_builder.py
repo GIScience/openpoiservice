@@ -160,11 +160,11 @@ class QueryBuilder(object):
                 filters.append(query.c.key == tag.lower())
 
                 # STUCK HERE!
-                if settings['query_type'] == 'like':
+                if settings['filterable'] == 'like':
                     filters.append(query.c.value.like('%' + params[tag].lower() + '%'))
 
                 # DOES THIS WORK?
-                if settings['query_type'] == 'equals':
+                if settings['filterable'] == 'equals':
                     filters.append(query.c.value == params[tag].lower())
 
         return filters
@@ -241,7 +241,7 @@ class QueryBuilder(object):
                 properties['category_id'] = item[1]
                 properties[item[4]] = item[5]
                 point = wkb.loads(str(item[6]), hex=True)
-                geojson_point = geojson.Point((point.y, point.x))
+                geojson_point = geojson.Point((point.x, point.y))
                 geojson_feature = geojson.Feature(geometry=geojson_point,
                                                   properties=properties
                                                   )

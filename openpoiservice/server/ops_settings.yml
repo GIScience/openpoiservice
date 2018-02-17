@@ -18,31 +18,25 @@ column_mappings:
   # https://wiki.openstreetmap.org/wiki/Key:name
   name:
     common_values: ['str']
-    query_type: 'like'
+    filterable: 'like'
   # https://wiki.openstreetmap.org/wiki/Key:wheelchair
   wheelchair:
     common_values: ['yes', 'limited', 'no', 'designated']
-    query_type: 'equals'
+    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:smoking
   smoking:
     common_values: ['dedicated','yes','separated','isolated', 'no', 'outside']
-    query_type: 'equals'
+    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:fee
   fee:
     common_values: ['yes','no', 'str']
-    query_type: 'equals'
+    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:opening_hours
   opening_hours:
-    common_values: ['str']
-    query_type: 'false'
   # https://wiki.openstreetmap.org/wiki/Key:phone
   phone:
-    common_values: ['str']
-    query_type: 'false'
   # https://wiki.openstreetmap.org/wiki/Key:website
   website:
-    common_values: ['str']
-    query_type: 'false'
 
 
 response_limit: 1000

@@ -2,7 +2,7 @@ tags:
   - Places
 summary: openpoiservice (POST)
 description: |
-            Returns Points of Interest in the area surrounding a geometry.
+            Returns points of interest in the area surrounding a geometry (geometry and/or bbox).
 consumes:
   - application/json
 produces:
@@ -13,13 +13,23 @@ parameters:
     required: True
     description: body for a post request
     schema:
-      $ref: '#/definitions/LocationsBody'
+      $ref: '#/definitions/LocationsBodyPois'
+      # this does not work yet..
+      # https://swagger.io/docs/specification/describing-request-body/
+      # oneOf:
+      #- $ref: '#/definitions/LocationsBodyPois'
+      #- $ref: '#/definitions/LocationsBodyStats'
+      #- $ref: '#/definitions/LocationsBodyList'
 
 responses:
   200:
     description: Standard response for successfully processed requests.
     schema:
       $ref: '#/definitions/LocationsPoiResponse'
+      # oneOf:
+      #- $ref: '#/definitions/LocationsPoiResponse'
+      #- $ref: '#/definitions/LocationsStatsResponse'
+      #- $ref: '#/definitions/LocationsListResponse'
   400:
     description: Unable to parse JSON request.
   401:
@@ -34,157 +44,240 @@ responses:
     description: Unknown internal error.
 
 definitions:
-
-  # POST
-  LocationsBody:
+  LocationsBodyPois:
+    type: object
+    required:
+      - request
+      - category_ids
+      - category_group_ids
     properties:
       request:
         type: string
         example: pois
-        enum:
-        - pois
-        - category_stats
-        - category_list
       category_group_ids:
-        type: array
-        items:
-          type: integer
-          format: int64
-          example: 560
+        $ref: "#/definitions/category_group_ids"
       category_ids:
-        type: array
-        items:
-          type: integer
-          format: int64
-          example: 561
+        $ref: "#/definitions/category_ids"
       limit:
-        type: integer
-        format: int64
-        example: 1000
+        $ref: "#/definitions/limit"
       radius:
-        type: integer
-        format: int64
-        example: 500
+        $ref: "#/definitions/radius"
       sortby:
-        type: string
-        example: category
-        enum:
-        - category
-        - distance
+        $ref: "#/definitions/sortby"
       bbox:
-        type: array
-        example: [[53.075051,8.798952],[53.080785,8.907160]]
-        description: The pattern for this bbox string is minlon,minlat,maxlon,maxlat
+        $ref: "#/definitions/bbox"
       geometry_type:
-        type: string
-        example: polygon
-        enum:
-        - polygon
-        - point
-        - linestring
+        $ref: "#/definitions/geometry_type"
       geometry:
         $ref: "#/definitions/geometry"
-        description: You have to specify at least one of bbox and geometry
-
 
       # CUSTOM FIELDS
       name:
-        description: Name to filter the POIs by using sql like.
-        type: string
-        example: Tankstelle
+        $ref: "#/definitions/name"
       wheelchair:
-        description: Filter returned features by wheelchair tag entries.
-        type: string
-        example: "yes"
-        enum: [yes, no, limited, designated]
+        $ref: "#/definitions/wheelchair"
       smoking:
-        description: Filter returned features by smoking tag entries.
-        type: string
-        example: "no"
-        enum:
-        - dedicated
-        - yes
-        - no
-        - separated
-        - isolated
-        - outside
+        $ref: "#/definitions/smoking"
       fee:
-        description: Filter returned features by fee tag entries.
+        $ref: "#/definitions/fee"
+
+    title:  "Openpoiservice poi request"
+
+  LocationsBodyStats:
+    required:
+      - request
+      - category_ids
+      - category_group_ids
+    properties:
+      request:
         type: string
-        example: "no"
-        enum:
-        - yes
-        - no
-    title:  openpoiservice POST body
+        example: category_stats
+
+      category_group_ids:
+        $ref: "#/definitions/category_group_ids"
+      category_ids:
+        $ref: "#/definitions/category_ids"
+      radius:
+        $ref: "#/definitions/radius"
+      bbox:
+        $ref: "#/definitions/bbox"
+      geometry_type:
+        $ref: "#/definitions/geometry_type"
+      geometry:
+        $ref: "#/definitions/geometry"
+
+      # CUSTOM FIELDS
+      name:
+        $ref: "#/definitions/name"
+      wheelchair:
+        $ref: "#/definitions/wheelchair"
+      smoking:
+        $ref: "#/definitions/smoking"
+      fee:
+        $ref: "#/definitions/fee"
+
+    title:  "Openpoiservice category statistics"
+
+  LocationsBodyList:
+    required:
+      - request
+    properties:
+      request:
+        type: string
+        example: category_list
+    title: "Openpoiservice category list"
+
+  # SHARED PROPERTIES
+  category_group_ids:
+    type: array
+    items:
+      type: integer
+      format: int64
+    example: [420]
+  category_ids:
+    type: array
+    items:
+      type: integer
+      format: int64
+    example: [601, 280]
+  limit:
+    type: integer
+    format: int64
+    example: 1000
+  radius:
+    type: integer
+    format: int64
+    example: 500
+  sortby:
+    type: string
+    example: category
+    enum:
+    - category
+    - distance
+  bbox:
+    type: array
+    items:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: float
+    minItems: 2
+    maxItems: 2
+    example: [[53.075051,8.798952],[53.080785,8.907160]]
+    description: The pattern for this bbox string is minlon,minlat,maxlon,maxlat
 
   geometry:
     description: The geometry can be either a point, linestring or polygon
     type: array
+    minItems: 1
+    items:
+      type: array
+      items:
+        type: float
+        minItems: 2
+        maxItems: 2
     example: [[53.075051,8.798952],[53.080785,8.907160],[53.080785,9.107160]]
 
+  geometry_type:
+    type: string
+    example: point
+    enum:
+    - "polygon"
+    - "point"
+    - "linestring"
 
+  # SHARED CUSTOM PROPERTIES
+  name:
+    description: Name to filter the POIs by using sql like.
+    type: string
+    example: Tankstelle
+  wheelchair:
+    description: Filter returned features by wheelchair tag entries.
+    type: string
+    example: "yes"
+    enum: ["yes", "no", "limited", "designated"]
+  smoking:
+    description: Filter returned features by smoking tag entries.
+    type: string
+    example: "no"
+    enum:
+    - "dedicated"
+    - "yes"
+    - "no"
+    - "separated"
+    - "isolated"
+    - "outside"
+  fee:
+    description: Filter returned features by fee tag entries.
+    type: string
+    example: "no"
+    enum:
+    - "yes"
+    - "no"
+
+  # List response object
+  LocationsListResponse:
+    type: object
+    title: "Openpoiservice category list response"
+    description: "Openpoiservice category list"
+
+  # Poi response object
   LocationsPoiResponse:
-    type: "object"
+    type: object
     properties:
       type:
-        type: "string"
-        default: "FeatureCollection"
-        example: "FeatureCollection"
+        type: string
+        default: FeatureCollection
       features:
-        type: "array"
+        type: array
         items:
           $ref: "#/definitions/location_features"
-        example:
-          - {
-              "type": "Feature",
-              "geometry": {
-                "type": "Point",
-                "coordinates": [
-                  8.1691,
-                  47.444286
-                ]
-              },
-              "properties": {
-                "osm_id": "4491251090",
-                "category": "451",
-                "name": "Volg",
-                "distance": "115.08"
-              }
-            }
-          - {
-              "type": "Feature",
-              "geometry": {
-                "type": "Point",
-                "coordinates": [
-                  8.168594,
-                  47.380072
-                ]
-              },
-              "properties": {
-                "osm_id": "2754058215",
-                "category": "474",
-                "name": "Berner Früchte und Gemüse",
-                "phone": "+41 (0)62 891 34 50/51",
-                "website": "http://www.berner-gemuese.ch",
-                "distance": "76.58"
-              }
-            }
-      bbox:
-        type: "array"
-        items:
-          type: "number"
-          format: "double"
-        maxItems: 4
-        minItems: 4
-        description: "Contains the minimum bounding box of all features."
-        example:
-          - 8.168594
-          - 47.380072
-          -  8.1691
-          - 47.444286
-      #info:
-        #$ref: "#.."
-    title: "Places Poi Response Object"
+    title: "Openpoiservice poi response"
+
+  # Stats response object
+  LocationsStatsResponse:
+    type: "object"
+    properties:
+      places:
+        type: "object"
+        $ref: "#/definitions/places_object"
+
+    title: "Openpoiservice stats response"
+
+  places_object:
+    type: object
+    properties:
+      category_group_id:
+        type: object
+        $ref: "#/definitions/stats_object"
+      total_count:
+        type: integer
+    additionalProperties:
+      type: object
+      $ref: "#/definitions/stats_object"
+    title: "Places object"
+
+  stats_object:
+    type: object
+    properties:
+      categories:
+        type: object
+        $ref: "#/definitions/category_object"
+      name:
+        type: string
+        description: name of group
+      total_count:
+        type: integer
+    title: "Stats object"
+
+  category_object:
+    type: object
+    properties:
+      category_id:
+        type: integer
+    additionalProperties:
+      type: object
 
   location_features:
     type: "object"
@@ -194,9 +287,9 @@ definitions:
         default: "Feature"
       geometry:
         $ref: "#/definitions/location_features_geometry"
-      properties:
+      feature_properties:
         $ref: "#/definitions/location_features_properties"
-    title: "features object"
+    title: "GeoJSON features object"
 
   location_features_geometry:
     properties:
@@ -210,18 +303,17 @@ definitions:
           format: "double"
         maxItems: 2
         minItems: 2
-    title: "geometry object"
+    title: "GeoJSON geometry object"
+
   location_features_properties:
     properties:
       osm_id:
         type: "string"
-      category:
+      category_id:
         type: "string"
       name:
         type: "string"
       address:
-        type: "string"
-      phone:
         type: "string"
       website:
         type: "string"
@@ -231,4 +323,6 @@ definitions:
         type: "string"
       distance:
         type: "string"
-    title: "properties object"
+      fee:
+        type: "string"
+    title: "GeoJSON properties object"

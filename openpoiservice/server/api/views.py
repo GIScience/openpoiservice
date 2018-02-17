@@ -11,7 +11,6 @@ from openpoiservice.server.utils.geometries import parse_geometry, validate_limi
 from flasgger.utils import swag_from
 from flasgger import validate
 
-
 # json get/post schema for raw request
 # bool: http://nullege.com/codes/search/voluptuous.Boolean
 schema = Schema({
@@ -48,15 +47,17 @@ def custom_schema():
 
     for tag, settings in ops_settings['column_mappings'].iteritems():
         possible_values = []
+        print tag, ops_settings['column_mappings']
+        if ops_settings['column_mappings'][tag] is not None and 'filterable' in ops_settings['column_mappings'][tag]:
+            print tag
+            for value in settings['common_values']:
 
-        for value in settings['common_values']:
+                if value == 'str':
+                    possible_values.append(Coerce(str))
 
-            if value == 'str':
-                possible_values.append(Coerce(str))
-
-            else:
-                possible_values.append(value)
-        custom_dict[tag] = Required(Any(*possible_values), msg='must be one of {}'.format(possible_values))
+                else:
+                    possible_values.append(value)
+            custom_dict[tag] = Required(Any(*possible_values), msg='must be one of {}'.format(possible_values))
 
     return custom_dict
 
@@ -66,8 +67,7 @@ print schema
 main_blueprint = Blueprint('main', __name__, )
 
 
-@main_blueprint.route('/places', methods=['GET', 'POST'])
-@swag_from('places_get.yml', methods=['GET'])
+@main_blueprint.route('/places', methods=['POST'])
 @swag_from('places_post.yml', methods=['POST'])
 def places():
     """
@@ -78,44 +78,34 @@ def places():
     :type: string
     """
 
-    if request.method == 'POST' or request.method == 'GET':
+    if request.method == 'POST':
 
-        if request.method == 'POST':
+        if request.headers['Content-Type'] == 'application/json' and request.is_json:
 
-            if request.headers['Content-Type'] == 'application/json' and request.is_json:
+            all_args = request.get_json(silent=True)
+            if all_args is None:
+                raise api_exceptions.InvalidUsage('Invalid JSON object in request', status_code=400)
 
-                all_args = request.get_json(silent=True)
-                if all_args is None:
-                    raise api_exceptions.InvalidUsage('Invalid JSON object in request', status_code=400)
+            try:
+                schema(all_args)
+            except MultipleInvalid as error:
+                raise api_exceptions.InvalidUsage(str(error), status_code=401)
+            # query stats
+            if all_args['request'] == 'category_list':
+                return jsonify(categories_tools.categories_object)
 
-        elif request.method == 'GET':
+            # are required params presents
+            are_required_keys_present(all_args)
+            are_required_geom_present(all_args)
 
-            all_args = request.args.to_dict()
-            all_args = split_get_values(all_args)
+            # merge category group ids and category ids
+            all_args['category_ids'] = categories_tools.unify_categories(all_args)
 
-        # validate json schema
+            # check restrictions and parse geometry
+            all_args = parse_geometries(all_args)
 
-        # validate(data, 'User', "test_validation.yml")
-        try:
-            schema(all_args)
-        except MultipleInvalid as error:
-            raise api_exceptions.InvalidUsage(str(error), status_code=401)
-        # query stats
-        if all_args['request'] == 'category_list':
-            return jsonify(categories_tools.categories_object)
-
-        # are required params presents
-        are_required_keys_present(all_args)
-        are_required_geom_present(all_args)
-
-        # merge category group ids and category ids
-        all_args['category_ids'] = categories_tools.unify_categories(all_args)
-
-        # check restrictions and parse geometry
-        all_args = parse_geometries(all_args)
-
-        # query pois
-        return jsonify(request_pois(all_args))
+            # query pois
+            return jsonify(request_pois(all_args))
 
     else:
 

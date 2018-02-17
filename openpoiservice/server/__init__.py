@@ -12,10 +12,8 @@ import time
 # instantiate the extensions
 db = SQLAlchemy()
 
-
 # load categories
 categories_tools = CategoryTools('categories.yml')
-
 
 """load custom settings for openpoiservice"""
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -29,8 +27,15 @@ def create_app(script_info=None):
     )
 
     app.config['SWAGGER'] = {
-        'title': 'openpoiservice',
-        'uiversion': 3
+        'title': 'Openpoiservice',
+        "swagger_version": "2.0",
+        'version': 0.1,
+        'uiversion': 3,
+        "headers": [
+            ('Access-Control-Allow-Origin', '*'),
+            ('Access-Control-Allow-Methods', "GET, POST"),
+            ('Access-Control-Allow-Credentials', "true"),
+        ]
     }
 
     # set config
