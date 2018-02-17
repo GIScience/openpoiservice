@@ -1,6 +1,6 @@
 # Openpoiservice
 
-Openpoiservice is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap data.
+Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data.
 
 [![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
 
@@ -9,8 +9,10 @@ Openpoiservice is a flask application which hosts a highly customizable points o
 ### Basics
 
 1. Create and activate a virtualenv
-2. Install the requirements via pip
-3. Make sure protoc is installed on your host system (needed to parse the osm pbf files, `$ protoc --version`
+2. Make sure `google protobuf` is installed on your system (**caution**: most likely you will have to
+install from source on ubuntu [(instructions)](https://github.com/google/protobuf/blob/master/src/README.md).
+Using **homebrew** on OS X `brew install protobuf` will suffice.
+3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
 
 ### Set Environment Variables
 
@@ -61,7 +63,7 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 
 ### API Documentation
 
-The documentation for this flask service is provided through flasgger and can be
+The documentation for this flask service is provided via [flasgger](https://github.com/rochacbruno/flasgger) and can be
 accessed via `http://localhost:5000/apidocs/`.
 
 Generally you have three different request types `pois`, `category_stats` and
@@ -114,7 +116,7 @@ This is where you will configure your spatial restrictions and database connecti
 Also, these settings file controls which OSM information will be considered in the database and also if 
 these may be queried by the user via the API. As an example:
 
-```python
+```py
 wheelchair:
     common_values: ['yes', 'limited', 'no', 'designated']
     filterable: 'equals'
@@ -125,7 +127,7 @@ during import and also if a user adds `wheelchair:` as a property and one of the
 
 ### Examples
 
-##### Pois
+##### POIs
 ```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
@@ -143,7 +145,7 @@ curl -X POST \
 }'
 ```
 
-##### Poi Statistics
+##### POI Statistics
 ```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
@@ -160,7 +162,7 @@ curl -X POST \
 }'
 ```
 
-##### Poi List
+##### POI Category List
 
 ```sh
 curl -X POST \
@@ -172,7 +174,7 @@ curl -X POST \
 ```
 
 
-### Testing
+### Testing: TODO
 
 ```sh
 $ python manage.py test
