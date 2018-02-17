@@ -126,7 +126,7 @@ during import and also if a user adds `wheelchair:` as a property and one of the
 ### Examples
 
 ##### Pois
-```bash
+```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
@@ -144,7 +144,7 @@ curl -X POST \
 ```
 
 ##### Poi Statistics
-```bash
+```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
@@ -162,7 +162,7 @@ curl -X POST \
 
 ##### Poi List
 
-```bash
+```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
