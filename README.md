@@ -1,4 +1,4 @@
-# Openpoiservice (WIP)
+# Openpoiservice
 
 Openpoiservice is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap data.
 
