@@ -2,6 +2,16 @@
 
 Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data.
 
+> OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
+> map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
+> or other structured items. 
+
+This service makes use of OSM tags by grouping them into certain categories. If it picks up a node tagged with
+one of the osm key's defined in `categories.yml` it will import this point of interest with additional tags
+which may be defined in `ops_settings.yml`. Any additional tag, for instance `wheelchair` may then be used
+to query the service via the API. 
+
+
 [![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
 
 ## Quick Start
@@ -9,9 +19,12 @@ Openpoiservice (ops) is a flask application which hosts a highly customizable po
 ### Basics
 
 1. Create and activate a virtualenv
-2. Make sure `google protobuf` is installed on your system (**caution**: most likely you will have to
-install from source on ubuntu [(instructions)](https://github.com/google/protobuf/blob/master/src/README.md).
-Using **homebrew** on OS X `brew install protobuf` will suffice.
+2. This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
+OpenStreetMap data. To this end, make sure `google's protobuf` is installed on your system 
+- **Ubuntu**: most likely you will have to install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md) if 
+[https://imposm.org/docs/imposm.parser/latest/install.html#requirements](https://imposm.org/docs/imposm.parser/latest/install.html#requirements) doesn't
+do the job.
+- **OS X**  Using homebrew` on OS X `brew install protobuf` will suffice.
 3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
 
 ### Set Environment Variables
@@ -127,21 +140,46 @@ during import and also if a user adds `wheelchair:` as a property and one of the
 
 ### Examples
 
+##### POST body structure
+
+```sh
+{
+	"request": "pois"|"category_stats"|"category_list",
+	"geometry": {
+	    "type": "polygon"|"point"|"linestring"
+	    "geom": [[lat,lng],[...,...]...],
+	    "bbox": [[lat,lng],[...,...]...],
+	    "radius": 10000
+	}
+	"filters": {
+	    "wheelchair": "yes"|"no"|"..."
+        "smoking": "yes"|"no“|"..."	
+        "category_ids": [cat_id_1,cat_id_2,...],
+	    "category_group_ids: [cat_group_id_1,cat_group_id_2,...]
+        ...    
+	}
+	"limit": 100,
+	"sortby": "distance"
+}
+```
+
 ##### POIs
 ```sh
 curl -X POST \
   http://127.0.0.1:5000/places \
+  -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	"request": "pois",
-	"category_ids": [601, 280],
-	"geometry_type": "point",
-	"geometry": [[53.075051,8.798952]],
-	"radius": 10000,
-	"limit": 100,
-	"sortby": "distance",
-	"wheelchair": "yes",
-	"bbox": [[53.075051,8.798952],[53.080785,8.907160]]
+	"request": "category_stats",
+	"geometry": {
+	    "type": "point",
+	    "geom": [[53.075051,8.798952]],
+	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
+	    "radius": 10000
+	},
+	"filters": {
+        "category_ids": [601, 280] 
+	}
 }'
 ```
 
@@ -151,14 +189,18 @@ curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
   -d '{
-	"request": "category_stats",
-	"category_ids": [601, 280],
-	"geometry_type": "point",
-	"geometry": [[53.075051,8.798952]],
-	"radius": 10000,
+	"request": "pois",
+	"geometry": {
+	    "type": "point",
+	    "geom": [[53.075051,8.798952]],
+	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
+	    "radius": 10000
+	},
+	"filters": {
+        "category_ids": [601, 280] 
+	},
 	"limit": 100,
-	"wheelchair": "yes",
-	"bbox": [[53.075051,8.798952],[53.080785,8.907160]]
+	"sortby": "distance"
 }'
 ```
 

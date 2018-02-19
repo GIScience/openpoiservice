@@ -35,8 +35,8 @@ class QueryBuilder(object):
         """
 
         params = self.payload
-        if 'radius' in params:
-            radius = params['radius']
+        if 'radius' in params['geometry']:
+            radius = params['geometry']['radius']
         else:
             radius = 0
 
@@ -47,10 +47,11 @@ class QueryBuilder(object):
         # query_intersects = db.session.query(Pois).filter(
         #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
 
-        geom_filters, geom = self.generate_geom_filters(params, radius, Pois)
+        geom_filters, geom = self.generate_geom_filters(params['geometry'], radius, Pois)
 
-        if 'category_ids' in params:
-            geom_filters.append(Pois.category.in_(params['category_ids']))
+        print geom_filters, geom
+        if 'category_ids' in params['filters']:
+            geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
         bbox_query = db.session \
             .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
@@ -58,9 +59,10 @@ class QueryBuilder(object):
             .join(Tags) \
             .subquery()
 
-        custom_filters = self.generate_custom_filters(params, bbox_query)
+        custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
 
-        if params['stats']:
+        if 'stats' in params and params['stats']:
+
             stats_query = db.session \
                 .query(bbox_query.c.category, func.count(bbox_query.c.category).label("count")) \
                 .filter(*custom_filters) \
@@ -83,11 +85,9 @@ class QueryBuilder(object):
             .filter(*custom_filters) \
             .order_by(*sortby_group) \
             .limit(params['limit']) \
-            .all()
+            # .all()
 
-        # print str(pois_query.statement.compile(
-        #    dialect=dialects.postgresql.dialect(),
-        #    compile_kwargs={"literal_binds": True}))
+        print str(pois_query)
 
         # response as geojson feature collection
         features = self.generate_geojson_features(pois_query)
@@ -116,33 +116,33 @@ class QueryBuilder(object):
         return sortby
 
     @staticmethod
-    def generate_geom_filters(params, radius, Pois):
-
+    def generate_geom_filters(geometry, radius, Pois):
+        print geometry, radius
         filters, geom = [], None
 
-        if 'bbox' in params and 'geometry' not in params:
-            geom = params['bbox'].wkt
+        if 'bbox' in geometry and 'geom' not in geometry:
+            geom = geometry['bbox'].wkt
             filters.append(
                 geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
 
-        elif 'bbox' in params and 'geometry' in params:
-            geom_bbox = params['bbox'].wkt
-            geom = params['geometry'].wkt
+        elif 'bbox' in geometry and 'geom' in geometry:
+            geom_bbox = geometry['bbox'].wkt
+            geom = geometry['geom'].wkt
             filters.append(  # in bbox
                 geo_func.ST_DWithin(
                     geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), radius),
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
-        elif 'bbox' not in params and 'geometry' in params:
+        elif 'bbox' not in geometry and 'geometry' in geometry:
 
-            geom = params['geometry'].wkt
+            geom = geometry['geom'].wkt
             filters.append(  # buffer around geom
                 geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
 
         return filters, geom
 
     @staticmethod
-    def generate_custom_filters(params, query):
+    def generate_custom_filters(filters, query):
         """
         Generates a list of custom filters used for query.
 
@@ -155,17 +155,18 @@ class QueryBuilder(object):
         filters = []
         for tag, settings in ops_settings['column_mappings'].iteritems():
 
-            if tag in params:
+            if tag in filters:
 
                 filters.append(query.c.key == tag.lower())
 
-                # STUCK HERE!
                 if settings['filterable'] == 'like':
-                    filters.append(query.c.value.like('%' + params[tag].lower() + '%'))
+                    filters.append(query.c.value.like('%' + filters[tag].lower() + '%'))
 
-                # DOES THIS WORK?
-                if settings['filterable'] == 'equals':
-                    filters.append(query.c.value == params[tag].lower())
+                elif settings['filterable'] == 'equals':
+                    filters.append(query.c.value == filters[tag].lower())
+
+                else:
+                    pass
 
         return filters
 

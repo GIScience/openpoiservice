@@ -48,74 +48,79 @@ definitions:
     type: object
     required:
       - request
-      - category_ids
-      - category_group_ids
+      - geometry
     properties:
       request:
         type: string
         example: pois
-      category_group_ids:
-        $ref: "#/definitions/category_group_ids"
-      category_ids:
-        $ref: "#/definitions/category_ids"
+      geometry:
+        type: object
+        properties:
+          radius:
+            $ref: "#/definitions/radius"
+          bbox:
+            $ref: "#/definitions/bbox"
+          type:
+            $ref: "#/definitions/geometry_type"
+          geom:
+            $ref: "#/definitions/geometry"
+      filters:
+        type: object
+        properties:
+          category_group_ids:
+            $ref: "#/definitions/category_group_ids"
+          category_ids:
+            $ref: "#/definitions/category_ids"
+          # CUSTOM FILTERS
+          name:
+            $ref: "#/definitions/name"
+          wheelchair:
+            $ref: "#/definitions/wheelchair"
+          smoking:
+            $ref: "#/definitions/smoking"
+          fee:
+            $ref: "#/definitions/fee"
       limit:
         $ref: "#/definitions/limit"
-      radius:
-        $ref: "#/definitions/radius"
       sortby:
         $ref: "#/definitions/sortby"
-      bbox:
-        $ref: "#/definitions/bbox"
-      geometry_type:
-        $ref: "#/definitions/geometry_type"
-      geometry:
-        $ref: "#/definitions/geometry"
-
-      # CUSTOM FIELDS
-      name:
-        $ref: "#/definitions/name"
-      wheelchair:
-        $ref: "#/definitions/wheelchair"
-      smoking:
-        $ref: "#/definitions/smoking"
-      fee:
-        $ref: "#/definitions/fee"
-
     title:  "Openpoiservice poi request"
 
   LocationsBodyStats:
     required:
       - request
-      - category_ids
-      - category_group_ids
+      - geometry
     properties:
       request:
         type: string
         example: category_stats
-
-      category_group_ids:
-        $ref: "#/definitions/category_group_ids"
-      category_ids:
-        $ref: "#/definitions/category_ids"
-      radius:
-        $ref: "#/definitions/radius"
-      bbox:
-        $ref: "#/definitions/bbox"
-      geometry_type:
-        $ref: "#/definitions/geometry_type"
       geometry:
-        $ref: "#/definitions/geometry"
-
-      # CUSTOM FIELDS
-      name:
-        $ref: "#/definitions/name"
-      wheelchair:
-        $ref: "#/definitions/wheelchair"
-      smoking:
-        $ref: "#/definitions/smoking"
-      fee:
-        $ref: "#/definitions/fee"
-
+        type: object
+        properties:
+          radius:
+            $ref: "#/definitions/radius"
+          bbox:
+            $ref: "#/definitions/bbox"
+          type:
+            $ref: "#/definitions/geometry_type"
+          geom:
+            $ref: "#/definitions/geometry"
+      filters:
+        type: object
+        properties:
+          category_group_ids:
+            $ref: "#/definitions/category_group_ids"
+          category_ids:
+            $ref: "#/definitions/category_ids"
+          # CUSTOM FILTERS
+          name:
+            $ref: "#/definitions/name"
+          wheelchair:
+            $ref: "#/definitions/wheelchair"
+          smoking:
+            $ref: "#/definitions/smoking"
+          fee:
+            $ref: "#/definitions/fee"
     title:  "Openpoiservice category statistics"
 
   LocationsBodyList:

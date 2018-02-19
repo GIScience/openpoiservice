@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
+
 import yaml
 import os
 import time
@@ -30,12 +31,7 @@ def create_app(script_info=None):
         'title': 'Openpoiservice',
         "swagger_version": "2.0",
         'version': 0.1,
-        'uiversion': 3,
-        "headers": [
-            ('Access-Control-Allow-Origin', '*'),
-            ('Access-Control-Allow-Methods', "GET, POST"),
-            ('Access-Control-Allow-Credentials', "true"),
-        ]
+        'uiversion': 3
     }
 
     # set config

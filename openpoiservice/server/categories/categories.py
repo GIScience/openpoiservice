@@ -15,20 +15,20 @@ class CategoryTools(object):
         self.category_to_group_index = {}
         self.category_index = self.generate_category_index()
 
-    def unify_categories(self, request):
+    def unify_categories(self, filters):
 
         category_ids_of_group = []
 
-        if 'category_group_ids' in request:
+        if 'category_group_ids' in filters:
 
-            for group_id in request['category_group_ids']:
+            for group_id in filters['category_group_ids']:
 
                 if group_id in self.group_index:
                     category_ids_of_group.extend(self.group_index[group_id])
 
-        if 'category_ids' in request:
+        if 'category_ids' in filters:
             in_first = set(category_ids_of_group)
-            in_second = set(request['category_ids'])
+            in_second = set(filters['category_ids'])
 
             in_second_but_not_in_first = in_second - in_first
 

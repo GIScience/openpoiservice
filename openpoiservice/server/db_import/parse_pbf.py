@@ -71,7 +71,7 @@ class PbfImporter(object):
     def parse_relations(self, relations):
         """
         Callback function called by imposm after relations are parsed. The idea is to extract polygons which may
-        contain poi tags of interested. For this we are currently using osm_type=multipolygon.
+        contain poi tags of interest. For this we are currently using osm_type=multipolygon.
         The osm ids of the found objects are then used in parse_ways.
 
         :param relations: osm relations objects
@@ -112,7 +112,7 @@ class PbfImporter(object):
         """
         Callback function called by imposm after ways are parsed. If a category can't be found it may likely
         be that the osmid of this way can be found in self.relation_ways which will contain additional tags
-        and therefor eventually a category. A way object is added to a list process_ways which at this point
+        and therefore eventually a category. A way object is added to a list process_ways which at this point
         is lacking coordinates -> next step.
 
         :param ways: osm way objects
@@ -176,9 +176,9 @@ class PbfImporter(object):
             db.session.commit()
             self.poi_objects, self.tags_objects = [], []
 
-        if self.pois_cnt % 50000 == 0:
-            print 'POIs found: {} ({} % parsed, type= {}'.format(self.pois_cnt,
-                                                                 self.global_cnt * 100 / self.entity_cnt, 1)
+        # if self.pois_cnt % 50000 == 0:
+        #    print 'POIs found: {} ({} % parsed, type= {}'.format(self.pois_cnt,
+        #                                                         self.global_cnt * 100 / self.entity_cnt, 1)
 
     def store_tags(self, tags_object):
         """
@@ -287,7 +287,9 @@ class PbfImporter(object):
                     sum_lat += self.nodes[osmid].lat
                     sum_lng += self.nodes[osmid].lng
 
-                if not broken_way:
+                # caution osm_id of way may be the same of some node_id of node
+                # https://gis.stackexchange.com/questions/103572/are-osm-ids-unique-over-all-object-types
+                if not broken_way and way.osm_id not in self.nodes:
                     lat = sum_lat / way_length
                     lng = sum_lng / way_length
                     lat_lng = LatLng(lat, lng)
