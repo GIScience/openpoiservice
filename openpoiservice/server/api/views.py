@@ -75,7 +75,7 @@ schema = Schema({
 
     Required('geometry'): geom_schema,
 
-    Required('filters'): filters_schema,
+    Optional('filters'): filters_schema,
 
     Optional('limit'): Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit'])),
                                 msg='must be between 1 and {}'.format(
@@ -116,13 +116,11 @@ def places():
             if all_args['request'] == 'category_list':
                 return jsonify(categories_tools.categories_object)
 
-            if all_args['request'] == 'category_stats':
-                all_args['stats'] = True
-
-            # are required params presents
-            if are_required_keys_present(all_args['filters']):
-                # merge category group ids and category ids
+            if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
                 all_args['filters']['category_ids'] = categories_tools.unify_categories(all_args['filters'])
+
+            if 'limit' not in all_args:
+                all_args['limit'] = ops_settings['response_limit']
 
             are_required_geom_present(all_args['geometry'])
 
@@ -213,8 +211,8 @@ def parse_geometries(geometry):
     """
 
     # parse radius
-    if 'radius' in geometry:
-        geometry['radius'] = int(geometry['radius'])
+    if 'radius' not in geometry:
+        geometry['radius'] = 0
 
     # parse geom
     if 'geom' in geometry and 'type' in geometry:

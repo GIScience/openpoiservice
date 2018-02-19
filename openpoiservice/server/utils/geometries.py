@@ -14,7 +14,7 @@ def parse_geometry(geometry):
 
     geom = []
     for coords in geometry:
-        geom.append((float(coords[1]), float(coords[0])))
+        geom.append((float(coords[0]), float(coords[1])))
 
     return geom
 
@@ -33,7 +33,7 @@ def validate_limits(radius, limit):
     :type: bool
     """
 
-    if 0 < radius <= limit:
+    if 0 <= radius <= limit:
         return True
 
     return False

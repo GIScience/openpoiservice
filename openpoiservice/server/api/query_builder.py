@@ -3,11 +3,12 @@
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 import geoalchemy2.functions as geo_func
-from geoalchemy2.types import Geography
+from geoalchemy2.types import Geography, Geometry
+from geoalchemy2.elements import WKBElement, WKTElement
 from shapely import wkb
 from openpoiservice.server.db_import.models import Pois, Tags
 from sqlalchemy.sql.expression import type_coerce
-from sqlalchemy import func
+from sqlalchemy import func, cast
 from sqlalchemy import dialects
 import geojson as geojson
 from itertools import tee, islice, chain, izip
@@ -35,10 +36,6 @@ class QueryBuilder(object):
         """
 
         params = self.payload
-        if 'radius' in params['geometry']:
-            radius = params['geometry']['radius']
-        else:
-            radius = 0
 
         # https://github.com/geoalchemy/geoalchemy2/issues/61
         # q1 = db.session.query(Pois).filter(Pois.geom.ST_Distance(type_coerce(geom.wkt, Geography)) < radius)
@@ -47,21 +44,35 @@ class QueryBuilder(object):
         # query_intersects = db.session.query(Pois).filter(
         #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
 
-        geom_filters, geom = self.generate_geom_filters(params['geometry'], radius, Pois)
+        # 298
+        # print str(pois_query)
+
+        # test_query = db.session \
+        #    .query(Pois) \
+        #    .filter(*geom_filters) \
+        #    .all()
+
+        # print str(test_query)
+        # for dude in test_query:
+        #    print wkb.loads(str(dude.geom), hex=True)
+
+        geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
 
         print geom_filters, geom
-        if 'category_ids' in params['filters']:
+        if 'filters' in params and 'category_ids' in params['filters']:
             geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
-        bbox_query = db.session \
-            .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
-            .filter(*geom_filters) \
-            .join(Tags) \
-            .subquery()
+        if params['request'] == 'category_stats':
 
-        custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
+            bbox_query = db.session \
+                .query(Pois) \
+                .filter(*geom_filters) \
+                .subquery()
 
-        if 'stats' in params and params['stats']:
+            if 'filters' in params:
+                custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
+            else:
+                custom_filters = []
 
             stats_query = db.session \
                 .query(bbox_query.c.category, func.count(bbox_query.c.category).label("count")) \
@@ -71,28 +82,43 @@ class QueryBuilder(object):
 
             places_json = self.generate_category_stats(stats_query)
 
+            print str(stats_query)
+
             return places_json
 
-        sortby_group = []
-        if 'sortby' in params:
+        # join with tags
+        elif params['request'] == 'pois':
 
-            sortby_group = self.generate_sortby(params, geom, bbox_query)
+            bbox_query = db.session \
+                .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
+                .filter(*geom_filters) \
+                .outerjoin(Tags) \
+                .subquery()
 
-        pois_query = db.session \
-            .query(bbox_query.c.osm_id, bbox_query.c.category,
-                   bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
-                   bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
-            .filter(*custom_filters) \
-            .order_by(*sortby_group) \
-            .limit(params['limit']) \
-            # .all()
+            custom_filters = []
+            if 'filters' in params:
+                custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
 
-        print str(pois_query)
+            sortby_group = []
+            if 'sortby' in params:
+                sortby_group = self.generate_sortby(params, geom, bbox_query)
 
-        # response as geojson feature collection
-        features = self.generate_geojson_features(pois_query)
+            pois_query = db.session \
+                .query(bbox_query.c.osm_id, bbox_query.c.category,
+                       bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
+                       bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
+                .filter(*custom_filters) \
+                .order_by(*sortby_group) \
+                .limit(params['limit']) \
+                .all()
 
-        return features
+            for dude in pois_query:
+                print wkb.loads(str(dude[6]), hex=True)
+            print len(pois_query)
+            # response as geojson feature collection
+            features = self.generate_geojson_features(pois_query)
+
+            return features
 
     @staticmethod
     def generate_sortby(params, geom, query):
@@ -116,28 +142,33 @@ class QueryBuilder(object):
         return sortby
 
     @staticmethod
-    def generate_geom_filters(geometry, radius, Pois):
-        print geometry, radius
+    def generate_geom_filters(geometry, Pois):
+        print geometry, geometry['radius']
         filters, geom = [], None
 
         if 'bbox' in geometry and 'geom' not in geometry:
             geom = geometry['bbox'].wkt
             filters.append(
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']), Pois.geom, 0))
 
         elif 'bbox' in geometry and 'geom' in geometry:
             geom_bbox = geometry['bbox'].wkt
             geom = geometry['geom'].wkt
             filters.append(  # in bbox
                 geo_func.ST_DWithin(
-                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), radius),
+                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']),
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
-        elif 'bbox' not in geometry and 'geometry' in geometry:
+        # POLYGON TESTED!
+        # LINESTRING -
+        # POINT -
+        elif 'bbox' not in geometry and 'geom' in geometry:
 
             geom = geometry['geom'].wkt
+            print geom
             filters.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), radius), Pois.geom, 0))
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']), Pois.geom, 0)
+            )
 
         return filters, geom
 
@@ -146,7 +177,7 @@ class QueryBuilder(object):
         """
         Generates a list of custom filters used for query.
 
-        :param params:
+        :param filters:
         :param query: sqlalchemy flask query
         :return: returns sqlalchemy filters
         :type: list
@@ -231,12 +262,22 @@ class QueryBuilder(object):
 
         properties = dict()
 
+        # TO DO SOMETHONG NOT WORIKING HERE !!!
+        i = 0
         for previous, item, nxt in cls.previous_and_next(query):
             print item, nxt
             osm_id = item[0]
+
+            if nxt is not None:
+                next_osm_id = nxt[0]
+            else:
+                next_osm_id = None
+
             poi_distance = item[2]
 
-            if nxt is None or nxt[0] != osm_id:
+            if nxt is None or next_osm_id != osm_id:
+
+                print 'ADDING LAST'
                 properties['distance'] = poi_distance
                 properties['osm_id'] = osm_id
                 properties['category_id'] = item[1]
@@ -248,13 +289,21 @@ class QueryBuilder(object):
                                                   )
                 features.append(geojson_feature)
 
+                print 'NEW DICT'
                 properties = dict()
-
-            else:
+                i += 1
+                # print i
+            elif next_osm_id == osm_id:
+                print 'ADDING TO SAME'
                 properties[item[4]] = item[5]
+
+                i += 1
+
+
 
         feature_collection = geojson.FeatureCollection(features)
 
+        print i, len(features)
         return feature_collection
 
     @staticmethod
