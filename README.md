@@ -74,6 +74,12 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > $ python manage.py run -h 0.0.0.0 -p 8080
 > ```
 
+### Testing: TODO
+
+```sh
+$ export TESTING=True && python manage.py test
+```
+
 ### API Documentation
 
 The documentation for this flask service is provided via [flasgger](https://github.com/rochacbruno/flasgger) and can be
@@ -137,12 +143,6 @@ wheelchair:
 
 Means that the OpenStreetMap tag [wheelchair](https://wiki.openstreetmap.org/wiki/Key:wheelchair) will be considered
 during import and also if a user adds `wheelchair:` as a property and one of the `common_values` as value to the POST body.
-
-### Testing: TODO
-
-```sh
-$ export TESTING=True && python manage.py test
-```
 
 ### Examples
 
