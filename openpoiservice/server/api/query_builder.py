@@ -80,9 +80,8 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.category) \
                 .all()
 
+            print len(stats_query)
             places_json = self.generate_category_stats(stats_query)
-
-            print str(stats_query)
 
             return places_json
 
@@ -99,7 +98,7 @@ class QueryBuilder(object):
             if 'filters' in params:
                 custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
 
-            sortby_group = []
+            sortby_group = [bbox_query.c.osm_id]
             if 'sortby' in params:
                 sortby_group = self.generate_sortby(params, geom, bbox_query)
 
@@ -112,9 +111,10 @@ class QueryBuilder(object):
                 .limit(params['limit']) \
                 .all()
 
-            for dude in pois_query:
-                print wkb.loads(str(dude[6]), hex=True)
+            # for dude in pois_query:
+            #    print wkb.loads(str(dude[6]), hex=True)
             print len(pois_query)
+
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query)
 
@@ -160,10 +160,18 @@ class QueryBuilder(object):
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
         # POLYGON TESTED!
-        # LINESTRING -
-        # POINT -
+        # LINESTRING - TESTED!
+        # POINT - TESTED!
+
+        # POLYGON + BBOX
+        # LINESTRING + BBOX
+        # POINT + BBOX
+
+        # BBOX
+
         elif 'bbox' not in geometry and 'geom' in geometry:
 
+            print geometry['radius']
             geom = geometry['geom'].wkt
             print geom
             filters.append(  # buffer around geom
@@ -222,24 +230,28 @@ class QueryBuilder(object):
         for poi_group in query:
             # get the group of this category
             category_group = categories_tools.category_to_group_index[poi_group.category]
+
             group_id = category_group["group_id"]
             group_name = category_group["group_name"]
             category_obj = {
-                poi_group.category: poi_group.count
+                categories_tools.category_ids_index[poi_group.category]['poi_name']: {
+                    'count': poi_group.count,
+                    'category_id': poi_group.category
+
+                }
             }
+            if group_name not in places_dict["places"]:
 
-            if group_id not in places_dict:
-
-                places_dict["places"][group_id] = {
-                    "name": group_name,
+                places_dict["places"][group_name] = {
+                    "group_id": group_id,
                     "categories": category_obj,
                     "total_count": poi_group.count
                 }
 
-            elif group_id in places_dict:
+            elif group_name in places_dict["places"]:
 
-                places_dict["places"][group_id]['categories'].update(category_obj)
-                places_dict["places"][group_id]['total_count'] += poi_group.count
+                places_dict["places"][group_name]['categories'].update(category_obj)
+                places_dict["places"][group_name]['total_count'] += poi_group.count
 
             places_dict["places"]["total_count"] += poi_group.count
 
@@ -262,10 +274,8 @@ class QueryBuilder(object):
 
         properties = dict()
 
-        # TO DO SOMETHONG NOT WORIKING HERE !!!
-        i = 0
         for previous, item, nxt in cls.previous_and_next(query):
-            print item, nxt
+
             osm_id = item[0]
 
             if nxt is not None:
@@ -275,12 +285,16 @@ class QueryBuilder(object):
 
             poi_distance = item[2]
 
-            if nxt is None or next_osm_id != osm_id:
+            if nxt is None or osm_id != next_osm_id:
 
-                print 'ADDING LAST'
                 properties['distance'] = poi_distance
                 properties['osm_id'] = osm_id
-                properties['category_id'] = item[1]
+                category_id = item[1]
+                properties['category_id'] = category_id
+                # add category name and group
+                properties['category_name'] = categories_tools.category_ids_index[category_id]['poi_name']
+                properties['category_group'] = categories_tools.category_ids_index[category_id]['poi_group']
+
                 properties[item[4]] = item[5]
                 point = wkb.loads(str(item[6]), hex=True)
                 geojson_point = geojson.Point((point.x, point.y))
@@ -288,22 +302,15 @@ class QueryBuilder(object):
                                                   properties=properties
                                                   )
                 features.append(geojson_feature)
-
-                print 'NEW DICT'
                 properties = dict()
-                i += 1
-                # print i
+
             elif next_osm_id == osm_id:
-                print 'ADDING TO SAME'
+
                 properties[item[4]] = item[5]
-
-                i += 1
-
-
 
         feature_collection = geojson.FeatureCollection(features)
 
-        print i, len(features)
+        print len(features)
         return feature_collection
 
     @staticmethod

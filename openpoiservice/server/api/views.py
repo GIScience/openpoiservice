@@ -9,11 +9,9 @@ from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limits
 from flasgger.utils import swag_from
-from flasgger import validate
 
 
-# json get/post schema for raw request
-# bool: http://nullege.com/codes/search/voluptuous.Boolean
+# from flasgger import validate
 
 
 def custom_schema():
@@ -73,7 +71,7 @@ schema = Schema({
     Required('request'): Required(Any('pois', 'category_stats', 'category_list'),
                                   msg='pois, category_stats or category_list missing'),
 
-    Required('geometry'): geom_schema,
+    Optional('geometry'): geom_schema,
 
     Optional('filters'): filters_schema,
 
@@ -127,7 +125,6 @@ def places():
             # check restrictions and parse geometry
             all_args['geometry'] = parse_geometries(all_args['geometry'])
 
-            print all_args
             # query pois
             return jsonify(request_pois(all_args))
 

@@ -1,10 +1,12 @@
-# project/server/tests/base.py
-
+# openpoiservice/server/tests/base.py
 
 from flask_testing import TestCase
-
 from openpoiservice.server import db, create_app
-from openpoiservice.server.db_import.models import Pois
+from openpoiservice.server.db_import import parser
+from openpoiservice.server import ops_settings
+import os
+
+print 'BASE'
 
 app = create_app()
 
@@ -12,15 +14,16 @@ app = create_app()
 class BaseTestCase(TestCase):
 
     def create_app(self):
-        app.config.from_object('project.server.config.TestingConfig')
+        app.config.from_object('openpoiservice.server.config.TestingConfig')
+
         return app
 
     def setUp(self):
         db.create_all()
-        user = User(email="ad@min.com", password="admin_user")
-        db.session.add(user)
-        db.session.commit()
+
+        parser.run_import(os.path.join(os.getcwd(), ops_settings['osm_file_tests']))
 
     def tearDown(self):
-        db.session.remove()
-        db.drop_all()
+        pass
+        # db.session.remove()
+        # db.drop_all()

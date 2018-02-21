@@ -1,15 +1,12 @@
 # openpoiservice/server/models.py
 
 from openpoiservice.server import db, ops_settings
-from geoalchemy2 import Geometry, Geography
+from geoalchemy2 import Geography
 
 
 class Pois(db.Model):
-    if 'table_name' in ops_settings['provider_parameters']:
-        __tablename__ = ops_settings['provider_parameters']['table_name']
-    else:
-        __tablename__ = "ops_planet_pois"
-
+    __tablename__ = ops_settings['provider_parameters']['table_name']
+    print __tablename__
     osm_id = db.Column(db.BigInteger, primary_key=True)
     osm_type = db.Column(db.Integer, nullable=False)
     category = db.Column(db.Integer, index=True, nullable=False)
@@ -24,10 +21,8 @@ class Pois(db.Model):
 
 
 class Tags(db.Model):
-    if 'table_name' in ops_settings['provider_parameters']:
-        __tablename__ = ops_settings['provider_parameters']['table_name'] + "_tags"
-    else:
-        __tablename__ = "ops_planet_pois_tags"
+    __tablename__ = ops_settings['provider_parameters']['table_name'] + "_tags"
+    print __tablename__
 
     id = db.Column(db.Integer, primary_key=True)
     osm_id = db.Column(db.BigInteger,

@@ -13,7 +13,7 @@ class CategoryTools(object):
         self.category_ids = []
         self.group_index = {}
         self.category_to_group_index = {}
-        self.category_index = self.generate_category_index()
+        self.generate_category_indices()
 
     def unify_categories(self, filters):
 
@@ -38,9 +38,10 @@ class CategoryTools(object):
 
         return category_ids_of_group
 
-    def generate_category_index(self):
+    def generate_category_indices(self):
 
-        category_index = {}
+        self.category_index = {}
+        self.category_ids_index = {}
 
         for k, v in self.categories_object.iteritems():
 
@@ -53,20 +54,24 @@ class CategoryTools(object):
 
             for tag_name, pois in group_children.iteritems():
 
-                if tag_name in category_index:
-                    category_index[tag_name].update(pois)
+                if tag_name in self.category_index:
+                    self.category_index[tag_name].update(pois)
                 else:
-                    category_index[tag_name] = pois
+                    self.category_index[tag_name] = pois
 
                 for poi, cat_id in pois.iteritems():
+
+                    self.category_ids_index[cat_id] = {
+                        'poi_name': poi,
+                        'poi_group': group_name
+                    }
+
                     self.category_ids.append(int(cat_id))
                     self.group_index[group_id].append(int(cat_id))
 
                     if cat_id not in self.category_to_group_index:
                         self.category_to_group_index[cat_id] = {'group_id': v['id'],
                                                                 'group_name': k}
-
-        return category_index
 
     def get_category(self, tags):
 

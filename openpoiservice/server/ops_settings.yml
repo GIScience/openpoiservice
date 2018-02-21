@@ -6,7 +6,9 @@ maximum_feature_length: 10000000
 maximum_search_radius_for_linestrings: 1000
 maximum_search_radius_for_points: 20000
 maximum_search_radius_for_polygons: 1000
-osm_file: austria-latest.osm.pbf
+response_limit: 20000
+osm_file: bremen-latest.osm.pbf
+osm_file_tests: bremen-tests.pbf
 provider_parameters:
   table_name: ops_planet_pois
   db_name: gis
@@ -37,48 +39,3 @@ column_mappings:
   phone:
   # https://wiki.openstreetmap.org/wiki/Key:website
   website:
-
-
-response_limit: 1000
-
-
-             #   if tag == 'name':
-             #   self.name = value
-
-           # elif tag == 'wheelchair':
-            #    self.wheelchair_access = 'yes' if value == 'true' else 'no'
-            #    self.wheelchair_access = value
-
-           # elif tag == 'smoking':
-           #     self.smoking = 'yes' if value == 'true' else 'no'
-           #     self.smoking = value
-
-           # elif tag == 'fee':
-           #     self.fee = value
-
-           # elif tag == 'opening_hours':
-           #     self.opening_hours = value
-
-           # elif tag == 'phone' or tag == 'contact:phone':
-           #     self.phone = value
-
-           # elif tag == 'website':
-           #    self.website = value
-
-       #self.name = None
-       # self.wheelchair_access = None
-       # self.smoking = None
-       # self.fee = None
-       # self.opening_hours = None
-       # self.phone = None
-       # self.website = None
-       # self.address = None
-
-       #name = db.Column(db.Text, index=True, nullable=True)
-   # website = db.Column(db.Text, nullable=True)
-    #phone = db.Column(db.Text, nullable=True)
-   # opening_hours = db.Column(db.Text, nullable=True)
-    #wheelchair = db.Column(db.Text, nullable=True)
-    #smoking = db.Column(db.Text, nullable=True)
-    #fee = db.Column(db.Text, nullable=True)
-    #address = db.Column(db.Text, nullable=True)

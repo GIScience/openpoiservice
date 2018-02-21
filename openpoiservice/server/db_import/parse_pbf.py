@@ -4,6 +4,9 @@ from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import Pois, Tags
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+import shapely as shapely
+from shapely.geometry import Point, Polygon, LineString, MultiPoint
+
 
 
 class LatLng(object):
@@ -243,6 +246,7 @@ class PbfImporter(object):
 
             # populate missing coords of ways, will be used later
             if osmid in self.nodes and self.nodes[osmid] is None:
+
                 self.nodes[osmid] = LatLng(lat, lng)
 
     def parse_nodes(self, osm_nodes):
@@ -257,7 +261,7 @@ class PbfImporter(object):
 
         for osmid, tags, refs in osm_nodes:
             self.global_cnt += 1
-            lat_lng = LatLng(refs[1], refs[0])
+            lat_lng = LatLng(refs[0], refs[1])
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
     def parse_nodes_of_ways(self):
@@ -267,7 +271,10 @@ class PbfImporter(object):
         poi. Saved to DB afterwards.
         """
 
+        print self.nodes
+
         osm_type = 2
+
         for way in self.process_ways:
 
             way_length = len(way.refs)
@@ -284,8 +291,12 @@ class PbfImporter(object):
                         broken_way = True
                         break
 
-                    sum_lat += self.nodes[osmid].lat
-                    sum_lng += self.nodes[osmid].lng
+                    if self.nodes[osmid] is not None:
+                        sum_lat += self.nodes[osmid].lat
+                        sum_lng += self.nodes[osmid].lng
+                    else:
+                        broken_way = True
+                        break
 
                 # caution osm_id of way may be the same of some node_id of node
                 # https://gis.stackexchange.com/questions/103572/are-osm-ids-unique-over-all-object-types
@@ -293,6 +304,9 @@ class PbfImporter(object):
                     lat = sum_lat / way_length
                     lng = sum_lng / way_length
                     lat_lng = LatLng(lat, lng)
+
+                    # if not Point(lat, lng).intersects(Polygon([[8.23, 52.61], [9.79, 52.70], [9.62, 53.99], [7.63, 53.94]])):
+                    # print sum_lat, sum_lng, way_length
 
                     self.create_poi(way.tags, way.osm_id, lat_lng, osm_type, way.cat_id)
 

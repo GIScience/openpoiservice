@@ -5,24 +5,29 @@ from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
-
 import yaml
 import os
 import time
 
 # instantiate the extensions
-db = SQLAlchemy()
-
-# load categories
-categories_tools = CategoryTools('categories.yml')
+print 'creating db', os.environ['TESTING']
 
 """load custom settings for openpoiservice"""
 basedir = os.path.abspath(os.path.dirname(__file__))
 ops_settings = yaml.safe_load(open(os.path.join(basedir, 'ops_settings.yml')))
 
+if os.environ['TESTING']:
+    ops_settings['provider_parameters']['table_name'] = ops_settings['provider_parameters']['table_name'] + '_test'
+
+db = SQLAlchemy()
+
+# load categories
+categories_tools = CategoryTools('categories.yml')
+
 
 def create_app(script_info=None):
     # instantiate the app
+
     app = Flask(
         __name__
     )
@@ -33,6 +38,7 @@ def create_app(script_info=None):
         'version': 0.1,
         'uiversion': 3
     }
+
 
     # set config
     app_settings = os.getenv('APP_SETTINGS', 'openpoiservice.server.config.ProductionConfig')
@@ -53,8 +59,9 @@ def create_app(script_info=None):
 
     @app.teardown_request
     def teardown_request(exception=None):
-        diff = time.time() - g.start
-        print "Request took: {} seconds".format(diff)
+        if 'start' in g:
+            diff = time.time() - g.start
+            print "Request took: {} seconds".format(diff)
 
     # error handlers
     @app.errorhandler(401)
@@ -80,6 +87,9 @@ def create_app(script_info=None):
         return response
 
     # shell context for flask cli
-    app.shell_context_processor({'app': app, 'db': db})
+    app.shell_context_processor({
+        'app': app,
+        'db': db}
+    )
 
     return app
