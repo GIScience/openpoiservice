@@ -138,6 +138,12 @@ wheelchair:
 Means that the OpenStreetMap tag [wheelchair](https://wiki.openstreetmap.org/wiki/Key:wheelchair) will be considered
 during import and also if a user adds `wheelchair:` as a property and one of the `common_values` as value to the POST body.
 
+### Testing: TODO
+
+```sh
+$ export TESTING=True && python manage.py test
+```
+
 ### Examples
 
 ##### POST body structure
@@ -213,12 +219,5 @@ curl -X POST \
   -d '{
 	"request": "category_list"
 }'
-```
-
-
-### Testing: TODO
-
-```sh
-$ python manage.py test
 ```
 
