@@ -77,7 +77,7 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 ### Testing: TODO
 
 ```sh
-$ export TESTING=True && python manage.py test
+$ export TESTING="True" && python manage.py test
 ```
 
 ### API Documentation
