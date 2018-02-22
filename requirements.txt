@@ -11,3 +11,4 @@ voluptuous==0.10.5
 geojson==2.3.0
 shapely==1.6.4
 flasgger==0.8.1
+pyproj==1.9.5.1

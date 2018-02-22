@@ -10,13 +10,12 @@ import os
 import time
 
 # instantiate the extensions
-print 'creating db', os.environ['TESTING']
 
 """load custom settings for openpoiservice"""
 basedir = os.path.abspath(os.path.dirname(__file__))
 ops_settings = yaml.safe_load(open(os.path.join(basedir, 'ops_settings.yml')))
 
-if os.environ['TESTING']:
+if "TESTING" in os.environ:
     ops_settings['provider_parameters']['table_name'] = ops_settings['provider_parameters']['table_name'] + '_test'
 
 db = SQLAlchemy()

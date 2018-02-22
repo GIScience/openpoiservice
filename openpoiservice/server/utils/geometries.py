@@ -1,5 +1,9 @@
 # openpoiservice/server/main/geom_utils.py
 
+from functools import partial
+import pyproj
+from shapely.ops import transform
+
 
 def parse_geometry(geometry):
     """
@@ -19,7 +23,22 @@ def parse_geometry(geometry):
     return geom
 
 
-def validate_limits(radius, limit):
+def transform_geom(g1, src_proj, dest_proj):
+    project = partial(
+        pyproj.transform,
+        pyproj.Proj(init=src_proj),
+        pyproj.Proj(init=dest_proj))
+
+    g2 = transform(project, g1)
+
+    return g2
+
+
+def validate_area(geometry, limit):
+    pass
+
+
+def validate_limit(radius, limit):
     """
     Returns True if radius is in custom specific limits.
 

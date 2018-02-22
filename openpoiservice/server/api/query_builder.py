@@ -173,7 +173,7 @@ class QueryBuilder(object):
 
             print geometry['radius']
             geom = geometry['geom'].wkt
-            print geom
+
             filters.append(  # buffer around geom
                 geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']), Pois.geom, 0)
             )

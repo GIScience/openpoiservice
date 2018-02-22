@@ -1,13 +1,17 @@
 --- 
-attribution: "openrouteservice.org | OpenStreetMap contributors | Who's On First, whosonfirst.mapzen.com | GeoNames, www.geonames.org"
+attribution: "openrouteservice.org | OpenStreetMap contributors"
 maximum_categories: 5
-maximum_feature_area: -1
-maximum_feature_length: 10000000
-maximum_search_radius_for_linestrings: 1000
-maximum_search_radius_for_points: 20000
-maximum_search_radius_for_polygons: 1000
-response_limit: 20000
-osm_file: bremen-latest.osm.pbf
+# meters
+maximum_search_radius_for_linestrings: 2000
+maximum_search_radius_for_points: 2000
+maximum_search_radius_for_polygons: 2000
+# square meters
+maximum_area: 25000
+# meters
+maximum_linestring_length: 500000
+# limit of pois
+response_limit: 2000
+osm_file: bremen-tests.pbf
 osm_file_tests: bremen-tests.pbf
 provider_parameters:
   table_name: ops_planet_pois
