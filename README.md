@@ -74,6 +74,12 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > $ python manage.py run -h 0.0.0.0 -p 8080
 > ```
 
+### Testing: TODO
+
+```sh
+$ export TESTING="True" && python manage.py test
+```
+
 ### API Documentation
 
 The documentation for this flask service is provided via [flasgger](https://github.com/rochacbruno/flasgger) and can be
@@ -213,12 +219,5 @@ curl -X POST \
   -d '{
 	"request": "category_list"
 }'
-```
-
-
-### Testing: TODO
-
-```sh
-$ python manage.py test
 ```
 
