@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def run_import(path):
+    # or list of files ?
+
     pbf_importer = PbfImporter()
 
     osm_file_path = path

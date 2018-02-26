@@ -91,6 +91,7 @@ class QueryBuilder(object):
         # join with tags
         elif params['request'] == 'pois':
 
+            # how can I limit here already before the join?
             bbox_query = db.session \
                 .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
                 .filter(*geom_filters) \
@@ -111,15 +112,14 @@ class QueryBuilder(object):
                        bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
                 .filter(*custom_filters) \
                 .order_by(*sortby_group) \
-                .limit(params['limit']) \
                 .all()
 
             # for dude in pois_query:
             #    print wkb.loads(str(dude[6]), hex=True)
-            logger.debug("number of pois: {}".format(len(pois_query)))
+            logger.info("number of pois: {}".format(len(pois_query)))
 
             # response as geojson feature collection
-            features = self.generate_geojson_features(pois_query)
+            features = self.generate_geojson_features(pois_query, params['limit'])
 
             return features
 
@@ -161,16 +161,6 @@ class QueryBuilder(object):
                     geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']),
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
-        # POLYGON TESTED!
-        # LINESTRING - TESTED!
-        # POINT - TESTED!
-
-        # POLYGON + BBOX
-        # LINESTRING + BBOX
-        # POINT + BBOX
-
-        # BBOX
-
         elif 'bbox' not in geometry and 'geom' in geometry:
 
             geom = geometry['geom'].wkt
@@ -192,7 +182,7 @@ class QueryBuilder(object):
         :type: list
         """
 
-        filters = []
+        filters_list = []
         for tag, settings in ops_settings['column_mappings'].iteritems():
 
             if tag in filters:
@@ -200,15 +190,15 @@ class QueryBuilder(object):
                 filters.append(query.c.key == tag.lower())
 
                 if settings['filterable'] == 'like':
-                    filters.append(query.c.value.like('%' + filters[tag].lower() + '%'))
+                    filters_list.append(query.c.value.like('%' + filters[tag].lower() + '%'))
 
                 elif settings['filterable'] == 'equals':
-                    filters.append(query.c.value == filters[tag].lower())
+                    filters_list.append(query.c.value == filters[tag].lower())
 
                 else:
                     pass
 
-        return filters
+        return filters_list
 
     @classmethod
     def generate_category_stats(cls, query):
@@ -259,7 +249,7 @@ class QueryBuilder(object):
         return places_dict
 
     @classmethod
-    def generate_geojson_features(cls, query):
+    def generate_geojson_features(cls, query, limit):
         """
         Generates a GeoJSON feature collection from the response.
         :param query: the response from the database
@@ -275,6 +265,7 @@ class QueryBuilder(object):
 
         properties = dict()
 
+        cnt = 1
         for previous, item, nxt in cls.previous_and_next(query):
 
             osm_id = item[0]
@@ -303,6 +294,12 @@ class QueryBuilder(object):
                                                   properties=properties
                                                   )
                 features.append(geojson_feature)
+
+                if cnt == limit:
+                    break
+
+                cnt += 1
+
                 properties = dict()
 
             elif next_osm_id == osm_id:
