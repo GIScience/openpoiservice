@@ -2,11 +2,14 @@
 
 from openpoiservice.server import db, ops_settings
 from geoalchemy2 import Geography
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Pois(db.Model):
     __tablename__ = ops_settings['provider_parameters']['table_name']
-    print __tablename__
+    logger.info('table name for pois: {}'.format(__tablename__))
     osm_id = db.Column(db.BigInteger, primary_key=True)
     osm_type = db.Column(db.Integer, nullable=False)
     category = db.Column(db.Integer, index=True, nullable=False)
@@ -22,7 +25,7 @@ class Pois(db.Model):
 
 class Tags(db.Model):
     __tablename__ = ops_settings['provider_parameters']['table_name'] + "_tags"
-    print __tablename__
+    logger.info('Table name for tags: {}'.format(__tablename__))
 
     id = db.Column(db.Integer, primary_key=True)
     osm_id = db.Column(db.BigInteger,

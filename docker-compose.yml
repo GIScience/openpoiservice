@@ -1,0 +1,8 @@
+version: '2'
+services:
+ openpoiservice-flask:
+  build: .
+  #volumes:
+  #- ./:/var/www/crypto
+  ports:
+   - "5000:5000"

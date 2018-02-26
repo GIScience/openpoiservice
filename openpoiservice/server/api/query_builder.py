@@ -12,6 +12,9 @@ from sqlalchemy import func, cast
 from sqlalchemy import dialects
 import geojson as geojson
 from itertools import tee, islice, chain, izip
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class QueryBuilder(object):
@@ -58,7 +61,7 @@ class QueryBuilder(object):
 
         geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
 
-        print geom_filters, geom
+        logger.debug('geometry filters: {}, geometry: {}'.format(geom_filters, geom))
         if 'filters' in params and 'category_ids' in params['filters']:
             geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
@@ -80,7 +83,7 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.category) \
                 .all()
 
-            print len(stats_query)
+            logger.debug('number of poi stats: {}'.format(len(stats_query)))
             places_json = self.generate_category_stats(stats_query)
 
             return places_json
@@ -113,7 +116,7 @@ class QueryBuilder(object):
 
             # for dude in pois_query:
             #    print wkb.loads(str(dude[6]), hex=True)
-            print len(pois_query)
+            logger.debug("number of pois: {}".format(len(pois_query)))
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query)
@@ -143,7 +146,6 @@ class QueryBuilder(object):
 
     @staticmethod
     def generate_geom_filters(geometry, Pois):
-        print geometry, geometry['radius']
         filters, geom = [], None
 
         if 'bbox' in geometry and 'geom' not in geometry:
@@ -171,7 +173,6 @@ class QueryBuilder(object):
 
         elif 'bbox' not in geometry and 'geom' in geometry:
 
-            print geometry['radius']
             geom = geometry['geom'].wkt
 
             filters.append(  # buffer around geom
@@ -310,7 +311,7 @@ class QueryBuilder(object):
 
         feature_collection = geojson.FeatureCollection(features)
 
-        print len(features)
+        logger.debug("Amount of features {}".format(len(features)))
         return feature_collection
 
     @staticmethod

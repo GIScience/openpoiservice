@@ -1,11 +1,16 @@
 # manage.py
 
+
 import unittest
 from flask.cli import FlaskGroup
 from openpoiservice.server import create_app, db
 from openpoiservice.server.db_import import parser
 from openpoiservice.server import ops_settings
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 app = create_app()
@@ -46,6 +51,9 @@ def import_data():
 
     db.create_all()
 
+    logger.info("Starting to import data...")
+
+    # add option to add multiple osm pbf files
     parser.run_import(os.path.join(os.getcwd(), ops_settings['osm_file']))
 
 

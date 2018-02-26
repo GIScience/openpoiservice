@@ -34,10 +34,6 @@ def transform_geom(g1, src_proj, dest_proj):
     return g2
 
 
-def validate_area(geometry, limit):
-    pass
-
-
 def validate_limit(radius, limit):
     """
     Returns True if radius is in custom specific limits.

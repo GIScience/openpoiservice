@@ -8,6 +8,9 @@ from openpoiservice.server.api import api_exceptions
 import yaml
 import os
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 # instantiate the extensions
 
@@ -52,15 +55,16 @@ def create_app(script_info=None):
 
     Swagger(app)
 
-    @app.before_request
-    def before_request():
-        g.start = time.time()
+    if "DEVELOPMENT" in os.environ:
+        @app.before_request
+        def before_request():
+            g.start = time.time()
 
-    @app.teardown_request
-    def teardown_request(exception=None):
-        if 'start' in g:
+        @app.teardown_request
+        def teardown_request(exception=None):
+            # if 'start' in g:
             diff = time.time() - g.start
-            print "Request took: {} seconds".format(diff)
+            logger.info("Request took: {} seconds".format(diff))
 
     # error handlers
     @app.errorhandler(401)

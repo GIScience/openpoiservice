@@ -7,7 +7,7 @@ from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, Multip
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
-from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, validate_area, transform_geom
+from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, transform_geom
 from flasgger.utils import swag_from
 
 
@@ -83,7 +83,6 @@ schema = Schema({
     Optional('id'): Required(Coerce(str), msg='must be a string')
 })
 
-print schema
 main_blueprint = Blueprint('main', __name__, )
 
 
