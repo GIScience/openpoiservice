@@ -45,10 +45,6 @@ def drop_db():
 def import_data():
     """Imports osm pbf data to postgis."""
 
-    db.drop_all()
-
-    db.create_all()
-
     logger.info("Starting to import data...")
 
     # add option to add multiple osm pbf files

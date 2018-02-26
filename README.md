@@ -104,11 +104,25 @@ Access the application at the address [http://localhost:5000/](http://localhost:
 > $ python manage.py run -h 0.0.0.0 -p 8080
 > ```
 
-### Testing: TODO
+### Testing
 
 ```sh
 $ export TESTING="True" && python manage.py test
 ```
+
+
+### Technical specs for importing OSM
+
+Please consider the following technical specifications for importing an osm file.
+
+| Region        | Memory        | 
+| ------------- |:-------------:|
+| Germany       | 16 GB         |
+| Europe        | 64 GB         | 
+| Planet        | 128 GB        | 
+
+**Note:** we will be adding the functionality for adding a list of pbf files in the future.
+
 
 ### API Documentation
 

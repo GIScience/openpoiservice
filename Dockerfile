@@ -8,16 +8,6 @@ RUN apt-get update
 RUN apt-get install -y python python-pip python-virtualenv gunicorn git nano
 
 # Install protobuf
-#RUN apt-get install -y autoconf automake libtool curl make g++ unzip
-#RUN git clone https://github.com/google/protobuf.git protobuf
-#WORKDIR /protobuf
-#RUN ./autogen.sh
-#RUN ./configure
-#RUN make
-#RUN make check
-#RUN make install
-#RUN ldconfig
-
 RUN apt-get install -y build-essential protobuf-compiler libprotobuf-dev
 
 # Setup flask application
