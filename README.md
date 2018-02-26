@@ -14,9 +14,42 @@ to query the service via the API.
 
 [![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
 
-## Quick Start
+## Installation
 
-### Basics
+You can either run openpoiservice on your host machine in a virtual environment or simply with docker. The Dockerfile 
+installs a WSGI server (gunicorn) which starts the flask service on port 5000. 
+
+### Run as Docker Container (Flask + Gunicorn)
+
+Make your necessary changes to the settings in `ops_settings_docker.yml`. This file will be copied to the docker container.
+If you are planning to import a different osm file, please download it to the `osm folder` as this will
+be a shared volume. Afterwards run:
+
+
+```sh
+$ docker-compose up -d -f /path/to/docker-compose.yml
+```
+
+Once the container is built you can either, create the database:
+
+```sh
+$ docker exec -it container_name python manage.py create_db
+```
+
+To delete the database:
+
+```sh
+$ docker exec -it container_name python manage.py drop_db
+```
+
+To import the OSM data:
+
+```sh
+$ docker exec -it container_name python manage.py import_data
+```
+
+
+### Run in Virtual Environment
 
 1. Create and activate a virtualenv
 2. This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
@@ -27,20 +60,17 @@ do the job.
 - **OS X**  Using homebrew` on OS X `brew install protobuf` will suffice.
 3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
 
-### Set Environment Variables
 
-Update *openpoiservice/server/ops_settings.yml* with your database, and then run:
+### Prepare settings.yml
 
+Update `openpoiservice/server/ops_settings.yml` with your necessary settings and then run one of the following
+commands.
+
+[
 ```sh
-$ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig"
+$ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig|DevelopmentConfig"
 ```
-
-(or
-
-```sh
-$ export APP_SETTINGS="openpoiservice.server.config.DevelopmentConfig"
-```
-)
+]
 
 
 ### Create the POI DB

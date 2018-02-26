@@ -12,7 +12,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
@@ -44,7 +43,6 @@ def drop_db():
 
 @cli.command()
 def import_data():
-
     """Imports osm pbf data to postgis."""
 
     db.drop_all()
@@ -54,10 +52,8 @@ def import_data():
     logger.info("Starting to import data...")
 
     # add option to add multiple osm pbf files
-    parser.run_import(os.path.join(os.getcwd(), ops_settings['osm_file']))
+    parser.run_import(os.path.join(os.getcwd() + '/osm', ops_settings['osm_file']))
 
 
 if __name__ == '__main__':
-
     cli()
-

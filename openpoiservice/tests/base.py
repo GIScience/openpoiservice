@@ -21,7 +21,7 @@ class BaseTestCase(TestCase):
     def setUp(self):
         db.create_all()
 
-        parser.run_import(os.path.join(os.getcwd(), ops_settings['osm_file_tests']))
+        parser.run_import(os.path.join(os.getcwd() + '/osm', ops_settings['osm_file_tests']))
 
     def tearDown(self):
         db.session.remove()

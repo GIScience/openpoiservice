@@ -1,8 +1,8 @@
-version: '2'
+version: '3'
 services:
- openpoiservice-flask:
+ gunicorn_flask:
   build: .
-  #volumes:
-  #- ./:/var/www/crypto
+  volumes:
+  - ./osm:/deploy/app/osm
   ports:
    - "5000:5000"
