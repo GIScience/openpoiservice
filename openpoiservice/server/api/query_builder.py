@@ -83,7 +83,7 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.category) \
                 .all()
 
-            logger.debug('number of poi stats: {}'.format(len(stats_query)))
+            logger.info('Number of poi statistic groups: {}'.format(len(stats_query)))
             places_json = self.generate_category_stats(stats_query)
 
             return places_json
@@ -102,9 +102,15 @@ class QueryBuilder(object):
             if 'filters' in params:
                 custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
 
-            sortby_group = [bbox_query.c.osm_id]
+            # sortby needed here for generating features in next step
+            # sortby_group = [bbox_query.c.osm_id]
+            sortby_group = []
             if 'sortby' in params:
-                sortby_group = self.generate_sortby(params, geom, bbox_query)
+                if params['sortby'] == 'distance':
+                    sortby_group.append(geo_func.ST_Distance(type_coerce(geom, Geography), bbox_query.c.geom))
+
+                elif params['sortby'] == 'category':
+                    sortby_group.append(bbox_query.c.category)
 
             pois_query = db.session \
                 .query(bbox_query.c.osm_id, bbox_query.c.category,
@@ -116,33 +122,11 @@ class QueryBuilder(object):
 
             # for dude in pois_query:
             #    print wkb.loads(str(dude[6]), hex=True)
-            logger.info("number of pois: {}".format(len(pois_query)))
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query, params['limit'])
 
             return features
-
-    @staticmethod
-    def generate_sortby(params, geom, query):
-        """
-
-        :param params:
-        :param query:
-        :param geom:
-        :return:
-        """
-
-        sortby = []
-        if 'sortby' in params:
-
-            if params['sortby'] == 'distance':
-                sortby.append(geo_func.ST_Distance(type_coerce(geom, Geography), query.c.geom))
-
-            elif params['sortby'] == 'category':
-                sortby.append(query.c.category)
-
-        return sortby
 
     @staticmethod
     def generate_geom_filters(geometry, Pois):
@@ -252,63 +236,55 @@ class QueryBuilder(object):
     def generate_geojson_features(cls, query, limit):
         """
         Generates a GeoJSON feature collection from the response.
+        :param limit:
         :param query: the response from the database
         :type query: list of objects
-
         :return: GeoJSON feature collection containing properties
         :type: list
         """
 
-        features = []
+        features = dict()
+        osm_ids_list = list()
 
-        query = iter(query)
+        for q in query:
 
-        properties = dict()
-
-        cnt = 1
-        for previous, item, nxt in cls.previous_and_next(query):
-
-            osm_id = item[0]
-
-            if nxt is not None:
-                next_osm_id = nxt[0]
-            else:
-                next_osm_id = None
-
-            poi_distance = item[2]
-
-            if nxt is None or osm_id != next_osm_id:
-
-                properties['distance'] = poi_distance
-                properties['osm_id'] = osm_id
-                category_id = item[1]
-                properties['category_id'] = category_id
-                # add category name and group
-                properties['category_name'] = categories_tools.category_ids_index[category_id]['poi_name']
-                properties['category_group'] = categories_tools.category_ids_index[category_id]['poi_group']
-
-                properties[item[4]] = item[5]
-                point = wkb.loads(str(item[6]), hex=True)
+            if q[0] not in features:
+                point = wkb.loads(str(q[6]), hex=True)
                 geojson_point = geojson.Point((point.x, point.y))
-                geojson_feature = geojson.Feature(geometry=geojson_point,
-                                                  properties=properties
-                                                  )
-                features.append(geojson_feature)
 
-                if cnt == limit:
-                    break
+                features[q[0]] = {
+                    "properties": {
+                        "distance": q[2],
+                        "osm_id": q[0],
+                        "category_id": q[1],
+                        "category_name": categories_tools.category_ids_index[q[1]]['poi_name'],
+                        "category_group": categories_tools.category_ids_index[q[1]]['poi_group'],
+                        q[4]: q[5]
 
-                cnt += 1
+                    },
+                    "geometry": geojson_point,
+                }
 
-                properties = dict()
+                osm_ids_list.append(q[0])
 
-            elif next_osm_id == osm_id:
+            else:
 
-                properties[item[4]] = item[5]
+                features[q[0]][q[4]] = q[5]
 
-        feature_collection = geojson.FeatureCollection(features)
+        geojson_features = list()
+        # keep order!!!
+        for osm_id in osm_ids_list:
+            geojson_feature = geojson.Feature(geometry=features[osm_id]['geometry'],
+                                              properties=features[osm_id]['properties']
+                                              )
+            geojson_features.append(geojson_feature)
+            if len(geojson_features) == limit:
+                break
 
-        logger.debug("Amount of features {}".format(len(features)))
+        feature_collection = geojson.FeatureCollection(geojson_features)
+
+        logger.info("Amount of features {}".format(len(geojson_features)))
+
         return feature_collection
 
     @staticmethod

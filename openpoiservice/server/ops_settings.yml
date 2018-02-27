@@ -6,12 +6,12 @@ maximum_search_radius_for_linestrings: 2000
 maximum_search_radius_for_points: 2000
 maximum_search_radius_for_polygons: 2000
 # square meters
-maximum_area: 25000
+maximum_area: 50000000
 # meters
 maximum_linestring_length: 500000
 # limit of pois
 response_limit: 2000
-osm_file: bremen-latest.osm.pbf
+osm_file: berlin-latest.osm.pbf
 osm_file_tests: bremen-tests.osm.pbf
 
 provider_parameters:
