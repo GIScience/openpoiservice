@@ -7,6 +7,7 @@ from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ class PbfImporter(object):
         """ Initializes pbf importer class with necessary counters."""
 
         self.relations_cnt = 0
-        self.entity_cnt = 0
         self.ways_cnt = 0
         self.nodes_cnt = 0
         self.global_cnt = 0
@@ -103,15 +103,13 @@ class PbfImporter(object):
 
                         # consider only outer rings
                         if rel_member[2] == 'outer':
-                            osmid_rel = rel_member[0]
-                            self.relation_ways[osmid_rel] = tags
-                            self.relation_ways[osmid_rel].update({'relation_id': osmid})
+                            osmid_rel_member = rel_member[0]
+                            self.relation_ways[osmid_rel_member] = tags
+                            self.relation_ways[osmid_rel_member].update({'relation_id': osmid})
                             self.relations_cnt += 1
 
                             if self.relations_cnt % 10000 == 0:
                                 logger.info('Relations found: {} '.format(self.relations_cnt))
-
-            self.entity_cnt += 1
 
     def parse_ways(self, ways):
         """
@@ -148,8 +146,9 @@ class PbfImporter(object):
 
                 if len(refs) < 1000:
 
-                    for node in refs:
-                        self.nodes[node] = None
+                    for osmid_of_node in refs:
+                        # print osmid_of_node
+                        self.nodes[osmid_of_node] = None
                     self.ways_cnt += 1
 
                     if self.ways_cnt % 50000 == 0:
@@ -168,11 +167,13 @@ class PbfImporter(object):
 
         self.pois_cnt += 1
 
-        self.poi_objects.append(Pois(osm_id=poi_object.osmid,
-                                     osm_type=poi_object.type,
-                                     category=poi_object.category,
-                                     geom=poi_object.geom
-                                     ))
+        self.poi_objects.append(Pois(
+            uuid=poi_object.uuid,
+            osm_id=poi_object.osmid,
+            osm_type=poi_object.type,
+            category=poi_object.category,
+            geom=poi_object.geom
+        ))
 
         if self.pois_cnt % 1000 == 0:
             logger.info('Pois: {}, tags: {}'.format(self.pois_cnt, self.tags_cnt))
@@ -195,10 +196,12 @@ class PbfImporter(object):
 
         self.tags_cnt += 1
 
-        self.tags_objects.append(Tags(osm_id=tags_object.osmid,
-                                      key=tags_object.key,
-                                      value=tags_object.value
-                                      ))
+        self.tags_objects.append(Tags(
+            uuid=tags_object.uuid,
+            osm_id=tags_object.osmid,
+            key=tags_object.key,
+            value=tags_object.value
+        ))
 
     def create_poi(self, tags, osmid, lat_lng, osm_type, category=0):
         """
@@ -224,16 +227,20 @@ class PbfImporter(object):
             category = categories_tools.get_category(tags)
 
         if category > 0:
+
             self.nodes[osmid] = lat_lng
+
+            # random id used as primary key
+            my_uuid = str(uuid.uuid4())
 
             # create dynamically from settings yml
             for tag, value in tags.iteritems():
 
                 if tag in ops_settings['column_mappings']:
-                    tags_object = TagsObject(osmid, tag, value)
+                    tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(tags_object)
 
-            poi_object = PoiObject(category, osmid, lat_lng, osm_type)
+            poi_object = PoiObject(my_uuid, category, osmid, lat_lng, osm_type)
             self.store_poi(poi_object)
 
     def parse_coords(self, coords):
@@ -248,7 +255,6 @@ class PbfImporter(object):
 
             # populate missing coords of ways, will be used later
             if osmid in self.nodes and self.nodes[osmid] is None:
-
                 self.nodes[osmid] = LatLng(lat, lng)
 
     def parse_nodes(self, osm_nodes):
@@ -264,6 +270,7 @@ class PbfImporter(object):
         for osmid, tags, refs in osm_nodes:
             self.global_cnt += 1
             lat_lng = LatLng(refs[0], refs[1])
+
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
     def parse_nodes_of_ways(self):
@@ -297,9 +304,7 @@ class PbfImporter(object):
                         broken_way = True
                         break
 
-                # caution osm_id of way may be the same of some node_id of node
-                # https://gis.stackexchange.com/questions/103572/are-osm-ids-unique-over-all-object-types
-                if not broken_way and way.osm_id not in self.nodes:
+                if not broken_way:
                     lat = sum_lat / way_length
                     lng = sum_lng / way_length
                     lat_lng = LatLng(lat, lng)

@@ -3,7 +3,8 @@
 
 class PoiObject(object):
 
-    def __init__(self, category, osmid, lat_lng, osm_type):
+    def __init__(self, uuid, category, osmid, lat_lng, osm_type):
+        self.uuid = uuid
         self.osmid = int(osmid)
         self.type = int(osm_type)
         self.category = int(category)
@@ -17,7 +18,8 @@ class PoiObject(object):
 
 class TagsObject(object):
 
-    def __init__(self, osmid, key, value):
+    def __init__(self, uuid, osmid, key, value):
+        self.uuid = uuid
         self.osmid = int(osmid)
         self.key = key
         self.value = value

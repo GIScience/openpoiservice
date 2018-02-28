@@ -11,7 +11,8 @@ maximum_area: 50000000
 maximum_linestring_length: 500000
 # limit of pois
 response_limit: 2000
-osm_file: berlin-latest.osm.pbf
+osm_files: ['bremen-latest.osm.pbf', 'berlin-latest.osm.pbf', 'austria-latest.osm.pbf']
+#osm_files: ['bremen-latest.osm.pbf']
 osm_file_tests: bremen-tests.osm.pbf
 
 provider_parameters:

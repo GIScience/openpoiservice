@@ -1,12 +1,12 @@
 # manage.py
 
-
 import unittest
 from flask.cli import FlaskGroup
 from openpoiservice.server import create_app, db
 from openpoiservice.server.db_import import parser
 from openpoiservice.server import ops_settings
 import os
+from timeit import Timer
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -45,10 +45,11 @@ def drop_db():
 def import_data():
     """Imports osm pbf data to postgis."""
 
-    logger.info("Starting to import data...")
+    osm_files = [os.path.join(os.getcwd() + '/osm', osm_file) for osm_file in ops_settings['osm_files']]
+    t = Timer(lambda: parser.run_import(osm_files))
 
-    # add option to add multiple osm pbf files
-    parser.run_import(os.path.join(os.getcwd() + '/osm', ops_settings['osm_file']))
+    logger.info("Starting to import OSM data...{}".format(osm_files))
+    logger.info('Time passed for importing OSM files: {}s'.format(t.timeit(number=1)))
 
 
 if __name__ == '__main__':
