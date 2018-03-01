@@ -3,13 +3,21 @@ language: python
 python:
   - "2.7"
 
+services:
+  - postgresql
+
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev
 
+# database creation
+before_script:
+  - psql -c "CREATE DATABASE gis;" -U postgres
+  - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres
+  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis
+
 install:
   - pip install -r requirements.txt
-  #- pip install coveralls
 
 script:
   - python manage.py test

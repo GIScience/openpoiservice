@@ -38,7 +38,7 @@ class TestingConfig(BaseConfig):
     TESTING = True
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pg_settings['user_name'], pg_settings['password'],
-                                                                   pg_settings['host'], pg_settings['port'],
+                                                                   pg_settings['host'], pg_settings['port_tests'],
                                                                    pg_settings['db_name'])
     DEBUG_TB_ENABLED = False
     PRESERVE_CONTEXT_ON_EXCEPTION = False
