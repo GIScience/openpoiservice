@@ -42,7 +42,7 @@ geom_schema = {
     Optional('geojson'): Required(All(object), msg='Must be a geojson object'),
     Optional('bbox'): Required(All(list, Length(min=2, max=2)),
                                msg='Must be length of {}'.format(2)),
-    Optional('radius'): Required(
+    Optional('buffer'): Required(
         All(Coerce(int), Range(min=0, max=ops_settings['maximum_search_radius_for_points'])),
         msg='Must be between 1 and {}'.format(
             ops_settings['maximum_search_radius_for_points']))
@@ -166,11 +166,11 @@ def are_required_geom_present(geometry):
                                           status_code=401)
 
 
-def check_for_radius(geometry, maximum_search_radius):
-    if 'radius' not in geometry:
-        raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
+def check_for_buffer(geometry, maximum_search_radius):
+    if 'buffer' not in geometry:
+        raise api_exceptions.InvalidUsage('Buffer is missing', status_code=404)
 
-    if not validate_limit(int(geometry['radius']), maximum_search_radius):
+    if not validate_limit(int(geometry['buffer']), maximum_search_radius):
         raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
 
@@ -185,8 +185,8 @@ def parse_geometries(geometry):
     if 'geojson' in geometry:
 
         # parse radius
-        if 'radius' not in geometry:
-            geometry['radius'] = 0
+        if 'buffer' not in geometry:
+            geometry['buffer'] = 0
 
         s = json.dumps(geometry['geojson'])
         # Convert to geojson.geometry
@@ -202,10 +202,10 @@ def parse_geometries(geometry):
         geojson_obj = check_validity(g2)
 
         if geojson_obj.geom_type == 'Point':
-            check_for_radius(geometry, ops_settings['maximum_search_radius_for_points'])
+            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_points'])
 
         elif geojson_obj.geom_type == 'LineString':
-            check_for_radius(geometry, ops_settings['maximum_search_radius_for_linestrings'])
+            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_linestrings'])
 
             # check if linestring not too long
             length = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').length
@@ -217,7 +217,7 @@ def parse_geometries(geometry):
 
         elif geojson_obj.geom_type == 'Polygon':
 
-            check_for_radius(geometry, ops_settings['maximum_search_radius_for_polygons'])
+            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
 
             # check if area not too large
             area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area

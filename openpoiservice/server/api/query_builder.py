@@ -135,14 +135,14 @@ class QueryBuilder(object):
         if 'bbox' in geometry and 'geom' not in geometry:
             geom = geometry['bbox'].wkt
             filters.append(
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']), Pois.geom, 0))
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0))
 
         elif 'bbox' in geometry and 'geom' in geometry:
             geom_bbox = geometry['bbox'].wkt
             geom = geometry['geom'].wkt
             filters.append(  # in bbox
                 geo_func.ST_DWithin(
-                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']),
+                    geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']),
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
         elif 'bbox' not in geometry and 'geom' in geometry:
@@ -150,7 +150,7 @@ class QueryBuilder(object):
             geom = geometry['geom'].wkt
 
             filters.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['radius']), Pois.geom, 0)
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0)
             )
 
         return filters, geom

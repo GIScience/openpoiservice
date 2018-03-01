@@ -56,14 +56,12 @@ definitions:
       geometry:
         type: object
         properties:
-          radius:
-            $ref: "#/definitions/radius"
+          buffer:
+            $ref: "#/definitions/buffer"
           bbox:
             $ref: "#/definitions/bbox"
-          type:
-            $ref: "#/definitions/geometry_type"
-          geom:
-            $ref: "#/definitions/geometry"
+          geojson:
+            $ref: "#/definitions/geojson"
       filters:
         type: object
         properties:
@@ -97,14 +95,12 @@ definitions:
       geometry:
         type: object
         properties:
-          radius:
-            $ref: "#/definitions/radius"
+          buffer:
+            $ref: "#/definitions/buffer"
           bbox:
             $ref: "#/definitions/bbox"
-          type:
-            $ref: "#/definitions/geometry_type"
-          geom:
-            $ref: "#/definitions/geometry"
+          geojson:
+            $ref: "#/definitions/geojson"
       filters:
         type: object
         properties:
@@ -149,7 +145,7 @@ definitions:
     type: integer
     format: int64
     example: 1000
-  radius:
+  buffer:
     type: integer
     format: int64
     example: 500
@@ -172,25 +168,11 @@ definitions:
     example: [[53.075051,8.798952],[53.080785,8.907160]]
     description: The pattern for this bbox string is minlon,minlat,maxlon,maxlat
 
-  geometry:
-    description: The geometry can be either a point, linestring or polygon
-    type: array
-    minItems: 1
-    items:
-      type: array
-      items:
-        type: float
-        minItems: 2
-        maxItems: 2
-    example: [[53.075051,8.798952],[53.080785,8.907160],[53.080785,9.107160]]
+  geojson:
+    description: This is a geojson object
+    type: object
+    example: ...
 
-  geometry_type:
-    type: string
-    example: point
-    enum:
-    - "polygon"
-    - "point"
-    - "linestring"
 
   # SHARED CUSTOM PROPERTIES
   name:
