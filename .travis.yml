@@ -6,6 +6,12 @@ python:
 services:
   - postgresql
 
+addons:
+  postgresql: "9.5"
+  apt:
+    packages:
+    - postgresql-9.5-postgis-2.3
+
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev
