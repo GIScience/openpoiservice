@@ -20,6 +20,7 @@ provider_parameters:
   password: admin
   host: localhost
   port: 5433
+  port_tests: 5432
 column_mappings:
   # https://wiki.openstreetmap.org/wiki/Key:name
   name:
