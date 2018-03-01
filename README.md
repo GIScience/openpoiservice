@@ -1,5 +1,7 @@
 # Openpoiservice
 
+[![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
+
 Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data.
 
 > OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
@@ -16,9 +18,6 @@ for instance `wheelchair` may then be used to query the service via the API afte
 How this works...
 
 osm_type = 1|2|3
-
-
-[![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
 ## Installation
 
