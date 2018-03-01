@@ -180,13 +180,12 @@ def parse_geometries(geometry):
     :param geometry: Request parameters from get or post request
     :return: returns processed request parameters
     """
+    # parse radius
+    if 'buffer' not in geometry:
+        geometry['buffer'] = 0
 
     # parse geojson
     if 'geojson' in geometry:
-
-        # parse radius
-        if 'buffer' not in geometry:
-            geometry['buffer'] = 0
 
         s = json.dumps(geometry['geojson'])
         # Convert to geojson.geometry
@@ -198,6 +197,10 @@ def parse_geometries(geometry):
         except ValueError as e:
             raise api_exceptions.InvalidUsage(str(e),
                                               status_code=401)
+        except AttributeError as e:
+            raise api_exceptions.InvalidUsage(str(e),
+                                              status_code=401)
+
         # parse geom if valid
         geojson_obj = check_validity(g2)
 

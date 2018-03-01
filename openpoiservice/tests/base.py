@@ -6,8 +6,6 @@ from openpoiservice.server.db_import import parser
 from openpoiservice.server import ops_settings
 import os
 
-print 'BASE'
-
 app = create_app()
 
 
@@ -20,8 +18,6 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         db.create_all()
-
-        print True, ops_settings['osm_file_tests']
 
         test_files = [os.path.join(os.getcwd() + '/osm', osm_file) for osm_file in ops_settings['osm_file_tests']]
 

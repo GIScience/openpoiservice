@@ -10,9 +10,9 @@ from base import BaseTestCase
 request_poi_point_geom = dict(
     request='pois',
     geometry=dict(
-        type="point",
-        geom=[[8.807499091203672, 53.07528723347236]],
-        radius=50
+        geojson=dict(type="Point",
+                     coordinates=[8.807499091203672, 53.07528723347236]),
+        buffer=50
     )
 )
 
@@ -20,10 +20,11 @@ request_poi_point_geom = dict(
 request_poi_point_geom_with_bbox = dict(
     request='pois',
     geometry=dict(
-        type="point",
-        geom=[[8.807499091203672, 53.07528723347236]],
+        geojson=dict(type='Point',
+                     coordinates=[8.807499091203672, 53.07528723347236]
+                     ),
         bbox=[[8.807054, 53.075024], [8.807533, 53.075363]],
-        radius=50
+        buffer=50
     )
 )
 
@@ -31,11 +32,15 @@ request_poi_point_geom_with_bbox = dict(
 request_poi_polygon_geom = dict(
     request='pois',
     geometry=dict(
-        type="polygon",
-        geom=[[8.80864522981668685, 53.07594435294385704], [8.80864522981668685, 53.07536364271325624],
-              [8.80824790176417238, 53.07508856944613029], [8.80803395588974247, 53.07545533380229585],
-              [8.80821733806782525, 53.07589850739933013], [8.80864522981668685, 53.07594435294385704]],
-        radius=0
+        geojson=dict(type='Polygon',
+                     coordinates=[[[8.80864522981668685, 53.07594435294385704],
+                                   [8.80864522981668685, 53.07536364271325624],
+                                   [8.80824790176417238, 53.07508856944613029],
+                                   [8.80803395588974247, 53.07545533380229585],
+                                   [8.80821733806782525, 53.07589850739933013],
+                                   [8.80864522981668685, 53.07594435294385704]]]
+                     ),
+        buffer=0
     )
 )
 
@@ -43,12 +48,16 @@ request_poi_polygon_geom = dict(
 request_poi_polygon_geom_with_bbox = dict(
     request='pois',
     geometry=dict(
-        type="polygon",
-        geom=[[8.80864522981668685, 53.07594435294385704], [8.80864522981668685, 53.07536364271325624],
-              [8.80824790176417238, 53.07508856944613029], [8.80803395588974247, 53.07545533380229585],
-              [8.80821733806782525, 53.07589850739933013], [8.80864522981668685, 53.07594435294385704]],
+        geojson=dict(type='Polygon',
+                     coordinates=[[[8.80864522981668685, 53.07594435294385704],
+                                   [8.80864522981668685, 53.07536364271325624],
+                                   [8.80824790176417238, 53.07508856944613029],
+                                   [8.80803395588974247, 53.07545533380229585],
+                                   [8.80821733806782525, 53.07589850739933013],
+                                   [8.80864522981668685, 53.07594435294385704]]]
+                     ),
+        buffer=0,
         bbox=[[8.808345, 53.075677], [8.808781, 53.076031]],
-        radius=0
     )
 )
 
@@ -56,10 +65,10 @@ request_poi_polygon_geom_with_bbox = dict(
 request_poi_linestring_geom = dict(
     request='pois',
     geometry=dict(
-        type="linestring",
-        geom=[[8.807132326847508, 53.07574568891761], [8.807514373051843, 53.0756845615249],
-              [8.807865855559836, 53.07559287043586], [8.807926982952514, 53.07545533380228]],
-        radius=10
+        geojson=dict(type="LineString",
+                     coordinates=[[8.807132326847508, 53.07574568891761], [8.807514373051843, 53.0756845615249],
+                                  [8.807865855559836, 53.07559287043586], [8.807926982952514, 53.07545533380228]]),
+        buffer=10
     )
 )
 
@@ -67,11 +76,12 @@ request_poi_linestring_geom = dict(
 request_poi_linestring_geom_with_bbox = dict(
     request='pois',
     geometry=dict(
-        type="linestring",
-        geom=[[8.807132326847508, 53.07574568891761], [8.807514373051843, 53.0756845615249],
-              [8.807865855559836, 53.07559287043586], [8.807926982952514, 53.07545533380228]],
+        geojson=dict(type="LineString",
+                     coordinates=[[8.807132326847508, 53.07574568891761], [8.807514373051843, 53.0756845615249],
+                                  [8.807865855559836, 53.07559287043586], [8.807926982952514, 53.07545533380228]]
+                     ),
         bbox=[[8.807054, 53.075024], [8.807533, 53.075363]],
-        radius=50
+        buffer=50
     )
 )
 
@@ -79,8 +89,7 @@ request_poi_linestring_geom_with_bbox = dict(
 request_poi_bbox = dict(
     request='pois',
     geometry=dict(
-        bbox=[[8.807054, 53.075024], [8.807533, 53.075363]],
-        type="bounding_box"
+        bbox=[[8.807054, 53.075024], [8.807533, 53.075363]]
     )
 )
 
@@ -93,7 +102,9 @@ request_poi_missing_geometry = dict(
 request_poi_missing_geometry_geom = dict(
     request='pois',
     geometry=dict(
-        type="linestring"
+        geojson=dict(
+            type="LineString"
+        )
     )
 )
 
@@ -101,7 +112,9 @@ request_poi_missing_geometry_geom = dict(
 request_poi_missing_geometry_type = dict(
     request='pois',
     geometry=dict(
-        geom=[[8.807499091203672, 53.07528723347236]]
+        geojson=dict(
+            coordinates=[[8.807499091203672, 53.07528723347236]]
+        )
     )
 )
 

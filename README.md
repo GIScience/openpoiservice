@@ -13,12 +13,12 @@ for instance `wheelchair` may then be used to query the service via the API afte
 
 #### Import Process 
 
-How this works..
+How this works...
 
 osm_type = 1|2|3
 
 
-[![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
+[![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
 ## Installation
 

@@ -10,9 +10,10 @@ from base import BaseTestCase
 request_stats_category_ids_point_geom = dict(
     request='category_stats',
     geometry=dict(
-        type="point",
-        geom=[[8.807499091203672, 53.07528723347236]],
-        radius=50
+        geojson=dict(type="Point",
+                     coordinates=[8.807499091203672, 53.07528723347236]
+                     ),
+        buffer=50
     ),
     filters=dict(
         category_ids=[621],
@@ -23,9 +24,10 @@ request_stats_category_ids_point_geom = dict(
 request_stats_category_group_ids_point_geom = dict(
     request='category_stats',
     geometry=dict(
-        type="point",
-        geom=[[8.807499091203672, 53.07528723347236]],
-        radius=50
+        geojson=dict(type="Point",
+                     coordinates=[8.807499091203672, 53.07528723347236]
+                     ),
+        buffer=50
     ),
     filters=dict(
         category_group_ids=[620],
