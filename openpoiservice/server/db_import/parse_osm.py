@@ -1,4 +1,4 @@
-# openpoiservice/server/parse_pbf.py
+# openpoiservice/server/parse_osm.py
 
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
@@ -33,12 +33,15 @@ class LatLng(object):
 class WayObject(object):
     """ Class that creates a way object. """
 
-    def __init__(self, osm_id, tags, refs, cat_id):
+    def __init__(self, osm_id, osm_type, tags, refs, cat_id):
         """
         Initializes way object
 
         :param osm_id: the osm_id
         :type osm_id: int
+
+        :param osm_type: the osm type (relation or way)
+        :type osm_type: int
 
         :param tags: osm tags
         :type tags: list of objects
@@ -50,12 +53,13 @@ class WayObject(object):
         :type cat_id: int
         """
         self.osm_id = osm_id
+        self.osm_type = osm_type
         self.tags = tags
         self.refs = refs
         self.cat_id = cat_id
 
 
-class PbfImporter(object):
+class OsmImporter(object):
     """ Class that handles the parsed OSM data. """
 
     def __init__(self):
@@ -124,6 +128,8 @@ class PbfImporter(object):
         """
         for osmid, tags, refs in ways:
             category_id = categories_tools.get_category(tags)
+            # from way
+            osm_type = 2
 
             if category_id == 0:
 
@@ -141,6 +147,8 @@ class PbfImporter(object):
                         #        rel_id = tag_value
                         #        break
                         category_id = categories_tools.get_category(tags)
+                        # from relation
+                        osm_type = 3
 
             if category_id > 0:
 
@@ -154,7 +162,7 @@ class PbfImporter(object):
                     if self.ways_cnt % 50000 == 0:
                         logger.info('Ways found: {} '.format(self.ways_cnt))
 
-                    ways_obj = WayObject(osmid, tags, refs, category_id)
+                    ways_obj = WayObject(osmid, osm_type, tags, refs, category_id)
                     self.process_ways.append(ways_obj)
 
     def store_poi(self, poi_object):
@@ -231,7 +239,7 @@ class PbfImporter(object):
             self.nodes[osmid] = lat_lng
 
             # random id used as primary key
-            my_uuid = str(uuid.uuid4())
+            my_uuid = uuid.uuid4().bytes
 
             # create dynamically from settings yml
             for tag, value in tags.iteritems():
@@ -265,6 +273,7 @@ class PbfImporter(object):
         :type osm_nodes: list of osm nodes
         """
 
+        # from node
         osm_type = 1
 
         for osmid, tags, refs in osm_nodes:
@@ -279,7 +288,6 @@ class PbfImporter(object):
         It tries to find coordinates of these nodes and creates a simple average position of these which is the
         poi. Saved to DB afterwards.
         """
-        osm_type = 2
 
         for way in self.process_ways:
 
@@ -312,7 +320,7 @@ class PbfImporter(object):
                     # if not Point(lat, lng).intersects(Polygon([[8.23, 52.61], [9.79, 52.70], [9.62, 53.99], [7.63, 53.94]])):
                     # print sum_lat, sum_lng, way_length
 
-                    self.create_poi(way.tags, way.osm_id, lat_lng, osm_type, way.cat_id)
+                    self.create_poi(way.tags, way.osm_id, lat_lng, way.osm_type, way.cat_id)
 
         # save the remainder
         db.session.bulk_save_objects(self.poi_objects)

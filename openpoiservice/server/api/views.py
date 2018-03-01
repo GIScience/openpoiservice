@@ -4,11 +4,13 @@ from flask import Blueprint, request, jsonify
 from openpoiservice.server import categories_tools
 from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Invalid, \
     Optional, Boolean
-from shapely.geometry import Point, Polygon, LineString, MultiPoint
+from shapely.geometry import Point, Polygon, LineString, MultiPoint, shape
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, transform_geom
 from flasgger.utils import swag_from
+import geojson
+import json
 
 
 # from flasgger import validate
@@ -37,15 +39,12 @@ def custom_schema():
 
 geom_schema = {
 
-    Optional('geom'): Required(Any(list, Length(min=1, max=1000)),
-                               msg='Maximum length reached of {}'.format(1000)),
-    Optional('type'): Required(Any('point', 'linestring', 'polygon', 'bounding_box'),
-                               msg='must be point, linestring, bounding_box or polygon'),
+    Optional('geojson'): Required(All(object), msg='Must be a geojson object'),
     Optional('bbox'): Required(All(list, Length(min=2, max=2)),
-                               msg='must be length of {}'.format(2)),
+                               msg='Must be length of {}'.format(2)),
     Optional('radius'): Required(
         All(Coerce(int), Range(min=0, max=ops_settings['maximum_search_radius_for_points'])),
-        msg='must be between 1 and {}'.format(
+        msg='Must be between 1 and {}'.format(
             ops_settings['maximum_search_radius_for_points']))
 
 }
@@ -54,14 +53,14 @@ filters_schema = {
 
     Optional('category_group_ids'): Required(
         All(categories_tools.category_group_ids, Length(max=ops_settings['maximum_categories'])),
-        msg='must be one of {}'.format(
+        msg='Must be one of {}'.format(
             categories_tools.category_group_ids)),
 
     Optional('category_ids'): Required(
         All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories'])),
-        msg='must be one of {}'.format(categories_tools.category_ids)),
+        msg='Must be one of {}'.format(categories_tools.category_ids)),
 
-    Optional('address'): Required(Boolean(Coerce(str)), msg='must be true or false'),
+    Optional('address'): Required(Boolean(Coerce(str)), msg='Must be true or false'),
 
 }
 
@@ -162,18 +161,17 @@ def are_required_geom_present(geometry):
     Checks if enough geometry options are are present in request.
     :param geometry: Geometry parameters from  post request
     """
-    if 'geom' not in geometry and 'type' not in geometry and 'bbox' not in geometry:
-        raise api_exceptions.InvalidUsage('Bounding box, geometry and geometry_type not present in request',
+    if 'geojson' not in geometry and 'bbox' not in geometry:
+        raise api_exceptions.InvalidUsage('Bounding box and or geojson not present in request',
                                           status_code=401)
 
-    if 'geom' in geometry and 'type' not in geometry:
-        raise api_exceptions.InvalidUsage('Geometry_type not present in request', status_code=401)
 
-    if 'geom' not in geometry and 'type' not in geometry:
-        raise api_exceptions.InvalidUsage('Geometry and geometry_type not present in request', status_code=401)
+def check_for_radius(geometry, maximum_search_radius):
+    if 'radius' not in geometry:
+        raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
 
-    if 'geom' not in geometry and 'bbox' not in geometry and 'type' in geometry:
-        raise api_exceptions.InvalidUsage('Geometry not present in request', status_code=401)
+    if not validate_limit(int(geometry['radius']), maximum_search_radius):
+        raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
 
 
 def parse_geometries(geometry):
@@ -183,54 +181,43 @@ def parse_geometries(geometry):
     :return: returns processed request parameters
     """
 
-    # parse radius
-    if 'radius' not in geometry:
-        geometry['radius'] = 0
+    # parse geojson
+    if 'geojson' in geometry:
 
-    # parse geom
-    if 'geom' in geometry and 'type' in geometry:
+        # parse radius
+        if 'radius' not in geometry:
+            geometry['radius'] = 0
 
-        if geometry['type'].lower() == 'point':
-            if 'radius' not in geometry:
-                raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
+        s = json.dumps(geometry['geojson'])
+        # Convert to geojson.geometry
+        g1 = geojson.loads(s)
+        # Feed to shape() to convert to shapely.geometry.polygon.Polygon
+        # This will invoke its __geo_interface__ (https://gist.github.com/sgillies/2217756)
+        try:
+            g2 = shape(g1)
+        except ValueError as e:
+            raise api_exceptions.InvalidUsage(str(e),
+                                              status_code=401)
+        # parse geom if valid
+        geojson_obj = check_validity(g2)
 
-            if not validate_limit(int(geometry['radius']),
-                                  ops_settings['maximum_search_radius_for_points']):
-                raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
+        if geojson_obj.geom_type == 'Point':
+            check_for_radius(geometry, ops_settings['maximum_search_radius_for_points'])
 
-            point = parse_geometry(geometry['geom'])[0]
-            geojson_obj = Point((point[0], point[1]))
-            geometry['geom'] = check_validity(geojson_obj)
-
-        if geometry['type'].lower() == 'linestring':
-
-            if 'radius' not in geometry:
-                raise api_exceptions.InvalidUsage('Radius is missing', status_code=404)
-
-            if not validate_limit(int(geometry['radius']),
-                                  ops_settings['maximum_search_radius_for_linestrings']):
-                raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
-
-            # simplify? https://github.com/GIScience/openrouteservice/blob/master/openrouteservice/docs/services/locations/providers/postgresql/scripts/functions.sql
-            geojson_obj = LineString(parse_geometry(geometry['geom']))
-
-            geometry['geom'] = check_validity(geojson_obj)
+        elif geojson_obj.geom_type == 'LineString':
+            check_for_radius(geometry, ops_settings['maximum_search_radius_for_linestrings'])
 
             # check if linestring not too long
             length = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').length
             if length > ops_settings['maximum_linestring_length']:
                 raise api_exceptions.InvalidUsage(
-                    'Your linestring geometry is too long ({} meters), check the server restrictions.'.format(length),
+                    'Your linestring geometry is too long ({} meters), check the server restrictions.'.format(
+                        length),
                     status_code=404)
 
-        if geometry['type'].lower() == 'polygon':
-            # RESTRICT?
-            if not validate_limit(int(geometry['radius']),
-                                  ops_settings['maximum_search_radius_for_polygons']):
-                raise api_exceptions.InvalidUsage('Maximum restrictions reached', status_code=404)
+        elif geojson_obj.geom_type == 'Polygon':
 
-            geojson_obj = Polygon(parse_geometry(geometry['geom']))
-            geometry['geom'] = check_validity(geojson_obj)
+            check_for_radius(geometry, ops_settings['maximum_search_radius_for_polygons'])
 
             # check if area not too large
             area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area
@@ -239,6 +226,13 @@ def parse_geometries(geometry):
                     'Your polygon geometry is too large ({} square meters), check the server restrictions.'.format(
                         area),
                     status_code=404)
+
+        else:
+            # type not supported
+            raise api_exceptions.InvalidUsage('GeoJSON type {} not supported'.format(geojson_obj.geom_type),
+                                              status_code=401)
+
+        geometry['geom'] = geojson_obj
 
     # parse bbox, can be provided additionally to geometry
     if 'bbox' in geometry:

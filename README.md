@@ -6,10 +6,16 @@ Openpoiservice (ops) is a flask application which hosts a highly customizable po
 > map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
 > or other structured items. 
 
-This service makes use of OSM tags by grouping them into certain categories. If it picks up a node tagged with
-one of the osm key's defined in `categories.yml` it will import this point of interest with additional tags
-which may be defined in `ops_settings.yml`. Any additional tag, for instance `wheelchair` may then be used
-to query the service via the API. 
+This service consumes OSM tags on nodes, ways and relations by grouping them into predefined categories. 
+If it picks up an OSM object tagged with one of the osm key's defined in `categories.yml` it will import this 
+point of interest with additional tags which may be defined in `ops_settings.yml`. Any additional tag, 
+for instance `wheelchair` may then be used to query the service via the API after import.
+
+#### Import Process 
+
+How this works..
+
+osm_type = 1|2|3
 
 
 [![Build Status](https://travis-ci.org/realpython/flask-skeleton.svg?branch=master)](https://travis-ci.org/realpython/flask-skeleton)
