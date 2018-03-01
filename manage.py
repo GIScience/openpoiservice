@@ -8,6 +8,7 @@ from openpoiservice.server import ops_settings
 import os
 from timeit import Timer
 import logging
+import glob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,7 +46,11 @@ def drop_db():
 def import_data():
     """Imports osm pbf data to postgis."""
 
-    osm_files = [os.path.join(os.getcwd() + '/osm', osm_file) for osm_file in ops_settings['osm_files']]
+    osm_files = []
+    os.chdir(os.getcwd() + '/osm')
+    for f in glob.glob("*.osm.pbf"):
+        osm_files.append(os.path.join(os.getcwd(), f))
+
     t = Timer(lambda: parser.run_import(osm_files))
 
     logger.info("Starting to import OSM data...{}".format(osm_files))

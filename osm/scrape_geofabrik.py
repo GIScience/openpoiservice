@@ -5,6 +5,7 @@ import subprocess
 
 
 class GeoFabrikSpider(scrapy.Spider):
+
     name = "geofabrik_spider"
     start_urls = ['https://download.geofabrik.de/']
 
@@ -26,6 +27,9 @@ class GeoFabrikSpider(scrapy.Spider):
         sub_regions = sel.xpath("//a[contains(text(),'[.osm.pbf]')]/@href").extract()
 
         for sub_region in sub_regions:
+            with open('osm_files.txt', 'a') as f:
+                f.write(sub_region + "\n")
+
             download_link = urlparse.urljoin(response.url, sub_region)
 
             subprocess.call(['wget', download_link])
