@@ -171,7 +171,7 @@ class QueryBuilder(object):
 
             if tag in filters:
 
-                filters.append(query.c.key == tag.lower())
+                filters_list.append(query.c.key == tag.lower())
 
                 if settings['filterable'] == 'like':
                     filters_list.append(query.c.value.like('%' + filters[tag].lower() + '%'))
