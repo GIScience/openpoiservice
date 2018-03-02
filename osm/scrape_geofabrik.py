@@ -2,6 +2,7 @@ import scrapy
 import urlparse
 from scrapy.selector import Selector
 import subprocess
+from time import sleep
 
 
 class GeoFabrikSpider(scrapy.Spider):
@@ -13,13 +14,19 @@ class GeoFabrikSpider(scrapy.Spider):
 
         set_selector = '.subregion'
         for region in response.css(set_selector):
-            link_selector = 'a::attr(href)'
-            next_page = region.css(link_selector).extract_first(),
 
-            yield scrapy.Request(
-                urlparse.urljoin(response.url, next_page[0]),
-                callback=self.fetch_sub_regions
-            )
+            name_selector = 'a ::text'
+            subregion = region.css(name_selector).extract_first()
+
+            if subregion in ['Asia', 'Europe', 'North America']:
+                link_selector = 'a::attr(href)'
+
+                next_page = region.css(link_selector).extract_first(),
+
+                yield scrapy.Request(
+                    urlparse.urljoin(response.url, next_page[0]),
+                    callback=self.fetch_sub_regions
+                )
 
     def fetch_sub_regions(self, response):
 
@@ -33,6 +40,8 @@ class GeoFabrikSpider(scrapy.Spider):
             download_link = urlparse.urljoin(response.url, sub_region)
 
             subprocess.call(['wget', download_link])
+
+            sleep(120)  # few minutes
 
             yield {
                 "subregion_link": download_link,

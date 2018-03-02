@@ -5,7 +5,7 @@ FROM ubuntu:17.10
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
 RUN apt-get update
-RUN apt-get install -y python python-pip python-virtualenv gunicorn git nano
+RUN apt-get install -y python python-pip python-virtualenv gunicorn git nano wget
 
 # Install protobuf
 RUN apt-get install -y build-essential protobuf-compiler libprotobuf-dev
