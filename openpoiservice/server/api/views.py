@@ -109,7 +109,7 @@ def places():
             except MultipleInvalid as error:
                 raise api_exceptions.InvalidUsage(str(error), status_code=401)
             # query stats
-            if all_args['request'] == 'category_list':
+            if all_args['request'] == 'pois_list':
                 return jsonify(categories_tools.categories_object)
 
             if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
