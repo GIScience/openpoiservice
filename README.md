@@ -116,7 +116,7 @@ $ export TESTING="True" && python manage.py test
 ```
 
 
-### Technical specs for importing OSM
+### Technical requirements for importing OSM
 
 Please consider the following technical specifications for importing an osm file.
 
@@ -126,8 +126,10 @@ Please consider the following technical specifications for importing an osm file
 | Europe        | 64 GB         | 
 | Planet        | 128 GB        | 
 
-**Note:** we will be adding the functionality for adding a list of pbf files in the future.
-
+**Note:** Oenpoiservice will import any osm pbf file located in the osm folder. 
+This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script to be
+found in the osm folder) and still use a smaller machine to import the data. As long as
+the pbf files don't exceed 5 GB of disk space, 16 GB of memory will suffice.
 
 ### API Documentation
 
