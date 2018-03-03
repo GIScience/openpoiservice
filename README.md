@@ -15,9 +15,9 @@ for instance `wheelchair` may then be used to query the service via the API afte
 
 #### Import Process 
 
-How this works...
-
-osm_type = 1|2|3
+The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 1), ways (osm_type 2) and nodes (osm_type 3) in order. 
+Which type the specific poi originated from will be returned in the response.
+This will help you find the object directly on OpenStreetMap.org. 
 
 ## Installation
 
