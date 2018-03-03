@@ -8,7 +8,7 @@ from base import BaseTestCase
 
 # CATEGORY_IDS
 request_stats_category_ids_point_geom = dict(
-    request='category_stats',
+    request='stats',
     geometry=dict(
         geojson=dict(type="Point",
                      coordinates=[8.807499091203672, 53.07528723347236]
@@ -22,7 +22,7 @@ request_stats_category_ids_point_geom = dict(
 
 # CATEGORY_GROUP_IDS
 request_stats_category_group_ids_point_geom = dict(
-    request='category_stats',
+    request='stats',
     geometry=dict(
         geojson=dict(type="Point",
                      coordinates=[8.807499091203672, 53.07528723347236]
