@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
-Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data.
+Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data and it's notion of tags. 
 
 > OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
 > map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
@@ -12,6 +12,9 @@ This service consumes OSM tags on nodes, ways and relations by grouping them int
 If it picks up an OSM object tagged with one of the osm key's defined in `categories.yml` it will import this 
 point of interest with additional tags which may be defined in `ops_settings.yml`. Any additional tag, 
 for instance `wheelchair` may then be used to query the service via the API after import.
+
+The database may be queried by providing a point / linestring and buffer or a polygon.
+Pois will be returned within the given geometry
 
 #### Import Process 
 
