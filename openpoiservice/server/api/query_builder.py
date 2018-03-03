@@ -65,7 +65,7 @@ class QueryBuilder(object):
         if 'filters' in params and 'category_ids' in params['filters']:
             geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
-        if params['request'] == 'pois_stats':
+        if params['request'] == 'stats':
 
             bbox_query = db.session \
                 .query(Pois) \
