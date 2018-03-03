@@ -136,16 +136,16 @@ the pbf files don't exceed 5 GB of disk space, 16 GB of memory will suffice.
 The documentation for this flask service is provided via [flasgger](https://github.com/rochacbruno/flasgger) and can be
 accessed via `http://localhost:5000/apidocs/`.
 
-Generally you have three different request types `pois`, `category_stats` and
-`category_list`.
+Generally you have three different request types `pois`, `pois_stats` and
+`pois_list`.
 
-Using `request=poi` in the POST body will return a GeoJSON FeatureCollection
+Using `request=pois` in the POST body will return a GeoJSON FeatureCollection
 in your specified bounding box or geometry. 
 
-Using `request=category_stats` will do the same but group by the categories, ultimately
+Using `request=pois_stats` will do the same but group by the categories, ultimately
 returning a JSON object with the absolute numbers of pois of a certain group.
 
-Finally, `request=category_list` will return a JSON object generated from 
+Finally, `request=pois_list` will return a JSON object generated from 
 `openpoiservice/server/categories/categories.yml`.
 
 ### Category IDs and configuration
