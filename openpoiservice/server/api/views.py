@@ -67,8 +67,8 @@ filters_schema = {
 filters_schema.update(custom_schema())
 
 schema = Schema({
-    Required('request'): Required(Any('pois', 'category_stats', 'category_list'),
-                                  msg='pois, category_stats or category_list missing'),
+    Required('request'): Required(Any('pois', 'stats', 'list'),
+                                  msg='pois, stats or list missing'),
 
     Optional('geometry'): geom_schema,
 
@@ -109,7 +109,7 @@ def places():
             except MultipleInvalid as error:
                 raise api_exceptions.InvalidUsage(str(error), status_code=401)
             # query stats
-            if all_args['request'] == 'pois_list':
+            if all_args['request'] == 'categories':
                 return jsonify(categories_tools.categories_object)
 
             if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
