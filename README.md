@@ -126,7 +126,7 @@ Please consider the following technical specifications for importing an osm file
 | Europe        | 64 GB         | 
 | Planet        | 128 GB        | 
 
-**Note:** Oenpoiservice will import any osm pbf file located in the osm folder. 
+**Note:** Openpoiservice will import any osm pbf file located in the osm folder. 
 This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script to be
 found in the osm folder) and still use a smaller machine to import the data. As long as
 the pbf files don't exceed 5 GB of disk space, 16 GB of memory will suffice.
@@ -197,29 +197,6 @@ during import and also if a user adds `wheelchair:` as a property and one of the
 
 ### Examples
 
-##### POST body structure
-
-```sh
-{
-	"request": "pois"|"category_stats"|"category_list",
-	"geometry": {
-	    "type": "polygon"|"point"|"linestring"
-	    "geom": [[lat,lng],[...,...]...],
-	    "bbox": [[lat,lng],[...,...]...],
-	    "radius": 10000
-	}
-	"filters": {
-	    "wheelchair": "yes"|"no"|"..."
-        "smoking": "yes"|"no“|"..."	
-        "category_ids": [cat_id_1,cat_id_2,...],
-	    "category_group_ids: [cat_group_id_1,cat_group_id_2,...]
-        ...    
-	}
-	"limit": 100,
-	"sortby": "distance"
-}
-```
-
 ##### POIs
 ```sh
 curl -X POST \
@@ -227,15 +204,17 @@ curl -X POST \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	"request": "category_stats",
+	"request": "pois",
 	"geometry": {
-	    "type": "point",
-	    "geom": [[53.075051,8.798952]],
+	    "geojson": {
+	        "coordinates": [53.075051,8.798952],
+		"type": "Point"
+	    },
 	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
-	    "radius": 10000
+	    "buffer": 10000
 	},
 	"filters": {
-        "category_ids": [601, 280] 
+            "category_ids": [601, 280] 
 	}
 }'
 ```
@@ -246,12 +225,14 @@ curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
   -d '{
-	"request": "pois",
+	"request": "pois_stats",
 	"geometry": {
-	    "type": "point",
-	    "geom": [[53.075051,8.798952]],
+	    "geojson": {
+	        "coordinates": [53.075051,8.798952],
+		"type": "Point"
+	    },
 	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
-	    "radius": 10000
+	    "buffer": 10000
 	},
 	"filters": {
         "category_ids": [601, 280] 
@@ -268,7 +249,7 @@ curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
   -d '{
-	"request": "category_list"
+	"request": "pois_list"
 }'
 ```
 
