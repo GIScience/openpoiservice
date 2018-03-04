@@ -39,7 +39,7 @@ def custom_schema():
 
 geom_schema = {
 
-    Optional('geojson'): Required(All(object), msg='Must be a geojson object'),
+    Optional('geojson'): Required(object, msg='Must be a geojson object'),
     Optional('bbox'): Required(All(list, Length(min=2, max=2)),
                                msg='Must be length of {}'.format(2)),
     Optional('buffer'): Required(

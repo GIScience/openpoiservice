@@ -47,14 +47,16 @@ def import_data():
     """Imports osm pbf data to postgis."""
 
     osm_files = []
-    os.chdir(os.getcwd() + '/osm')
-    for f in glob.glob("*.osm.pbf"):
-        osm_files.append(os.path.join(os.getcwd(), f))
+    osm_dir = os.getcwd() + '/osm'
 
-    t = Timer(lambda: parser.run_import(osm_files))
+    for dirName, subdirList, fileList in os.walk(osm_dir):
+        print('Found directory: %s' % dirName)
+        for fname in fileList:
+            if fname.endswith('.osm.pbf') or fname.endswith('.osm'):
+                osm_files.append(os.path.join(dirName, fname))
 
     logger.info("Starting to import OSM data...{}".format(osm_files))
-    logger.info('Time passed for importing OSM files: {}s'.format(t.timeit(number=1)))
+    parser.run_import(osm_files)
 
 
 if __name__ == '__main__':
