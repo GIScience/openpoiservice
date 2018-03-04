@@ -19,9 +19,9 @@ class BaseTestCase(TestCase):
     def setUp(self):
         db.create_all()
 
-        test_files = [os.path.join(os.getcwd() + '/osm', osm_file) for osm_file in ops_settings['osm_file_tests']]
+        test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
 
-        parser.run_import(test_files)
+        parser.run_import([test_file])
 
     def tearDown(self):
         db.session.remove()

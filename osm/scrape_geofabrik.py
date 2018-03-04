@@ -4,6 +4,13 @@ from scrapy.selector import Selector
 import subprocess
 from time import sleep
 
+# while read p; do
+#  wget $p
+#  sleep 120
+# done <gf_dl.txt
+
+gf_file = open('gf_dl.txt', 'w+')
+
 
 class GeoFabrikSpider(scrapy.Spider):
 
@@ -34,14 +41,12 @@ class GeoFabrikSpider(scrapy.Spider):
         sub_regions = sel.xpath("//a[contains(text(),'[.osm.pbf]')]/@href").extract()
 
         for sub_region in sub_regions:
-            with open('osm_files.txt', 'a') as f:
-                f.write(sub_region + "\n")
-
             download_link = urlparse.urljoin(response.url, sub_region)
 
-            subprocess.call(['wget', download_link])
+            self.gf_file.write(download_link + "\n")
+            # subprocess.call(['wget', download_link])
 
-            sleep(120)  # few minutes
+            # sleep(120)  # few minutes
 
             yield {
                 "subregion_link": download_link,
