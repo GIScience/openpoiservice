@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
-Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data.
+Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from OpenStreetMap.org data and it's notion of tags. 
 
 > OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
 > map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
@@ -13,11 +13,14 @@ If it picks up an OSM object tagged with one of the osm key's defined in `catego
 point of interest with additional tags which may be defined in `ops_settings.yml`. Any additional tag, 
 for instance `wheelchair` may then be used to query the service via the API after import.
 
+The database may be queried by providing a point / linestring and buffer or a polygon.
+Pois will be returned within the given geometry
+
 #### Import Process 
 
-How this works...
-
-osm_type = 1|2|3
+The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 1), ways (osm_type 2) and nodes (osm_type 3) in order. 
+Which type the specific poi originated from will be returned in the response.
+This will help you find the object directly on OpenStreetMap.org. 
 
 ## Installation
 
@@ -116,7 +119,7 @@ $ export TESTING="True" && python manage.py test
 ```
 
 
-### Technical specs for importing OSM
+### Technical requirements for importing OSM
 
 Please consider the following technical specifications for importing an osm file.
 
@@ -126,24 +129,26 @@ Please consider the following technical specifications for importing an osm file
 | Europe        | 64 GB         | 
 | Planet        | 128 GB        | 
 
-**Note:** we will be adding the functionality for adding a list of pbf files in the future.
-
+**Note:** Openpoiservice will import any osm pbf file located in the osm folder. 
+This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script to be
+found in the osm folder) and still use a smaller machine to import the data. As long as
+the pbf files don't exceed 5 GB of disk space, 16 GB of memory will suffice.
 
 ### API Documentation
 
 The documentation for this flask service is provided via [flasgger](https://github.com/rochacbruno/flasgger) and can be
 accessed via `http://localhost:5000/apidocs/`.
 
-Generally you have three different request types `pois`, `category_stats` and
-`category_list`.
+Generally you have three different request types `pois`, `stats` and
+`list`.
 
-Using `request=poi` in the POST body will return a GeoJSON FeatureCollection
+Using `request=pois` in the POST body will return a GeoJSON FeatureCollection
 in your specified bounding box or geometry. 
 
-Using `request=category_stats` will do the same but group by the categories, ultimately
+Using `request=stats` will do the same but group by the categories, ultimately
 returning a JSON object with the absolute numbers of pois of a certain group.
 
-Finally, `request=category_list` will return a JSON object generated from 
+Finally, `request=list` will return a JSON object generated from 
 `openpoiservice/server/categories/categories.yml`.
 
 ### Category IDs and configuration
@@ -195,29 +200,6 @@ during import and also if a user adds `wheelchair:` as a property and one of the
 
 ### Examples
 
-##### POST body structure
-
-```sh
-{
-	"request": "pois"|"category_stats"|"category_list",
-	"geometry": {
-	    "type": "polygon"|"point"|"linestring"
-	    "geom": [[lat,lng],[...,...]...],
-	    "bbox": [[lat,lng],[...,...]...],
-	    "radius": 10000
-	}
-	"filters": {
-	    "wheelchair": "yes"|"no"|"..."
-        "smoking": "yes"|"no“|"..."	
-        "category_ids": [cat_id_1,cat_id_2,...],
-	    "category_group_ids: [cat_group_id_1,cat_group_id_2,...]
-        ...    
-	}
-	"limit": 100,
-	"sortby": "distance"
-}
-```
-
 ##### POIs
 ```sh
 curl -X POST \
@@ -225,15 +207,17 @@ curl -X POST \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	"request": "category_stats",
+	"request": "pois",
 	"geometry": {
-	    "type": "point",
-	    "geom": [[53.075051,8.798952]],
+	    "geojson": {
+	        "coordinates": [53.075051,8.798952],
+		"type": "Point"
+	    },
 	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
-	    "radius": 10000
+	    "buffer": 10000
 	},
 	"filters": {
-        "category_ids": [601, 280] 
+            "category_ids": [601, 280] 
 	}
 }'
 ```
@@ -244,12 +228,14 @@ curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
   -d '{
-	"request": "pois",
+	"request": "stats",
 	"geometry": {
-	    "type": "point",
-	    "geom": [[53.075051,8.798952]],
+	    "geojson": {
+	        "coordinates": [53.075051,8.798952],
+		"type": "Point"
+	    },
 	    "bbox": [[53.075051,8.798952],[53.080785,8.907160]],
-	    "radius": 10000
+	    "buffer": 10000
 	},
 	"filters": {
         "category_ids": [601, 280] 
@@ -266,7 +252,7 @@ curl -X POST \
   http://127.0.0.1:5000/places \
   -H 'content-type: application/json' \
   -d '{
-	"request": "category_list"
+	"request": "list"
 }'
 ```
 

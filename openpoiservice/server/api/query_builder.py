@@ -65,7 +65,7 @@ class QueryBuilder(object):
         if 'filters' in params and 'category_ids' in params['filters']:
             geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
-        if params['request'] == 'category_stats':
+        if params['request'] == 'stats':
 
             bbox_query = db.session \
                 .query(Pois) \
@@ -171,7 +171,7 @@ class QueryBuilder(object):
 
             if tag in filters:
 
-                filters.append(query.c.key == tag.lower())
+                filters_list.append(query.c.key == tag.lower())
 
                 if settings['filterable'] == 'like':
                     filters_list.append(query.c.value.like('%' + filters[tag].lower() + '%'))
