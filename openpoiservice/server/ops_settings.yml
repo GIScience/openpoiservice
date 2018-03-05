@@ -11,7 +11,9 @@ maximum_area: 50000000
 maximum_linestring_length: 500000
 # limit of pois
 response_limit: 2000
-
+# amount of workers used for parsing the osm files
+concurrent_workers: 4
+# Database parameters
 provider_parameters:
   table_name: ops_planet_pois
   db_name: gis
@@ -20,7 +22,6 @@ provider_parameters:
   host: localhost
   port: 5433
   port_tests: 5432
-
 # add any additional tags you want to save to the database
 column_mappings:
   # https://wiki.openstreetmap.org/wiki/Key:name

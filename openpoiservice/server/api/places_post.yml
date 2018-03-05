@@ -108,15 +108,15 @@ definitions:
             $ref: "#/definitions/category_group_ids"
           category_ids:
             $ref: "#/definitions/category_ids"
-          # CUSTOM FILTERS
-          name:
-            $ref: "#/definitions/name"
-          wheelchair:
-            $ref: "#/definitions/wheelchair"
-          smoking:
-            $ref: "#/definitions/smoking"
-          fee:
-            $ref: "#/definitions/fee"
+          # CUSTOM FILTERS NOT SUPPORTED YET!
+          #name:
+          #  $ref: "#/definitions/name"
+          #wheelchair:
+          #  $ref: "#/definitions/wheelchair"
+          #smoking:
+          #  $ref: "#/definitions/smoking"
+          #fee:
+          #  $ref: "#/definitions/fee"
     title:  "Openpoiservice category statistics"
 
   LocationsBodyList:
@@ -171,37 +171,27 @@ definitions:
   geojson:
     description: This is a geojson object
     type: object
-    example: ...
-
-
+    example: '"geometry": {
+      "type": "Point",
+      "coordinates": [125.6, 10.1]
+    }'
   # SHARED CUSTOM PROPERTIES
   name:
     description: Name to filter the POIs by using sql like.
-    type: string
-    example: Tankstelle
+    type: list
+    example: ["Tankstelle",...]
   wheelchair:
     description: Filter returned features by wheelchair tag entries.
-    type: string
-    example: "yes"
-    enum: ["yes", "no", "limited", "designated"]
+    type: list
+    example: ["yes", "no", "limited", "designated"]
   smoking:
     description: Filter returned features by smoking tag entries.
-    type: string
-    example: "no"
-    enum:
-    - "dedicated"
-    - "yes"
-    - "no"
-    - "separated"
-    - "isolated"
-    - "outside"
+    type: list
+    example: ["dedicated","yes","no","separated","isolated","outside"]
   fee:
     description: Filter returned features by fee tag entries.
-    type: string
-    example: "no"
-    enum:
-    - "yes"
-    - "no"
+    type: list
+    example: ["yes", "no"]
 
   # List response object
   LocationsListResponse:
