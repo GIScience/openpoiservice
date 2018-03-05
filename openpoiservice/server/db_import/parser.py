@@ -4,6 +4,7 @@ from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.utils.decorators import timeit
 from imposm.parser import OSMParser
 import logging
+import sys
 from openpoiservice.server import ops_settings
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,9 @@ def parse_file(osm_file):
     logger.info('Found {} pois'.format(osm_importer.pois_cnt))
 
     logger.info('Finished import of {}'.format(osm_file))
+
+    # clear memory
+    del osm_importer
 
 
 def run_import(osm_files_to_import):
