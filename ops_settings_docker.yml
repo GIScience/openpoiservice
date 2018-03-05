@@ -24,20 +24,12 @@ provider_parameters:
 column_mappings:
   # https://wiki.openstreetmap.org/wiki/Key:name
   name:
-    common_values: ['str']
-    filterable: 'like'
   # https://wiki.openstreetmap.org/wiki/Key:wheelchair
   wheelchair:
-    common_values: ['yes', 'limited', 'no', 'designated']
-    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:smoking
   smoking:
-    common_values: ['dedicated','yes','separated','isolated', 'no', 'outside']
-    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:fee
   fee:
-    common_values: ['yes','no', 'str']
-    filterable: 'equals'
   # https://wiki.openstreetmap.org/wiki/Key:opening_hours
   opening_hours:
   # https://wiki.openstreetmap.org/wiki/Key:phone

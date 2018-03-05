@@ -62,24 +62,22 @@ class QueryBuilder(object):
         geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
 
         logger.debug('geometry filters: {}, geometry: {}'.format(geom_filters, geom))
-        if 'filters' in params and 'category_ids' in params['filters']:
-            geom_filters.append(Pois.category.in_(params['filters']['category_ids']))
+
+        category_filters = []
+        if 'filters' in params:
+            if 'category_ids' in params['filters']:
+                category_filters.append(Pois.category.in_(params['filters']['category_ids']))
 
         if params['request'] == 'stats':
 
             bbox_query = db.session \
                 .query(Pois) \
                 .filter(*geom_filters) \
+                .filter(*category_filters) \
                 .subquery()
-
-            if 'filters' in params:
-                custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
-            else:
-                custom_filters = []
 
             stats_query = db.session \
                 .query(bbox_query.c.category, func.count(bbox_query.c.category).label("count")) \
-                .filter(*custom_filters) \
                 .group_by(bbox_query.c.category) \
                 .all()
 
@@ -91,16 +89,18 @@ class QueryBuilder(object):
         # join with tags
         elif params['request'] == 'pois':
 
-            # how can I limit here already before the join?
+            # currently only available for request=pois
+            custom_filters = []
+            if 'filters' in params:
+                custom_filters = self.generate_custom_filters(params['filters'])
+
             bbox_query = db.session \
                 .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
                 .filter(*geom_filters) \
+                .filter(*category_filters) \
+                .filter(*custom_filters) \
                 .outerjoin(Tags) \
                 .subquery()
-
-            custom_filters = []
-            if 'filters' in params:
-                custom_filters = self.generate_custom_filters(params['filters'], bbox_query)
 
             # sortby needed here for generating features in next step
             # sortby_group = [bbox_query.c.osm_id]
@@ -116,7 +116,6 @@ class QueryBuilder(object):
                 .query(bbox_query.c.osm_id, bbox_query.c.category,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
                        bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
-                .filter(*custom_filters) \
                 .order_by(*sortby_group) \
                 .all()
 
@@ -156,7 +155,7 @@ class QueryBuilder(object):
         return filters, geom
 
     @staticmethod
-    def generate_custom_filters(filters, query):
+    def generate_custom_filters(filters):
         """
         Generates a list of custom filters used for query.
 
@@ -166,23 +165,13 @@ class QueryBuilder(object):
         :type: list
         """
 
-        filters_list = []
+        custom_filters = []
         for tag, settings in ops_settings['column_mappings'].iteritems():
-
             if tag in filters:
+                custom_filters.append(Tags.key == tag.lower())
+                custom_filters.append(Tags.value.in_(filters[tag]))
 
-                filters_list.append(query.c.key == tag.lower())
-
-                if settings['filterable'] == 'like':
-                    filters_list.append(query.c.value.like('%' + filters[tag].lower() + '%'))
-
-                elif settings['filterable'] == 'equals':
-                    filters_list.append(query.c.value == filters[tag].lower())
-
-                else:
-                    pass
-
-        return filters_list
+        return custom_filters
 
     @classmethod
     def generate_category_stats(cls, query):
