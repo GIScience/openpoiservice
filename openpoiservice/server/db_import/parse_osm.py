@@ -4,10 +4,16 @@ from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import Pois, Tags
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+from openpoiservice.server.utils.decorators import get_size
+
+from openpoiservice.server.utils.geometries import truncate
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
 import uuid
+from guppy import hpy
+
+h = hpy()
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +31,9 @@ class LatLng(object):
         :param lng: longitude of coordinate
         :type lng: float
         """
+
+        # self.lat = float(truncate(lat, 6))
+        # self.lng = float(truncate(lng, 6))
 
         self.lat = lat
         self.lng = lng
@@ -76,6 +85,9 @@ class OsmImporter(object):
         self.process_ways = []
         self.poi_objects = []
         self.tags_objects = []
+        self.ways_obj = None
+        self.tags_object = None
+        self.poi_object = None
 
     def parse_relations(self, relations):
         """
@@ -157,13 +169,19 @@ class OsmImporter(object):
                     for osmid_of_node in refs:
                         # print osmid_of_node
                         self.nodes[osmid_of_node] = None
+
+                        if len(self.nodes) % 10000 == 0:
+                            logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
+                                                                                         get_size(
+                                                                                             self.nodes) / 1024 / 1024))
+
                     self.ways_cnt += 1
 
                     if self.ways_cnt % 50000 == 0:
                         logger.info('Ways found: {} '.format(self.ways_cnt))
 
-                    ways_obj = WayObject(osmid, osm_type, tags, refs, category_id)
-                    self.process_ways.append(ways_obj)
+                    self.ways_obj = WayObject(osmid, osm_type, tags, refs, category_id)
+                    self.process_ways.append(self.ways_obj)
 
     def store_poi(self, poi_object):
         """
@@ -188,7 +206,18 @@ class OsmImporter(object):
             db.session.add_all(self.poi_objects)
             db.session.add_all(self.tags_objects)
             db.session.commit()
-            self.poi_objects, self.tags_objects = [], []
+
+            # logger.info('heap poi and tags objects: {}'.format(h.heap()))
+            # logger.info('poi_objects size in bytes is {}'.format(get_size(self.poi_objects)))
+            # logger.info('tags_objects size in bytes is {}'.format(get_size(self.tags_objects)))
+
+            self.poi_objects = []
+            self.tags_objects = []
+
+            # logger.info('poi_objects size in bytes is {}'.format(get_size(self.poi_objects)))
+            # logger.info('tags_objects size in bytes is {}'.format(get_size(self.tags_objects)))
+
+            # logger.info('heap after poi and tags objects: {}'.format(h.heap()))
 
         # if self.pois_cnt % 50000 == 0:
         #    print 'POIs found: {} ({} % parsed, type= {}'.format(self.pois_cnt,
@@ -236,6 +265,10 @@ class OsmImporter(object):
 
         if category > 0:
 
+            if len(self.nodes) % 1000 == 0:
+                logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
+                                                                             get_size(self.nodes) / 1024 / 1024))
+
             self.nodes[osmid] = lat_lng
 
             # random id used as primary key
@@ -245,11 +278,11 @@ class OsmImporter(object):
             for tag, value in tags.iteritems():
 
                 if tag in ops_settings['column_mappings']:
-                    tags_object = TagsObject(my_uuid, osmid, tag, value)
-                    self.store_tags(tags_object)
+                    self.tags_object = TagsObject(my_uuid, osmid, tag, value)
+                    self.store_tags(self.tags_object)
 
-            poi_object = PoiObject(my_uuid, category, osmid, lat_lng, osm_type)
-            self.store_poi(poi_object)
+            self.poi_object = PoiObject(my_uuid, category, osmid, lat_lng, osm_type)
+            self.store_poi(self.poi_object)
 
     def parse_coords(self, coords):
         """
@@ -263,7 +296,11 @@ class OsmImporter(object):
 
             # populate missing coords of ways, will be used later
             if osmid in self.nodes and self.nodes[osmid] is None:
-                self.nodes[osmid] = LatLng(lat, lng)
+                self.nodes[osmid] = [lat, lng]
+
+                if len(self.nodes) % 1000 == 0:
+                    logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
+                                                                                 get_size(self.nodes) / 1024 / 1024))
 
     def parse_nodes(self, osm_nodes):
         """
@@ -278,7 +315,8 @@ class OsmImporter(object):
 
         for osmid, tags, refs in osm_nodes:
             self.global_cnt += 1
-            lat_lng = LatLng(refs[0], refs[1])
+            # lat_lng = LatLng(refs[0], refs[1])
+            lat_lng = [refs[0], refs[1]]
 
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
@@ -306,8 +344,10 @@ class OsmImporter(object):
                         break
 
                     if self.nodes[osmid] is not None:
-                        sum_lat += self.nodes[osmid].lat
-                        sum_lng += self.nodes[osmid].lng
+                        # sum_lat += self.nodes[osmid].lat
+                        # sum_lng += self.nodes[osmid].lng
+                        sum_lat += self.nodes[osmid][0]
+                        sum_lng += self.nodes[osmid][1]
                     else:
                         broken_way = True
                         break
@@ -315,7 +355,8 @@ class OsmImporter(object):
                 if not broken_way:
                     lat = sum_lat / way_length
                     lng = sum_lng / way_length
-                    lat_lng = LatLng(lat, lng)
+                    # lat_lng = LatLng(lat, lng)
+                    lat_lng = [lat, lng]
 
                     # if not Point(lat, lng).intersects(Polygon([[8.23, 52.61], [9.79, 52.70], [9.62, 53.99], [7.63, 53.94]])):
                     # print sum_lat, sum_lng, way_length

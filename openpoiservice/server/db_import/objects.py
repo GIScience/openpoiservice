@@ -9,8 +9,11 @@ class PoiObject(object):
         self.type = int(osm_type)
         self.category = int(category)
 
-        self.geom = 'SRID={};POINT({} {})'.format(4326, float(lat_lng.lat),
-                                                  float(lat_lng.lng))
+        # self.geom = 'SRID={};POINT({} {})'.format(4326, float(lat_lng.lat),
+        #                                          float(lat_lng.lng))
+
+        self.geom = 'SRID={};POINT({} {})'.format(4326, float(lat_lng[0]),
+                                                  float(lat_lng[1]))
 
         # add geocoder connector here...
         self.address = None
