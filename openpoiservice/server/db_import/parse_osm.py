@@ -5,38 +5,14 @@ from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import Pois, Tags
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 from openpoiservice.server.utils.decorators import get_size
-
 from openpoiservice.server.utils.geometries import truncate
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
 import uuid
-from guppy import hpy
-
-h = hpy()
+import sys
 
 logger = logging.getLogger(__name__)
-
-
-class LatLng(object):
-    """ Class that creates a latlng object. """
-
-    def __init__(self, lat, lng):
-        """
-        Initializes latlng object
-
-        :param lat: latitude of coordinate
-        :type lat: float
-
-        :param lng: longitude of coordinate
-        :type lng: float
-        """
-
-        # self.lat = float(truncate(lat, 6))
-        # self.lng = float(truncate(lng, 6))
-
-        self.lat = lat
-        self.lng = lng
 
 
 class WayObject(object):
@@ -77,7 +53,6 @@ class OsmImporter(object):
         self.relations_cnt = 0
         self.ways_cnt = 0
         self.nodes_cnt = 0
-        self.global_cnt = 0
         self.pois_cnt = 0
         self.tags_cnt = 0
         self.relation_ways = {}
@@ -170,8 +145,8 @@ class OsmImporter(object):
                         # print osmid_of_node
                         self.nodes[osmid_of_node] = None
 
-                        if len(self.nodes) % 10000 == 0:
-                            logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
+                        if len(self.nodes) % 100000 == 0:
+                            logger.info('Nodes length is {} and size in mb is {}'.format(len(self.nodes),
                                                                                          get_size(
                                                                                              self.nodes) / 1024 / 1024))
 
@@ -206,22 +181,8 @@ class OsmImporter(object):
             db.session.add_all(self.poi_objects)
             db.session.add_all(self.tags_objects)
             db.session.commit()
-
-            # logger.info('heap poi and tags objects: {}'.format(h.heap()))
-            # logger.info('poi_objects size in bytes is {}'.format(get_size(self.poi_objects)))
-            # logger.info('tags_objects size in bytes is {}'.format(get_size(self.tags_objects)))
-
             self.poi_objects = []
             self.tags_objects = []
-
-            # logger.info('poi_objects size in bytes is {}'.format(get_size(self.poi_objects)))
-            # logger.info('tags_objects size in bytes is {}'.format(get_size(self.tags_objects)))
-
-            # logger.info('heap after poi and tags objects: {}'.format(h.heap()))
-
-        # if self.pois_cnt % 50000 == 0:
-        #    print 'POIs found: {} ({} % parsed, type= {}'.format(self.pois_cnt,
-        #                                                         self.global_cnt * 100 / self.entity_cnt, 1)
 
     def store_tags(self, tags_object):
         """
@@ -265,12 +226,6 @@ class OsmImporter(object):
 
         if category > 0:
 
-            if len(self.nodes) % 1000 == 0:
-                logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
-                                                                             get_size(self.nodes) / 1024 / 1024))
-
-            self.nodes[osmid] = lat_lng
-
             # random id used as primary key
             my_uuid = uuid.uuid4().bytes
 
@@ -296,11 +251,11 @@ class OsmImporter(object):
 
             # populate missing coords of ways, will be used later
             if osmid in self.nodes and self.nodes[osmid] is None:
-                self.nodes[osmid] = [lat, lng]
+                self.nodes[osmid] = (lat, lng)
 
-                if len(self.nodes) % 1000 == 0:
-                    logger.info('nodes length is {} and size in mb is {}'.format(len(self.nodes),
-                                                                                 get_size(self.nodes) / 1024 / 1024))
+                if len(self.nodes) % 10000000 == 0:
+                    logger.info('Amount of nodes is {} and size in MB is {}'.format(len(self.nodes),
+                                                                                    get_size(self.nodes) / 1024 / 1024))
 
     def parse_nodes(self, osm_nodes):
         """
@@ -314,9 +269,7 @@ class OsmImporter(object):
         osm_type = 1
 
         for osmid, tags, refs in osm_nodes:
-            self.global_cnt += 1
-            # lat_lng = LatLng(refs[0], refs[1])
-            lat_lng = [refs[0], refs[1]]
+            lat_lng = (refs[0], refs[1])
 
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
@@ -355,8 +308,7 @@ class OsmImporter(object):
                 if not broken_way:
                     lat = sum_lat / way_length
                     lng = sum_lng / way_length
-                    # lat_lng = LatLng(lat, lng)
-                    lat_lng = [lat, lng]
+                    lat_lng = (lat, lng)
 
                     # if not Point(lat, lng).intersects(Polygon([[8.23, 52.61], [9.79, 52.70], [9.62, 53.99], [7.63, 53.94]])):
                     # print sum_lat, sum_lng, way_length

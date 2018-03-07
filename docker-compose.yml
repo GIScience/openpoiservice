@@ -1,8 +1,10 @@
-version: '3'
+version: '2.2'
 services:
  gunicorn_flask:
+  network_mode: "host"
   build: .
   volumes:
   - ./osm:/deploy/app/osm
   ports:
    - "5000:5000"
+  mem_limit: 28g
