@@ -40,25 +40,6 @@ class QueryBuilder(object):
 
         params = self.payload
 
-        # https://github.com/geoalchemy/geoalchemy2/issues/61
-        # q1 = db.session.query(Pois).filter(Pois.geom.ST_Distance(type_coerce(geom.wkt, Geography)) < radius)
-
-        # https://github.com/geoalchemy/geoalchemy2/issues/90
-        # query_intersects = db.session.query(Pois).filter(
-        #    func.ST_Intersects(func.ST_Buffer(type_coerce(geom.wkt, Geography), radius), Pois.geom))
-
-        # 298
-        # print str(pois_query)
-
-        # test_query = db.session \
-        #    .query(Pois) \
-        #    .filter(*geom_filters) \
-        #    .all()
-
-        # print str(test_query)
-        # for dude in test_query:
-        #    print wkb.loads(str(dude.geom), hex=True)
-
         geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
 
         logger.debug('geometry filters: {}, geometry: {}'.format(geom_filters, geom))

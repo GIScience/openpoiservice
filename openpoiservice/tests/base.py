@@ -19,7 +19,7 @@ class BaseTestCase(TestCase):
     def setUp(self):
         db.create_all()
 
-        test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf1')
+        test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
 
         parser.run_import([test_file])
 

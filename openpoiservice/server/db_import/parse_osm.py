@@ -5,12 +5,12 @@ from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import Pois, Tags
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 from openpoiservice.server.utils.decorators import get_size
-from openpoiservice.server.utils.geometries import truncate
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
 import uuid
 import sys
+from timeit import Timer
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class WayObject(object):
     """ Class that creates a way object. """
 
-    def __init__(self, osm_id, osm_type, tags, refs, cat_id):
+    def __init__(self, osm_id, osm_type, tags, refs, cat_id, n_refs):
         """
         Initializes way object
 
@@ -42,6 +42,9 @@ class WayObject(object):
         self.tags = tags
         self.refs = refs
         self.cat_id = cat_id
+        self.sum_lat = 0.0
+        self.sum_lng = 0.0
+        self.n_refs = n_refs
 
 
 class OsmImporter(object):
@@ -60,6 +63,7 @@ class OsmImporter(object):
         self.process_ways = []
         self.poi_objects = []
         self.tags_objects = []
+        self.ways_temp = []
         self.ways_obj = None
         self.tags_object = None
         self.poi_object = None
@@ -141,21 +145,17 @@ class OsmImporter(object):
 
                 if len(refs) < 1000:
 
-                    for osmid_of_node in refs:
-                        # print osmid_of_node
-                        self.nodes[osmid_of_node] = None
-
-                        if len(self.nodes) % 100000 == 0:
-                            logger.info('Nodes length is {} and size in mb is {}'.format(len(self.nodes),
-                                                                                         get_size(
-                                                                                             self.nodes) / 1024 / 1024))
-
                     self.ways_cnt += 1
 
                     if self.ways_cnt % 50000 == 0:
                         logger.info('Ways found: {} '.format(self.ways_cnt))
 
-                    self.ways_obj = WayObject(osmid, osm_type, tags, refs, category_id)
+                    # Make unique as duplicates may be inside
+                    refs = list(set(refs))
+                    refs.sort(key=int)
+
+                    self.ways_obj = WayObject(osmid, osm_type, tags, refs, category_id, len(refs))
+
                     self.process_ways.append(self.ways_obj)
 
     def store_poi(self, poi_object):
@@ -239,7 +239,7 @@ class OsmImporter(object):
             self.poi_object = PoiObject(my_uuid, category, osmid, lat_lng, osm_type)
             self.store_poi(self.poi_object)
 
-    def parse_coords(self, coords):
+    def parse_coords_for_ways(self, coords):
         """
         Callback function called by imposm while coordinates are parsed. Saves coordinates to nodes dictionary for
         way nodes that so far don't comprise coordinates.
@@ -248,14 +248,55 @@ class OsmImporter(object):
         :type coords: list of osm coordinates
         """
         for osmid, lat, lng in coords:
+            # nothing to do, all ways processed
+            if len(self.process_ways) == 0:
+                break
 
-            # populate missing coords of ways, will be used later
-            if osmid in self.nodes and self.nodes[osmid] is None:
-                self.nodes[osmid] = (lat, lng)
+            # current osmid is smaller then ordered ref osmids of way in process_ways
+            if osmid < self.process_ways[0].refs[0]:
+                continue
 
-                if len(self.nodes) % 10000000 == 0:
-                    logger.info('Amount of nodes is {} and size in MB is {}'.format(len(self.nodes),
-                                                                                    get_size(self.nodes) / 1024 / 1024))
+            # two ways could have the same ref as current osmid
+            while len(self.process_ways) != 0:
+
+                # if the first osm id matches
+                if self.process_ways[0].refs[0] == osmid:
+
+                    # pop the way from process_ways
+                    way = self.process_ways.pop(0)
+
+                    # remove first osm id from way as it is found
+                    way.refs.pop(0)
+
+                    # sum up coordinates
+                    way.sum_lat += lat
+                    way.sum_lng += lng
+
+                    # way has all its coordinates, create centroid and store in db
+                    if len(way.refs) == 0:
+
+                        centroid_lat = way.sum_lat / way.n_refs
+                        centroid_lng = way.sum_lng / way.n_refs
+
+                        centroid = (centroid_lat, centroid_lng)
+
+                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.cat_id)
+
+                    # way not completely seen yet, append to ways temp
+                    else:
+
+                        self.ways_temp.append(way)
+
+                # break out of while if first ref osmid doesnt match current osmid
+                else:
+
+                    break
+
+            # if ways_temp length greater 0 add to process ways and resort
+            if len(self.ways_temp) > 0:
+                self.process_ways = self.process_ways + self.ways_temp
+                self.ways_temp = []
+                self.process_ways.sort(key=lambda x: x.refs[0])
 
     def parse_nodes(self, osm_nodes):
         """
@@ -273,47 +314,7 @@ class OsmImporter(object):
 
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
-    def parse_nodes_of_ways(self):
-        """
-        Loops through list process_ways. Each way in this list has a tag which corresponds to a category.
-        It tries to find coordinates of these nodes and creates a simple average position of these which is the
-        poi. Saved to DB afterwards.
-        """
-
-        for way in self.process_ways:
-
-            way_length = len(way.refs)
-            if way_length > 0:
-                sum_lat = 0.0
-                sum_lng = 0.0
-                broken_way = False
-
-                way_nodes = way.refs
-
-                for osmid in way_nodes:
-
-                    if osmid not in self.nodes:
-                        broken_way = True
-                        break
-
-                    if self.nodes[osmid] is not None:
-                        # sum_lat += self.nodes[osmid].lat
-                        # sum_lng += self.nodes[osmid].lng
-                        sum_lat += self.nodes[osmid][0]
-                        sum_lng += self.nodes[osmid][1]
-                    else:
-                        broken_way = True
-                        break
-
-                if not broken_way:
-                    lat = sum_lat / way_length
-                    lng = sum_lng / way_length
-                    lat_lng = (lat, lng)
-
-                    # if not Point(lat, lng).intersects(Polygon([[8.23, 52.61], [9.79, 52.70], [9.62, 53.99], [7.63, 53.94]])):
-                    # print sum_lat, sum_lng, way_length
-
-                    self.create_poi(way.tags, way.osm_id, lat_lng, way.osm_type, way.cat_id)
+    def save_remainder(self):
 
         # save the remainder
         db.session.bulk_save_objects(self.poi_objects)

@@ -1,4 +1,4 @@
-# openpoiservice/server/main/geom_utils.py
+# openpoiservice/server/utils/geometries.py
 
 from functools import partial
 import pyproj

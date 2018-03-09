@@ -11,7 +11,7 @@ maximum_area: 50000000
 maximum_linestring_length: 500000
 # limit of pois
 response_limit: 2000
-osm_file_tests: ['bremen-tests.osm.pbf1']
+osm_file_tests: ['bremen-tests.osm.pbf']
 
 provider_parameters:
   table_name: ops_planet_pois
