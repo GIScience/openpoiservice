@@ -1,4 +1,6 @@
-# Openpoiservice
+# Openpoiservice 
+
+## WIP - we are still working on the import of large OSM files, please stay tuned.
 
 [![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
