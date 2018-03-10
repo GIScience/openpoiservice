@@ -9,6 +9,7 @@ import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
 import uuid
+from blist import *
 import sys
 from timeit import Timer
 
@@ -60,7 +61,7 @@ class OsmImporter(object):
         self.tags_cnt = 0
         self.relation_ways = {}
         self.nodes = {}
-        self.process_ways = []
+        self.process_ways = blist([])
         self.poi_objects = []
         self.tags_objects = []
         self.ways_temp = []
@@ -248,6 +249,7 @@ class OsmImporter(object):
         :type coords: list of osm coordinates
         """
         for osmid, lat, lng in coords:
+
             # nothing to do, all ways processed
             if len(self.process_ways) == 0:
                 break
@@ -292,11 +294,126 @@ class OsmImporter(object):
 
                     break
 
-            # if ways_temp length greater 0 add to process ways and resort
-            if len(self.ways_temp) > 0:
-                self.process_ways = self.process_ways + self.ways_temp
-                self.ways_temp = []
-                self.process_ways.sort(key=lambda x: x.refs[0])
+            # reorder process_ways
+            self.ways_temp.sort(key=lambda x: x.refs[0])
+
+            for t_way in self.ways_temp:
+                self.insert_temp_way(t_way)
+
+            self.ways_temp = []
+
+    def insert_temp_way(self, t_way):
+
+        for idx, p_way in enumerate(self.process_ways):
+
+            if p_way.refs[0] >= t_way.refs[0]:
+                self.process_ways.insert(idx, t_way)
+
+                return
+
+        # if we cant insert, just append to the end
+        self.process_ways.append(t_way)
+
+    def parse_coords_for_ways2(self, coords):
+        """
+        Callback function called by imposm while coordinates are parsed. Saves coordinates to nodes dictionary for
+        way nodes that so far don't comprise coordinates.
+
+        :param coords: osm coordinate objects
+        :type coords: list of osm coordinates
+        """
+        for osmid, lat, lng in coords:
+
+            # nothing to do, all ways processed
+            if len(self.process_ways) == 0:
+                break
+
+            # current osmid is smaller then ordered ref osmids of way in process_ways
+            if osmid < self.process_ways[0].refs[0]:
+                continue
+
+            p_index = 0
+            # two ways could have the same ref as current osmid
+            while len(self.process_ways) != 0:
+
+                # if the first osm id matches
+                if self.process_ways[p_index].refs[0] == osmid:
+
+                    # pop the way from process_ways
+                    way = self.process_ways[p_index]
+                    p_index += 1
+
+                    # remove first osm id from way as it is found
+                    way.refs.pop(0)
+
+                    # sum up coordinates
+                    way.sum_lat += lat
+                    way.sum_lng += lng
+
+                    # way has all its coordinates, create centroid and store in db
+                    if len(way.refs) == 0:
+
+                        centroid_lat = way.sum_lat / way.n_refs
+                        centroid_lng = way.sum_lng / way.n_refs
+
+                        centroid = (centroid_lat, centroid_lng)
+
+                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.cat_id)
+
+                    # way not completely seen yet, append to ways temp
+                    else:
+
+                        self.ways_temp.append(way)
+
+                # break out of while if first ref osmid doesnt match current osmid
+                else:
+
+                    break
+
+            # reorder process_ways.
+            # process_ways is already ordered from >= p_index
+            # every way before p_index needs to be checked and ordered again
+            self.ways_temp.sort(key=lambda x: x.refs[0])
+
+            t_index = 0
+
+            # If way_temp first ref smaller equal than process_ways first ref then just replace old way
+            while t_index < len(self.ways_temp) and self.ways_temp[t_index].refs[0] <= self.process_ways[p_index].refs[
+                0]:
+                self.process_ways[t_index] = self.ways_temp[t_index]  # replace way with temp_way in process_ways
+                t_index += 1
+
+            p_index2 = t_index
+
+            while t_index < len(self.ways_temp) and p_index < self.process_ways_length:
+                if self.ways_temp[t_index].refs[0] <= self.process_ways[p_index].refs[0]:
+                    self.process_ways[p_index2] = self.ways_temp[t_index]
+                    t_index += 1
+                else:
+                    self.process_ways[p_index2] = self.process_ways[p_index]
+                    p_index += 1
+
+                p_index2 += 1
+
+            while t_index < len(self.ways_temp):
+                # we have ways left in temp but process_ways is empty, so copy the remaining temp_ways
+                # to process_ways beginning at position pIndex2
+                # may be there is a better way to copy a bunch of elements from one array to another than
+                # to just copy them way by way!
+                self.process_ways[p_index2] = self.ways_temp[t_index]
+                p_index2 += 1
+                t_index += 1
+
+            while p_index < self.process_ways_length:
+                # we have ways left in process_ways and we need to SHIFT them to the left
+                # maybe there is operator which is faster than just copy way by way!
+                self.process_ways[p_index2] = self.process_ways[p_index]
+                p_index2 += 1
+                p_index += 1
+
+            # new length of process_ways
+            self.process_ways_length = p_index2
+            self.ways_temp = []
 
     def parse_nodes(self, osm_nodes):
         """

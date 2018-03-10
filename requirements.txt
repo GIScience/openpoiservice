@@ -14,3 +14,4 @@ flasgger==0.8.1
 pyproj==1.9.5.1
 scrapy==1.5.0
 guppy==0.1.10
+blist==1.3.6

@@ -1,15 +1,13 @@
 # openpoiservice/server/parser.py
 
 from openpoiservice.server.db_import.parse_osm import OsmImporter
-from openpoiservice.server.utils.decorators import timeit, profile, get_size, processify
+from openpoiservice.server.utils.decorators import timeit, processify
 from openpoiservice.server import ops_settings
 from imposm.parser import OSMParser
 import logging
 from guppy import hpy
-import time
 
 h = hpy()
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,13 +31,15 @@ def parse_file(osm_file):
     logger.info('Parsing ways...')
     ways = OSMParser(concurrency=ops_settings['concurrent_workers'], ways_callback=osm_importer.parse_ways)
     ways.parse(osm_file)
-    # Sort the ways by the first osm_id reference, saves memory for parsing coords
-    osm_importer.process_ways.sort(key=lambda x: x.refs[0])
 
     logger.info('Found {} ways'.format(osm_importer.ways_cnt))
     del osm_importer.relation_ways
 
-    logger.info('Importing ways... careful this can not be concurrent!!!')
+    # Sort the ways by the first osm_id reference, saves memory for parsing coords
+    osm_importer.process_ways.sort(key=lambda x: x.refs[0])
+    # init self.process_ways_length before the first call of parse_coords function!
+    osm_importer.process_ways_length = len(osm_importer.process_ways)
+    logger.info('Importing ways... (note this wont work concurrently)')
     coords = OSMParser(concurrency=1, coords_callback=osm_importer.parse_coords_for_ways)
     coords.parse(osm_file)
 
