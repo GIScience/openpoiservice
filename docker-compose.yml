@@ -1,7 +1,7 @@
 version: '2.2'
 services:
  gunicorn_flask:
-  network_mode: "host"
+  #network_mode: "host"
   build: .
   volumes:
   - ./osm:/deploy/app/osm

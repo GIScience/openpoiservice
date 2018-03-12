@@ -43,7 +43,7 @@ class CategoryTools(object):
         self.category_index = {}
         self.category_ids_index = {}
 
-        for k, v in self.categories_object.iteritems():
+        for k, v in self.categories_object.items():
 
             group_name = k
             group_id = v['id']
@@ -52,14 +52,14 @@ class CategoryTools(object):
             self.category_group_ids.append(int(group_id))
             group_children = v['children']
 
-            for tag_name, pois in group_children.iteritems():
+            for tag_name, pois in group_children.items():
 
                 if tag_name in self.category_index:
                     self.category_index[tag_name].update(pois)
                 else:
                     self.category_index[tag_name] = pois
 
-                for poi, cat_id in pois.iteritems():
+                for poi, cat_id in pois.items():
 
                     self.category_ids_index[cat_id] = {
                         'poi_name': poi,
@@ -78,7 +78,7 @@ class CategoryTools(object):
         category_id = 0
         if bool(tags):
 
-            for tag_name, tag_value in tags.iteritems():
+            for tag_name, tag_value in tags.items():
 
                 if tag_name:
 

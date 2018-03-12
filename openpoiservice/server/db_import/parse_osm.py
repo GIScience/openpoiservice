@@ -9,9 +9,10 @@ import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
 import logging
 import uuid
-from blist import *
+import time
 import sys
 from timeit import Timer
+from bisect import bisect_left
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,12 @@ class WayObject(object):
         self.sum_lng = 0.0
         self.n_refs = n_refs
 
+    def __lt__(self, other):
+        return self.refs[0] < other.refs[0]
+
+    def __repr__(self):
+        return 'WayObject_osmid({})'.format(self.osm_id)
+
 
 class OsmImporter(object):
     """ Class that handles the parsed OSM data. """
@@ -61,7 +68,7 @@ class OsmImporter(object):
         self.tags_cnt = 0
         self.relation_ways = {}
         self.nodes = {}
-        self.process_ways = blist([])
+        self.process_ways = []
         self.poi_objects = []
         self.tags_objects = []
         self.ways_temp = []
@@ -82,7 +89,7 @@ class OsmImporter(object):
         for osmid, tags, refs in relations:
             skip_relation = True
 
-            for tag, value in tags.iteritems():
+            for tag, value in tags.items():
 
                 if tag == "type" and value == "multipolygon":
                     skip_relation = False
@@ -231,7 +238,7 @@ class OsmImporter(object):
             my_uuid = uuid.uuid4().bytes
 
             # create dynamically from settings yml
-            for tag, value in tags.iteritems():
+            for tag, value in tags.items():
 
                 if tag in ops_settings['column_mappings']:
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
@@ -259,13 +266,14 @@ class OsmImporter(object):
                 continue
 
             # two ways could have the same ref as current osmid
+            start_time = time.time()
             while len(self.process_ways) != 0:
 
                 # if the first osm id matches
                 if self.process_ways[0].refs[0] == osmid:
 
                     # pop the way from process_ways
-                    way = self.process_ways.pop(0)
+                    way = self.process_ways.popleft()
 
                     # remove first osm id from way as it is found
                     way.refs.pop(0)
@@ -293,26 +301,39 @@ class OsmImporter(object):
                 else:
 
                     break
+            # elapsed_time = time.time() - start_time
+            # print('while...', elapsed_time * 1000)
 
+            # start_time = time.time()
             # reorder process_ways
-            self.ways_temp.sort(key=lambda x: x.refs[0])
+            # self.ways_temp.sort(key=lambda x: x.refs[0])
+            # elapsed_time = time.time() - start_time
+            # print('way temps sort...', elapsed_time*1000)
 
+            #start_time = time.time()
             for t_way in self.ways_temp:
                 self.insert_temp_way(t_way)
+            # elapsed_time = time.time() - start_time
+            #print('finding index and inserting to process way...', elapsed_time * 1000)
 
             self.ways_temp = []
 
     def insert_temp_way(self, t_way):
 
-        for idx, p_way in enumerate(self.process_ways):
+        self.process_ways.insert(bisect_left(self.process_ways, t_way), t_way)
 
-            if p_way.refs[0] >= t_way.refs[0]:
-                self.process_ways.insert(idx, t_way)
+        # for idx, p_way in enumerate(self.process_ways):
 
-                return
+        #    if p_way.refs[0] >= t_way.refs[0]:
+        #        start_time = time.time()
+        #        self.process_ways.insert(idx, t_way)
+        #        elapsed_time = time.time() - start_time
+        #        print('insert to deque...', elapsed_time * 1000)
+
+        #        return
 
         # if we cant insert, just append to the end
-        self.process_ways.append(t_way)
+        #self.process_ways.append(t_way)
 
     def parse_coords_for_ways2(self, coords):
         """
@@ -325,7 +346,7 @@ class OsmImporter(object):
         for osmid, lat, lng in coords:
 
             # nothing to do, all ways processed
-            if len(self.process_ways) == 0:
+            if len(self.process_ways_length) == 0:
                 break
 
             # current osmid is smaller then ordered ref osmids of way in process_ways
@@ -334,7 +355,7 @@ class OsmImporter(object):
 
             p_index = 0
             # two ways could have the same ref as current osmid
-            while len(self.process_ways) != 0:
+            while len(self.process_ways_length) != 0:
 
                 # if the first osm id matches
                 if self.process_ways[p_index].refs[0] == osmid:

@@ -5,9 +5,12 @@ from openpoiservice.server.utils.decorators import timeit, processify
 from openpoiservice.server import ops_settings
 from imposm.parser import OSMParser
 import logging
-from guppy import hpy
+import time
 
-h = hpy()
+# from guppy import hpy
+from collections import deque
+
+# h = hpy()
 logger = logging.getLogger(__name__)
 
 
@@ -18,9 +21,9 @@ def parse_file(osm_file):
 
     osm_importer = OsmImporter()
 
-    logger.info('Parsing and importing nodes...')
-    nodes = OSMParser(concurrency=ops_settings['concurrent_workers'], nodes_callback=osm_importer.parse_nodes)
-    nodes.parse(osm_file)
+    # logger.info('Parsing and importing nodes...')
+    # nodes = OSMParser(concurrency=ops_settings['concurrent_workers'], nodes_callback=osm_importer.parse_nodes)
+    #nodes.parse(osm_file)
 
     logger.info('Parsing relations...')
     relations = OSMParser(concurrency=ops_settings['concurrent_workers'],
@@ -39,7 +42,11 @@ def parse_file(osm_file):
     osm_importer.process_ways.sort(key=lambda x: x.refs[0])
     # init self.process_ways_length before the first call of parse_coords function!
     osm_importer.process_ways_length = len(osm_importer.process_ways)
+
+    # https://docs.python.org/3/library/collections.html#collections.deque
+    osm_importer.process_ways = deque(osm_importer.process_ways)
     logger.info('Importing ways... (note this wont work concurrently)')
+
     coords = OSMParser(concurrency=1, coords_callback=osm_importer.parse_coords_for_ways)
     coords.parse(osm_file)
 
@@ -50,7 +57,7 @@ def parse_file(osm_file):
 
     logger.info('Finished import of {}'.format(osm_file))
 
-    logger.debug('Heap: {}'.format(h.heap()))
+    #logger.debug('Heap: {}'.format(h.heap()))
 
     # clear memory
     del osm_importer

@@ -11,7 +11,6 @@ from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func, cast
 from sqlalchemy import dialects
 import geojson as geojson
-from itertools import tee, islice, chain, izip
 import logging
 
 logger = logging.getLogger(__name__)

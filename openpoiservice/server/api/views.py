@@ -19,7 +19,7 @@ import json
 def custom_schema():
     custom_dict = {}
 
-    for tag, settings in ops_settings['column_mappings'].iteritems():
+    for tag, settings in ops_settings['column_mappings'].items():
         custom_dict[tag] = Required(list, msg='Must be a list')
 
     return custom_dict
