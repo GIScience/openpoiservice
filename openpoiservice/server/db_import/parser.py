@@ -21,9 +21,9 @@ def parse_file(osm_file):
 
     osm_importer = OsmImporter()
 
-    # logger.info('Parsing and importing nodes...')
-    # nodes = OSMParser(concurrency=ops_settings['concurrent_workers'], nodes_callback=osm_importer.parse_nodes)
-    #nodes.parse(osm_file)
+    logger.info('Parsing and importing nodes...')
+    nodes = OSMParser(concurrency=ops_settings['concurrent_workers'], nodes_callback=osm_importer.parse_nodes)
+    nodes.parse(osm_file)
 
     logger.info('Parsing relations...')
     relations = OSMParser(concurrency=ops_settings['concurrent_workers'],

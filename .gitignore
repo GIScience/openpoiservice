@@ -112,3 +112,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+.idea
+
+openpoiservice/server/ops_settings.yml

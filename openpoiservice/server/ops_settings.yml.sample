@@ -1,0 +1,40 @@
+--- 
+attribution: "openrouteservice.org | OpenStreetMap contributors"
+maximum_categories: 5
+# meters
+maximum_search_radius_for_linestrings: 2000
+maximum_search_radius_for_points: 2000
+maximum_search_radius_for_polygons: 2000
+# square meters
+maximum_area: 50000000
+# meters
+maximum_linestring_length: 500000
+# limit of pois
+response_limit: 2000
+# amount of workers used for parsing the osm files
+concurrent_workers: 4
+# Database parameters
+provider_parameters:
+  table_name: ops_planet_pois
+  db_name: gis
+  user_name: gis_admin
+  password: admin
+  host: localhost
+  port: 5433
+  port_tests: 5432
+# add any additional tags you want to save to the database
+column_mappings:
+  # https://wiki.openstreetmap.org/wiki/Key:name
+  name:
+  # https://wiki.openstreetmap.org/wiki/Key:wheelchair
+  wheelchair:
+  # https://wiki.openstreetmap.org/wiki/Key:smoking
+  smoking:
+  # https://wiki.openstreetmap.org/wiki/Key:fee
+  fee:
+  # https://wiki.openstreetmap.org/wiki/Key:opening_hours
+  opening_hours:
+  # https://wiki.openstreetmap.org/wiki/Key:phone
+  phone:
+  # https://wiki.openstreetmap.org/wiki/Key:website
+  website:

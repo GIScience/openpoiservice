@@ -5,8 +5,8 @@ FROM ubuntu:17.10
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
 # Set the locale
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 RUN apt-get update
 RUN apt-get install -y python3-pip python-virtualenv nano wget git
@@ -37,4 +37,4 @@ EXPOSE 5000
 
 
 # Start gunicorn
-CMD ["gunicorn", "--config", "/deploy/gunicorn_config.py", "manage:app"]
+CMD ["/ops_venv/bin/gunicorn", "--config", "/deploy/gunicorn_config.py", "manage:app"]
