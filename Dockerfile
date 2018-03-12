@@ -4,15 +4,17 @@
 FROM ubuntu:17.10
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
-# Set the locale
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-
 RUN apt-get update
-RUN apt-get install -y python3-pip python-virtualenv nano wget git
+RUN apt-get install -y python3-pip python-virtualenv nano wget git locales
 
 # Install protobuf
 RUN apt-get install -y build-essential protobuf-compiler libprotobuf-dev
+
+# Set the locale
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 # Setup flask application
 RUN mkdir -p /deploy/app
@@ -34,7 +36,6 @@ COPY ops_settings_docker.yml /deploy/app/openpoiservice/server/ops_settings.yml
 WORKDIR /deploy/app
 
 EXPOSE 5000
-
 
 # Start gunicorn
 CMD ["/ops_venv/bin/gunicorn", "--config", "/deploy/gunicorn_config.py", "manage:app"]
