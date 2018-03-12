@@ -4,6 +4,13 @@
 FROM ubuntu:17.10
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
+# Set the locale
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
 RUN apt-get update
 RUN apt-get install -y python3-pip python-virtualenv nano wget git
 
@@ -22,9 +29,7 @@ RUN virtualenv --python=python3.6 /ops_venv
 
 RUN /bin/bash -c "source /ops_venv/bin/activate"
 
-RUN pip3 install -r /deploy/app/requirements.txt
-
-RUN ls -l /ops_venv/bin
+RUN /ops_venv/bin/pip3 install -r /deploy/app/requirements.txt
 
 COPY openpoiservice /deploy/app/openpoiservice
 COPY ops_settings_docker.yml /deploy/app/openpoiservice/server/ops_settings.yml
@@ -32,6 +37,7 @@ COPY ops_settings_docker.yml /deploy/app/openpoiservice/server/ops_settings.yml
 WORKDIR /deploy/app
 
 EXPOSE 5000
+
 
 # Start gunicorn
 CMD ["gunicorn", "--config", "/deploy/gunicorn_config.py", "manage:app"]
