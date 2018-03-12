@@ -13,6 +13,7 @@ import time
 import sys
 from timeit import Timer
 from bisect import bisect_left
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -267,6 +268,7 @@ class OsmImporter(object):
 
             # two ways could have the same ref as current osmid
             start_time = time.time()
+
             while len(self.process_ways) != 0:
 
                 # if the first osm id matches
@@ -306,15 +308,32 @@ class OsmImporter(object):
 
             # start_time = time.time()
             # reorder process_ways
-            # self.ways_temp.sort(key=lambda x: x.refs[0])
-            # elapsed_time = time.time() - start_time
-            # print('way temps sort...', elapsed_time*1000)
 
-            #start_time = time.time()
-            for t_way in self.ways_temp:
-                self.insert_temp_way(t_way)
-            # elapsed_time = time.time() - start_time
-            #print('finding index and inserting to process way...', elapsed_time * 1000)
+            if len(self.process_ways) == 0:
+
+                self.ways_temp.sort(key=lambda x: x.refs[0])
+                self.process_ways = deque(self.ways_temp)
+
+            else:
+
+                self.ways_temp.sort(key=lambda x: x.refs[0], reverse=True)
+                # elapsed_time = time.time() - start_time
+                # print('way temps sort...', elapsed_time*1000)
+
+                # start_time = time.time()
+
+                for t_way in self.ways_temp:
+
+                    if t_way.refs[0] <= self.process_ways[0].refs[0]:
+
+                        self.process_ways.insert(0, t_way)
+
+                    else:
+
+                        self.insert_temp_way(t_way)
+
+                # elapsed_time = time.time() - start_time
+                # print('finding index and inserting to process way...', elapsed_time * 1000)
 
             self.ways_temp = []
 
