@@ -5,10 +5,7 @@ FROM ubuntu:17.10
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
 # Set the locale
-RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    locale-gen
 ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 RUN apt-get update
