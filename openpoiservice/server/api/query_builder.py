@@ -146,7 +146,7 @@ class QueryBuilder(object):
         """
 
         custom_filters = []
-        for tag, settings in ops_settings['column_mappings'].iteritems():
+        for tag, settings in ops_settings['column_mappings'].items():
             if tag in filters:
                 custom_filters.append(Tags.key == tag.lower())
                 custom_filters.append(Tags.value.in_(filters[tag]))
