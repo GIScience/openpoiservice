@@ -212,8 +212,8 @@ class QueryBuilder(object):
         :type: list
         """
 
-        features = dict()
-        osm_ids_list = list()
+        features = {}
+        osm_ids_list = []
 
         for q in query:
 
@@ -240,7 +240,7 @@ class QueryBuilder(object):
 
                 features[q[0]][q[4]] = q[5]
 
-        geojson_features = list()
+        geojson_features = []
         # keep order!!!
         for osm_id in osm_ids_list:
             geojson_feature = geojson.Feature(geometry=features[osm_id]['geometry'],

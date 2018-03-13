@@ -35,8 +35,6 @@ class DevelopmentConfig(BaseConfig):
 class TestingConfig(BaseConfig):
     """Testing configuration."""
 
-    TESTING = True
-    WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pg_settings['user_name'], pg_settings['password'],
                                                                    pg_settings['host'], pg_settings['port'],
                                                                    pg_settings['db_name'])

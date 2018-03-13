@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 # process this function to free memory after import of each osm file
-@processify
-def parse_file(osm_file):
+
+def parse_import(osm_file):
     logger.info('Starting to read {}'.format(osm_file))
 
     osm_importer = OsmImporter()
@@ -57,10 +57,15 @@ def parse_file(osm_file):
 
     logger.info('Finished import of {}'.format(osm_file))
 
-    #logger.debug('Heap: {}'.format(h.heap()))
+    # logger.debug('Heap: {}'.format(h.heap()))
 
     # clear memory
     del osm_importer
+
+
+@processify
+def parse_file(osm_file):
+    parse_import(osm_file)
 
 
 @timeit
