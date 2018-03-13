@@ -1,6 +1,6 @@
 # openpoiservice/server/main/views.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from openpoiservice.server import categories_tools
 from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Invalid, \
     Optional, Boolean
@@ -11,8 +11,6 @@ from openpoiservice.server.utils.geometries import parse_geometry, validate_limi
 from flasgger.utils import swag_from
 import geojson
 import json
-
-
 # from flasgger import validate
 
 
@@ -113,9 +111,10 @@ def places():
 
             # check restrictions and parse geometry
             all_args['geometry'] = parse_geometries(all_args['geometry'])
-
             # query pois
-            return jsonify(request_pois(all_args))
+            return Response(json.dumps(request_pois(all_args)), mimetype='application/json')
+            # cant use jsonify directly for tests, error since upgrade python36, wtf?
+            # return jsonify(request_pois(all_args))
 
     else:
 

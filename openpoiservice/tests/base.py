@@ -3,7 +3,6 @@
 from flask_testing import TestCase
 from openpoiservice.server import db, create_app
 from openpoiservice.server.db_import import parser
-from openpoiservice.server import ops_settings
 import os
 
 app = create_app()
@@ -21,7 +20,7 @@ class BaseTestCase(TestCase):
 
         test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
 
-        parser.run_import([test_file])
+        parser.parse_import(test_file)
 
     def tearDown(self):
         db.session.remove()

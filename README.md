@@ -1,7 +1,5 @@
 # Openpoiservice 
 
-## WIP - we are still working on the import of large OSM files, please stay tuned.
-
 [![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
 Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from 
@@ -26,8 +24,8 @@ You can control the maximum size of geometries and further restrictions in the s
 
 #### Import Process 
 
-The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 1), 
-ways (osm_type 2) and nodes (osm_type 3) in order. Which type the specific point of interest originated from will be 
+The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 3), 
+ways (osm_type 2) and nodes (osm_type 1) in order. Which type the specific point of interest originated from will be 
 returned in the response - this will help you find the object directly on [OpenStreetMap.org](OpenStreetMap.org). 
 
 ## Installation
@@ -36,6 +34,11 @@ You can either run **openpoiservice** on your host machine in a virtual environm
 provided installs a WSGI server (gunicorn) which starts the flask service on port 5000. 
 
 ### Technical specs for storing and importing OSM files
+
+##### Python version
+
+As this service makes use of the python collections library, in particular the notion of deque's and its functions
+it only supports python 3.5 and greater.
 
 ##### Database
 This application uses a psql/postgis setup for storing the points of interest. We highly recommend [using this](https://github.com/kartoza/docker-postgis) 
@@ -46,13 +49,13 @@ Please consider the following technical requirements for parsing & importing osm
 
 | Region        | Memory        | 
 | ------------- |:-------------:|
-| Germany       | 16 GB         |
-| Europe        | 64 GB         | 
+| Germany       | 8 GB         |
+| Europe        | 32 GB         | 
 | Planet        | 128 GB        | 
 
 **Note:** Openpoiservice will import any osm pbf file located in the osm folder or subdirectory within. 
 This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script for the download
-links to be found in the osm folder) and still use a *smaller* instance to import the global data set (as long as
+links to be found in the osm folder) and use a *smaller* instance to import the global data set (as long as
 the OSM files don't exceed 5 GB of disk space, 16 GB of memory will suffice to import the entire planet).
 
 ### Run as Docker Container (Flask + Gunicorn)
@@ -71,19 +74,19 @@ $ docker-compose up -d -f /path/to/docker-compose.yml
 Once the container is built you can either, create the empty database:
 
 ```sh
-$ docker exec -it container_name python manage.py create_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py create_db
 ```
 
 Delete the database:
 
 ```sh
-$ docker exec -it container_name python manage.py drop_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py drop_db
 ```
 
 Or import the OSM data:
 
 ```sh
-$ docker exec -it container_name python manage.py import_data
+$ docker exec -it container_name /ops_venv/bin/python manage.py import_data
 ```
 
 
