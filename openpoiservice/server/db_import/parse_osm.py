@@ -76,6 +76,7 @@ class OsmImporter(object):
         self.ways_obj = None
         self.tags_object = None
         self.poi_object = None
+        self.process_ways_length = None
 
     def parse_relations(self, relations):
         """
@@ -250,8 +251,10 @@ class OsmImporter(object):
 
     def parse_coords_for_ways(self, coords):
         """
-        Callback function called by imposm while coordinates are parsed. Saves coordinates to nodes dictionary for
-        way nodes that so far don't comprise coordinates.
+        Callback function called by imposm while coordinates are parsed. Due due ordering we can use coords
+        on the fly for the ways to be processed. When the coordinates for the ways ref are found, the coordinates
+        are summed up and the way ref is then popped out of the way. The popped way is inserted back into process_ways
+        to be processed for when th next coordinate hits the way ref id.
 
         :param coords: osm coordinate objects
         :type coords: list of osm coordinates
@@ -267,7 +270,6 @@ class OsmImporter(object):
                 continue
 
             # two ways could have the same ref as current osmid
-            start_time = time.time()
 
             while len(self.process_ways) != 0:
 
@@ -303,24 +305,20 @@ class OsmImporter(object):
                 else:
 
                     break
-            # elapsed_time = time.time() - start_time
-            # print('while...', elapsed_time * 1000)
 
-            # start_time = time.time()
-            # reorder process_ways
-
+            # if no process_ways are left, append the ways_temp list to process_ways
             if len(self.process_ways) == 0:
 
                 self.ways_temp.sort(key=lambda x: x.refs[0])
                 self.process_ways = deque(self.ways_temp)
 
+            # else sort the ways_temp in reverse order by first way ref id and
+            # insert it back to process_ways. The likelihood is high that the way ref id is
+            # smaller or equal than the first way ref id of the first way in process_ways
+            # which is why this is checked first. If not insert finding the index binary search
             else:
 
                 self.ways_temp.sort(key=lambda x: x.refs[0], reverse=True)
-                # elapsed_time = time.time() - start_time
-                # print('way temps sort...', elapsed_time*1000)
-
-                # start_time = time.time()
 
                 for t_way in self.ways_temp:
 
@@ -332,27 +330,15 @@ class OsmImporter(object):
 
                         self.insert_temp_way(t_way)
 
-                # elapsed_time = time.time() - start_time
-                # print('finding index and inserting to process way...', elapsed_time * 1000)
-
             self.ways_temp = []
 
     def insert_temp_way(self, t_way):
-
+        """
+        Inserts a temp way to process_ways with binary search
+        :param t_way:
+        :type t_way: temp way
+        """
         self.process_ways.insert(bisect_left(self.process_ways, t_way), t_way)
-
-        # for idx, p_way in enumerate(self.process_ways):
-
-        #    if p_way.refs[0] >= t_way.refs[0]:
-        #        start_time = time.time()
-        #        self.process_ways.insert(idx, t_way)
-        #        elapsed_time = time.time() - start_time
-        #        print('insert to deque...', elapsed_time * 1000)
-
-        #        return
-
-        # if we cant insert, just append to the end
-        #self.process_ways.append(t_way)
 
     def parse_coords_for_ways2(self, coords):
         """
