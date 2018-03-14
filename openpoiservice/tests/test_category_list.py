@@ -10,7 +10,7 @@ from base import BaseTestCase
 class TestCategoryListBlueprint(BaseTestCase):
 
     def test_category_list(self):
-        response = self.client.post('/places', data=json.dumps(dict(request='list')),
+        response = self.client.post('/pois', data=json.dumps(dict(request='list')),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'accomodation', response.data)
