@@ -122,22 +122,22 @@ request_poi_missing_geometry_type = dict(
 class TestPoisBlueprint(BaseTestCase):
 
     def test_request_poi_missing_geom(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_missing_geometry),
+        response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 401)
 
     def test_request_poi_missing_geometry_geom(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_missing_geometry_geom),
+        response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 401)
 
     def test_request_poi_missing_geometry_type(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_missing_geometry_type),
+        response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry_type),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 401)
 
     def test_request_poi_point_geom(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_point_geom),
+        response = self.client.post('/pois', data=json.dumps(request_poi_point_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -145,7 +145,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 13)
 
     def test_request_poi_point_geom_with_bbox(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_point_geom_with_bbox),
+        response = self.client.post('/pois', data=json.dumps(request_poi_point_geom_with_bbox),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -153,7 +153,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 7)
 
     def test_request_poi_polygon_geom(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_polygon_geom),
+        response = self.client.post('/pois', data=json.dumps(request_poi_polygon_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -161,7 +161,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 7)
 
     def test_request_poi_polygon_geom_with_bbox(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_polygon_geom_with_bbox),
+        response = self.client.post('/pois', data=json.dumps(request_poi_polygon_geom_with_bbox),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -169,7 +169,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 1)
 
     def test_request_poi_linestring_geom(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_linestring_geom),
+        response = self.client.post('/pois', data=json.dumps(request_poi_linestring_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -177,7 +177,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 3)
 
     def test_request_poi_linestring_geom_with_bbox(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_linestring_geom_with_bbox),
+        response = self.client.post('/pois', data=json.dumps(request_poi_linestring_geom_with_bbox),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
@@ -185,7 +185,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(len(data['features']), 6)
 
     def test_request_poi_bbox(self):
-        response = self.client.post('/places', data=json.dumps(request_poi_bbox),
+        response = self.client.post('/pois', data=json.dumps(request_poi_bbox),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
