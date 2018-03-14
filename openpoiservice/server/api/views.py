@@ -71,8 +71,8 @@ schema = Schema({
 main_blueprint = Blueprint('main', __name__, )
 
 
-@main_blueprint.route('/places', methods=['POST'])
-@swag_from('places_post.yml', methods=['POST'])
+@main_blueprint.route('/pois', methods=['POST'])
+@swag_from('pois_post.yml', methods=['POST'])
 def places():
     """
     Function called when user posts or gets to /places.
