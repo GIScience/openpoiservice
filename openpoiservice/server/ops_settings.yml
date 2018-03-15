@@ -20,7 +20,7 @@ provider_parameters:
   user_name: gis_admin
   password: admin
   host: localhost
-  port: 5433
+  port: 5432
   port_tests: 5432
 # add any additional tags you want to save to the database
 column_mappings:
