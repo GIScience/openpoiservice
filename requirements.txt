@@ -13,4 +13,5 @@ flasgger==0.8.1
 pyproj==1.9.5.1
 scrapy==1.5.0
 gunicorn==19.7.1
+flask-cors==3.0.3
 git+https://github.com/lechup/imposm-parser.git@python3

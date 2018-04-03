@@ -93,7 +93,7 @@ class QueryBuilder(object):
                     sortby_group.append(bbox_query.c.category)
 
             pois_query = db.session \
-                .query(bbox_query.c.osm_id, bbox_query.c.category,
+                .query(bbox_query.c.osm_id, bbox_query.c.osm_type, bbox_query.c.category,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
                        bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
                 .order_by(*sortby_group) \
@@ -216,19 +216,20 @@ class QueryBuilder(object):
         osm_ids_list = []
 
         for q in query:
-
+            print(q)
             if q[0] not in features:
-                point = wkb.loads(str(q[6]), hex=True)
+                point = wkb.loads(str(q[7]), hex=True)
                 geojson_point = geojson.Point((point.x, point.y))
 
                 features[q[0]] = {
                     "properties": {
-                        "distance": q[2],
+                        "distance": q[3],
                         "osm_id": q[0],
-                        "category_id": q[1],
-                        "category_name": categories_tools.category_ids_index[q[1]]['poi_name'],
-                        "category_group": categories_tools.category_ids_index[q[1]]['poi_group'],
-                        q[4]: q[5]
+                        "osm_type": q[1],
+                        "category_id": q[2],
+                        "category_name": categories_tools.category_ids_index[q[2]]['poi_name'],
+                        "category_group": categories_tools.category_ids_index[q[2]]['poi_group'],
+                        q[5]: q[6]
 
                     },
                     "geometry": geojson_point,
@@ -238,7 +239,7 @@ class QueryBuilder(object):
 
             else:
 
-                features[q[0]][q[4]] = q[5]
+                features[q[0]][q[5]] = q[6]
 
         geojson_features = []
         # keep order!!!

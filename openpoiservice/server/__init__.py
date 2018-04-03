@@ -3,6 +3,7 @@
 from flask import Flask, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
+from flask_cors import CORS
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
 import yaml
@@ -33,6 +34,7 @@ def create_app(script_info=None):
     app = Flask(
         __name__
     )
+    cors = CORS(app, resources={r"/pois/*": {"origins": "*"}})
 
     app.config['SWAGGER'] = {
         'title': 'Openpoiservice',
@@ -53,7 +55,7 @@ def create_app(script_info=None):
     from openpoiservice.server.api.views import main_blueprint
     app.register_blueprint(main_blueprint)
 
-    Swagger(app)
+    Swagger(app, template_file='api/pois_post.yml')
 
     if "DEVELOPMENT" in os.environ:
         @app.before_request

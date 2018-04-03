@@ -1,50 +1,80 @@
+swagger: "2.0"
 tags:
-  - Places
-summary: openpoiservice (POST)
-description: |
+- name: "Pois"
+info:
+  description: |
             Returns points of interest in the area surrounding a geometry (geometry and/or bbox).
+  version: "0.1"
+  title: "Openpoiservice"
+  contact:
+    email: "support@openrouteservice.org"
+  license:
+    name: "MIT"
+    url: "https://github.com/swagger-api/swagger-ui/blob/master/LICENSE"
 consumes:
-  - application/json
+- "application/json"
+schemes:
+- "https"
 produces:
-  - application/json
-parameters:
-  - name: body
-    in: body
-    required: True
-    description: body for a post request
-    schema:
-      $ref: '#/definitions/LocationsBodyPois'
-      # this does not work yet..
-      # https://swagger.io/docs/specification/describing-request-body/
-      # oneOf:
-      #- $ref: '#/definitions/LocationsBodyPois'
-      #- $ref: '#/definitions/LocationsBodyStats'
-      #- $ref: '#/definitions/LocationsBodyList'
+- "application/json"
+host: "api.openrouteservice.org"
+security:
+- UserSecurity: [api_key]
+paths:
+  "/pois":
+    post:
+      parameters:
+        - name: "api_key"
+          in: "query"
+          description: |
+            Insert your API Key here.
+          type: "string"
+          required: true
+          default: "your-api-key"
+        - in: body
+          name: "body"
+          required: true
+          description: body for a post request
+          schema:
+            $ref: '#/definitions/LocationsBodyPois'
+            # this does not work yet..
+            # https://swagger.io/docs/specification/describing-request-body/
+            # oneOf:
+            #- $ref: '#/definitions/LocationsBodyPois'
+            #- $ref: '#/definitions/LocationsBodyStats'
+            #- $ref: '#/definitions/LocationsBodyList'
+      responses:
+        200:
+          description: Standard response for successfully processed requests.
+          schema:
+            $ref: '#/definitions/LocationsPoiResponse'
+            # oneOf:
+            #- $ref: '#/definitions/LocationsPoiResponse'
+            #- $ref: '#/definitions/LocationsStatsResponse'
+            #- $ref: '#/definitions/LocationsListResponse'
+        400:
+          description: Unable to parse JSON request.
+        401:
+          description: Required parameter is missing.
+        402:
+          description: Invalid parameter format.
+        403:
+          description: Invalid parameter value.
+        404:
+          description: Parameter value exceeds the maximum allowed limit.
+        499:
+          description: Unknown internal error.
 
-responses:
-  200:
-    description: Standard response for successfully processed requests.
-    schema:
-      $ref: '#/definitions/LocationsPoiResponse'
-      # oneOf:
-      #- $ref: '#/definitions/LocationsPoiResponse'
-      #- $ref: '#/definitions/LocationsStatsResponse'
-      #- $ref: '#/definitions/LocationsListResponse'
-  400:
-    description: Unable to parse JSON request.
-  401:
-    description: Required parameter is missing.
-  402:
-    description: Invalid parameter format.
-  403:
-    description: Invalid parameter value.
-  404:
-    description: Parameter value exceeds the maximum allowed limit.
-  499:
-    description: Unknown internal error.
-
+securityDefinitions:
+  UserSecurity:
+    name: "api_key"
+    description: |
+      Add your API Key as the value of the api_key parameter to your request.
+    type: "apiKey"
+    in: "query"
 definitions:
   LocationsBodyPois:
+    example: "{1: 1}"
     type: object
     required:
       - request
@@ -157,12 +187,12 @@ definitions:
     - distance
   bbox:
     type: array
-    items:
-      type: array
-      minItems: 2
-      maxItems: 2
-      items:
-        type: float
+    #items:
+    #  type: array
+    #  minItems: 2
+    #  maxItems: 2
+    #  items:
+    #    type: float
     minItems: 2
     maxItems: 2
     example: [[53.075051,8.798952],[53.080785,8.907160]]
@@ -177,20 +207,20 @@ definitions:
     }'
   # SHARED CUSTOM PROPERTIES
   name:
-    description: Name to filter the POIs by using sql like.
-    type: list
+    description: Filter by name of the poi object.
+    type: array
     example: ["Tankstelle",...]
   wheelchair:
-    description: Filter returned features by wheelchair tag entries.
-    type: list
+    description: Filter example.
+    type: array
     example: ["yes", "no", "limited", "designated"]
   smoking:
-    description: Filter returned features by smoking tag entries.
-    type: list
+    description: Filter example.
+    type: array
     example: ["dedicated","yes","no","separated","isolated","outside"]
   fee:
-    description: Filter returned features by fee tag entries.
-    type: list
+    description: Filter example.
+    type: array
     example: ["yes", "no"]
 
   # List response object
@@ -201,13 +231,13 @@ definitions:
 
   # Poi response object
   LocationsPoiResponse:
-    type: object
+    type: "object"
     properties:
       type:
-        type: string
-        default: FeatureCollection
+        type: "string"
+        default: "FeatureCollection"
       features:
-        type: array
+        type: "array"
         items:
           $ref: "#/definitions/location_features"
     title: "Openpoiservice poi response"
@@ -285,7 +315,9 @@ definitions:
   location_features_properties:
     properties:
       osm_id:
-        type: "string"
+        type: "number"
+      osm_type:
+        type: "number"
       category_id:
         type: "string"
       name:
