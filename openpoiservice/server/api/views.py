@@ -8,9 +8,11 @@ from shapely.geometry import Point, Polygon, LineString, MultiPoint, shape
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, transform_geom
-from flasgger.utils import swag_from
+from openpoiservice.server.api.query_info import QueryInfo
 import geojson
 import json
+import copy
+
 # from flasgger import validate
 
 
@@ -72,7 +74,6 @@ main_blueprint = Blueprint('main', __name__, )
 
 
 @main_blueprint.route('/pois', methods=['POST'])
-@swag_from('pois_post.yml', methods=['POST'])
 def places():
     """
     Function called when user posts or gets to /places.
@@ -84,9 +85,12 @@ def places():
 
     if request.method == 'POST':
 
-        if request.headers['Content-Type'] == 'application/json' and request.is_json:
+        if 'application/json' in request.headers['Content-Type'] and request.is_json:
 
             all_args = request.get_json(silent=True)
+
+            raw_request = copy.deepcopy(all_args)
+
             if all_args is None:
                 raise api_exceptions.InvalidUsage('Invalid JSON object in request', status_code=400)
 
@@ -111,8 +115,15 @@ def places():
 
             # check restrictions and parse geometry
             all_args['geometry'] = parse_geometries(all_args['geometry'])
+
+            features = request_pois(all_args)
+
+            query_info = QueryInfo(raw_request).__dict__
+
+            features["information"] = query_info
+
             # query pois
-            return Response(json.dumps(request_pois(all_args)), mimetype='application/json')
+            return Response(json.dumps(features), mimetype='application/json')
             # cant use jsonify directly for tests, error since upgrade python36, wtf?
             # return jsonify(request_pois(all_args))
 

@@ -4,11 +4,8 @@ import unittest
 from flask.cli import FlaskGroup
 from openpoiservice.server import create_app, db
 from openpoiservice.server.db_import import parser
-from openpoiservice.server import ops_settings
 import os
-from timeit import Timer
 import logging
-import glob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
