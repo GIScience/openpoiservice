@@ -216,7 +216,6 @@ class QueryBuilder(object):
         osm_ids_list = []
 
         for q in query:
-            print(q)
             if q[0] not in features:
                 point = wkb.loads(str(q[7]), hex=True)
                 geojson_point = geojson.Point((point.x, point.y))
