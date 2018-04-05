@@ -12,6 +12,7 @@ from sqlalchemy import func, cast
 from sqlalchemy import dialects
 import geojson as geojson
 import logging
+from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,8 @@ class QueryBuilder(object):
                 elif params['sortby'] == 'category':
                     sortby_group.append(bbox_query.c.category)
 
+            # start = timer()
+
             pois_query = db.session \
                 .query(bbox_query.c.osm_id, bbox_query.c.osm_type, bbox_query.c.category,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
@@ -99,6 +102,10 @@ class QueryBuilder(object):
                 .order_by(*sortby_group) \
                 .all()
 
+            # end = timer()
+            # print(end - start)
+
+            #print(str(pois_query))
             # for dude in pois_query:
             #    print wkb.loads(str(dude[6]), hex=True)
 

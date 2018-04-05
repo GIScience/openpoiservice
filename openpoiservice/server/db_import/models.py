@@ -31,7 +31,7 @@ class Tags(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     uuid = db.Column(db.LargeBinary, db.ForeignKey('{}.uuid'.format(ops_settings['provider_parameters']['table_name'])),
-                     nullable=False)
+                     nullable=False, index=True)
     osm_id = db.Column(db.BigInteger, nullable=False)
     key = db.Column(db.Text, nullable=True, index=True)
     value = db.Column(db.Text, nullable=True, index=True)
