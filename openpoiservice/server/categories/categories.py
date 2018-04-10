@@ -75,7 +75,8 @@ class CategoryTools(object):
 
     def get_category(self, tags):
 
-        category_id = 0
+        categories = []
+
         if bool(tags):
 
             for tag_name, tag_value in tags.items():
@@ -88,6 +89,6 @@ class CategoryTools(object):
                             category_id = self.category_index[tag_name][tag_value]
 
                             if category_id > 0:
-                                return category_id
+                                categories.append(category_id)
 
-        return category_id
+        return categories

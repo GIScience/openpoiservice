@@ -6,9 +6,9 @@ import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography, Geometry
 from geoalchemy2.elements import WKBElement, WKTElement
 from shapely import wkb
-from openpoiservice.server.db_import.models import Pois, Tags
+from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
-from sqlalchemy import func, cast
+from sqlalchemy import func, cast, Integer, ARRAY
 from sqlalchemy import dialects
 import geojson as geojson
 import logging
@@ -32,7 +32,8 @@ class QueryBuilder(object):
 
     def request_pois(self):
         """
-        Queries pois or statistics from the database
+        Queries pois or statistics from the database. Pois will always be less then querying category statistics
+        because one poi can have several categories.
 
         :return: Will either return a feature collection of pois or poi statistics.
         :type: dict
@@ -47,22 +48,27 @@ class QueryBuilder(object):
         category_filters = []
         if 'filters' in params:
             if 'category_ids' in params['filters']:
-                category_filters.append(Pois.category.in_(params['filters']['category_ids']))
+                category_filters.append(Categories.category.in_(params['filters']['category_ids']))
+
+        # currently only available for request=pois
+        custom_filters = []
+        if 'filters' in params:
+            custom_filters = self.generate_custom_filters(params['filters'])
 
         if params['request'] == 'stats':
 
             bbox_query = db.session \
-                .query(Pois) \
+                .query(Pois.uuid, Categories.category) \
                 .filter(*geom_filters) \
                 .filter(*category_filters) \
+                .outerjoin(Categories) \
                 .subquery()
 
             stats_query = db.session \
                 .query(bbox_query.c.category, func.count(bbox_query.c.category).label("count")) \
                 .group_by(bbox_query.c.category) \
-                .all()
+                # .all()
 
-            logger.info('Number of poi statistic groups: {}'.format(len(stats_query)))
             places_json = self.generate_category_stats(stats_query)
 
             return places_json
@@ -70,17 +76,9 @@ class QueryBuilder(object):
         # join with tags
         elif params['request'] == 'pois':
 
-            # currently only available for request=pois
-            custom_filters = []
-            if 'filters' in params:
-                custom_filters = self.generate_custom_filters(params['filters'])
-
             bbox_query = db.session \
-                .query(Pois, Tags.osm_id.label('t_osm_id'), Tags.key, Tags.value) \
+                .query(Pois) \
                 .filter(*geom_filters) \
-                .filter(*category_filters) \
-                .filter(*custom_filters) \
-                .outerjoin(Tags) \
                 .subquery()
 
             # sortby needed here for generating features in next step
@@ -93,21 +91,37 @@ class QueryBuilder(object):
                 elif params['sortby'] == 'category':
                     sortby_group.append(bbox_query.c.category)
 
-            # start = timer()
+            start = timer()
+
+            keys_agg = func.array_agg(Tags.key).label('keys')
+            values_agg = func.array_agg(Tags.value).label('values')
+            categories_agg = func.array_agg(Categories.category).label('categories')
 
             pois_query = db.session \
-                .query(bbox_query.c.osm_id, bbox_query.c.osm_type, bbox_query.c.category,
+                .query(bbox_query.c.osm_id,
+                       bbox_query.c.osm_type,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
-                       bbox_query.c.t_osm_id, bbox_query.c.key, bbox_query.c.value, bbox_query.c.geom) \
+                       bbox_query.c.geom,
+                       keys_agg,
+                       values_agg,
+                       categories_agg) \
                 .order_by(*sortby_group) \
-                .all()
+                .filter(*category_filters) \
+                .filter(*custom_filters) \
+                .outerjoin(Tags) \
+                .outerjoin(Categories) \
+                .group_by(bbox_query.c.uuid) \
+                .group_by(bbox_query.c.osm_id) \
+                .group_by(bbox_query.c.osm_type) \
+                .group_by(bbox_query.c.geom) \
+                # .all()
 
-            # end = timer()
-            # print(end - start)
+            end = timer()
+            print(end - start)
 
-            #print(str(pois_query))
+            print(str(pois_query))
             # for dude in pois_query:
-            #    print wkb.loads(str(dude[6]), hex=True)
+            # print(dude)
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query, params['limit'])
@@ -206,6 +220,8 @@ class QueryBuilder(object):
 
             places_dict["places"]["total_count"] += poi_group.count
 
+        logger.info('Number of poi stats groups: {}'.format(len(places_dict)))
+
         return places_dict
 
     @classmethod
@@ -219,42 +235,42 @@ class QueryBuilder(object):
         :type: list
         """
 
-        features = {}
-        osm_ids_list = []
-
-        for q in query:
-            if q[0] not in features:
-                point = wkb.loads(str(q[7]), hex=True)
-                geojson_point = geojson.Point((point.x, point.y))
-
-                features[q[0]] = {
-                    "properties": {
-                        "distance": q[3],
-                        "osm_id": q[0],
-                        "osm_type": q[1],
-                        "category_id": q[2],
-                        "category_name": categories_tools.category_ids_index[q[2]]['poi_name'],
-                        "category_group": categories_tools.category_ids_index[q[2]]['poi_group'],
-                        q[5]: q[6]
-
-                    },
-                    "geometry": geojson_point,
-                }
-
-                osm_ids_list.append(q[0])
-
-            else:
-
-                features[q[0]][q[5]] = q[6]
-
         geojson_features = []
-        # keep order!!!
-        for osm_id in osm_ids_list:
-            geojson_feature = geojson.Feature(geometry=features[osm_id]['geometry'],
-                                              properties=features[osm_id]['properties']
+
+        for q_idx, q in enumerate(query):
+
+            geometry = wkb.loads(str(q[3]), hex=True)
+
+            properties = dict(
+                osm_id=int(q[0]),
+                osm_type=int(q[1]),
+                distance=float(q[2])
+            )
+
+            category_ids_obj = {}
+            for c_id in set(q[6]):
+                category_name = categories_tools.category_ids_index[c_id]['poi_name']
+                category_group = categories_tools.category_ids_index[c_id]['poi_group']
+                category_ids_obj[c_id] = {
+                    "category_name": category_name,
+                    "category_group": category_group
+                }
+            properties["category_ids"] = category_ids_obj
+
+            key_values = {}
+            for idx, key in enumerate(q[4]):
+                if key is not 'null':
+                    key_values[key] = q[5][idx]
+
+            properties["osm_tags"] = key_values
+
+            geojson_feature = geojson.Feature(geometry=geometry,
+                                              properties=properties
                                               )
             geojson_features.append(geojson_feature)
-            if len(geojson_features) == limit:
+
+            # limit reached
+            if q_idx == limit - 2:
                 break
 
         feature_collection = geojson.FeatureCollection(geojson_features)
@@ -262,17 +278,3 @@ class QueryBuilder(object):
         logger.info("Amount of features {}".format(len(geojson_features)))
 
         return feature_collection
-
-    @staticmethod
-    def previous_and_next(some_iterable):
-        """
-        Gets previous, current and next in iterable list
-
-        :param some_iterable: a list
-        :return: returns the previous, current and next in the list
-        """
-
-        prevs, items, nexts = tee(some_iterable, 3)
-        prevs = chain([None], prevs)
-        nexts = chain(islice(nexts, 1, None), [None])
-        return izip(prevs, items, nexts)

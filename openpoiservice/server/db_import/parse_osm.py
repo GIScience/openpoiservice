@@ -2,7 +2,7 @@
 
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
-from openpoiservice.server.db_import.models import Pois, Tags
+from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 from openpoiservice.server.utils.decorators import get_size
 import shapely as shapely
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class WayObject(object):
     """ Class that creates a way object. """
 
-    def __init__(self, osm_id, osm_type, tags, refs, cat_id, n_refs):
+    def __init__(self, osm_id, osm_type, tags, refs, categories, n_refs):
         """
         Initializes way object
 
@@ -44,7 +44,7 @@ class WayObject(object):
         self.osm_type = osm_type
         self.tags = tags
         self.refs = refs
-        self.cat_id = cat_id
+        self.categories = categories
         self.sum_lat = 0.0
         self.sum_lng = 0.0
         self.n_refs = n_refs
@@ -67,11 +67,13 @@ class OsmImporter(object):
         self.nodes_cnt = 0
         self.pois_cnt = 0
         self.tags_cnt = 0
+        self.categories_cnt = 0
         self.relation_ways = {}
         self.nodes = {}
         self.process_ways = []
         self.poi_objects = []
         self.tags_objects = []
+        self.categories_objects = []
         self.ways_temp = []
         self.ways_obj = None
         self.tags_object = None
@@ -99,9 +101,9 @@ class OsmImporter(object):
                     break
 
             if not skip_relation:
-                category_id = categories_tools.get_category(tags)
+                categories = categories_tools.get_category(tags)
 
-                if category_id > 0:
+                if len(categories) > 0:
 
                     if len(refs) > 0:
                         rel_member = refs[0]
@@ -128,11 +130,11 @@ class OsmImporter(object):
 
         """
         for osmid, tags, refs in ways:
-            category_id = categories_tools.get_category(tags)
+            categories = categories_tools.get_category(tags)
             # from way
             osm_type = 2
 
-            if category_id == 0:
+            if len(categories) == 0:
 
                 if osmid in self.relation_ways:
                     tags = self.relation_ways[osmid]
@@ -147,11 +149,11 @@ class OsmImporter(object):
 
                         #        rel_id = tag_value
                         #        break
-                        category_id = categories_tools.get_category(tags)
+                        categories = categories_tools.get_category(tags)
                         # from relation
                         osm_type = 3
 
-            if category_id > 0:
+            if len(categories) > 0:
 
                 if len(refs) < 1000:
 
@@ -164,7 +166,7 @@ class OsmImporter(object):
                     refs = list(set(refs))
                     refs.sort(key=int)
 
-                    self.ways_obj = WayObject(osmid, osm_type, tags, refs, category_id, len(refs))
+                    self.ways_obj = WayObject(osmid, osm_type, tags, refs, categories, len(refs))
 
                     self.process_ways.append(self.ways_obj)
 
@@ -177,22 +179,22 @@ class OsmImporter(object):
         """
 
         self.pois_cnt += 1
-
         self.poi_objects.append(Pois(
             uuid=poi_object.uuid,
             osm_id=poi_object.osmid,
             osm_type=poi_object.type,
-            category=poi_object.category,
             geom=poi_object.geom
         ))
 
         if self.pois_cnt % 1000 == 0:
-            logger.info('Pois: {}, tags: {}'.format(self.pois_cnt, self.tags_cnt))
+            logger.info('Pois: {}, tags: {}, categories: {}'.format(self.pois_cnt, self.tags_cnt, self.categories_cnt))
             db.session.add_all(self.poi_objects)
             db.session.add_all(self.tags_objects)
+            db.session.add_all(self.categories_objects)
             db.session.commit()
             self.poi_objects = []
             self.tags_objects = []
+            self.categories_objects = []
 
     def store_tags(self, tags_object):
         """
@@ -211,7 +213,20 @@ class OsmImporter(object):
             value=tags_object.value
         ))
 
-    def create_poi(self, tags, osmid, lat_lng, osm_type, category=0):
+    def store_categories(self, uuid, category):
+        """
+
+        :param uuid:
+        :param category:
+        """
+        self.categories_cnt += 1
+
+        self.categories_objects.append(Categories(
+            uuid=uuid,
+            category=category
+        ))
+
+    def create_poi(self, tags, osmid, lat_lng, osm_type, categories=[]):
         """
         Creates a poi entity if a category is found. Stored afterwards.
 
@@ -227,14 +242,14 @@ class OsmImporter(object):
         :param osm_type: 1 for node, 2 for way
         :type osm_type: int
 
-        :param category: category id
-        :type category: int
+        :param categories: category list
+        :type categories: list
 
         """
-        if category == 0:
-            category = categories_tools.get_category(tags)
+        if len(categories) == 0:
+            categories = categories_tools.get_category(tags)
 
-        if category > 0:
+        if len(categories) > 0:
 
             # random id used as primary key
             my_uuid = uuid.uuid4().bytes
@@ -246,8 +261,11 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            self.poi_object = PoiObject(my_uuid, category, osmid, lat_lng, osm_type)
+            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type)
             self.store_poi(self.poi_object)
+
+            for category in categories:
+                self.store_categories(my_uuid, category)
 
     def parse_coords_for_ways(self, coords):
         """
@@ -294,7 +312,7 @@ class OsmImporter(object):
 
                         centroid = (centroid_lat, centroid_lng)
 
-                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.cat_id)
+                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.categories)
 
                     # way not completely seen yet, append to ways temp
                     else:
@@ -384,7 +402,7 @@ class OsmImporter(object):
 
                         centroid = (centroid_lat, centroid_lng)
 
-                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.cat_id)
+                        self.create_poi(way.tags, way.osm_id, centroid, way.osm_type, way.categories)
 
                     # way not completely seen yet, append to ways temp
                     else:
@@ -458,8 +476,8 @@ class OsmImporter(object):
             self.create_poi(tags, osmid, lat_lng, osm_type)
 
     def save_remainder(self):
-
         # save the remainder
         db.session.bulk_save_objects(self.poi_objects)
         db.session.bulk_save_objects(self.tags_objects)
+        db.session.bulk_save_objects(self.categories_objects)
         db.session.commit()
