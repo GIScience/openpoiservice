@@ -240,6 +240,8 @@ def parse_geometries(geometry):
         geojson_obj = MultiPoint(parse_geometry(geometry['bbox']))
         geometry['bbox'] = check_validity(geojson_obj).envelope
 
+        # print(geometry['bbox'].wkt)
+
         # check if area not too large
         area = transform_geom(geometry['bbox'], 'epsg:4326', 'epsg:3857').area
         if area > ops_settings['maximum_area']:

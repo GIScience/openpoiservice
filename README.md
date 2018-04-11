@@ -220,7 +220,7 @@ Finally, `request=list` will return a JSON object generated from
 ##### POIs
 ```sh
 curl -X POST \
-  http://localhost:5000/places \
+  http://localhost:5000/pois \
   -H 'Cache-Control: no-cache' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -244,7 +244,7 @@ curl -X POST \
 ##### POI Statistics
 ```sh
 curl -X POST \
-  http://localhost:5000/places \
+  http://localhost:5000/pois \
   -H 'Cache-Control: no-cache' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -268,7 +268,7 @@ curl -X POST \
 
 ```sh
 curl -X POST \
-  http://127.0.0.1:5000/places \
+  http://127.0.0.1:5000/pois \
   -H 'content-type: application/json' \
   -d '{
 	"request": "list"
