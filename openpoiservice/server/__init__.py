@@ -55,7 +55,7 @@ def create_app(script_info=None):
     from openpoiservice.server.api.views import main_blueprint
     app.register_blueprint(main_blueprint)
 
-    Swagger(app, template_file='api/pois_post.yml')
+    Swagger(app, template_file='api/pois_post.yaml')
 
     if "DEVELOPMENT" in os.environ:
         @app.before_request

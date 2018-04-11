@@ -259,7 +259,7 @@ class QueryBuilder(object):
 
             key_values = {}
             for idx, key in enumerate(q[4]):
-                if key is not 'null':
+                if key != "null":
                     key_values[key] = q[5][idx]
 
             properties["osm_tags"] = key_values
