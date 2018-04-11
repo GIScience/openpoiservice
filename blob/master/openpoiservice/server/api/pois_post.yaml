@@ -74,16 +74,7 @@ securityDefinitions:
     in: "query"
 definitions:
   LocationsBodyPois:
-    example: {
-      "request": "pois",
-      "geometry": {
-          "bbox": [
-              [8.74189636230469, 53.07144289415349],
-              [8.814767341613771, 53.091060308703845]
-          ]
-      },
-      "limit": 200
-    }
+    example: "{1: 1}"
     type: object
     required:
       - request
@@ -130,7 +121,7 @@ definitions:
     properties:
       request:
         type: string
-        example: stats
+        example: category_stats
       geometry:
         type: object
         properties:
@@ -164,7 +155,7 @@ definitions:
     properties:
       request:
         type: string
-        example: list
+        example: category_list
     title: "Openpoiservice category list"
 
   # SHARED PROPERTIES
@@ -208,8 +199,12 @@ definitions:
     description: The pattern for this bbox string is minlon,minlat,maxlon,maxlat
 
   geojson:
-    description: This is a GeoJSON object. Is either Point, Polygon or LineString.
+    description: This is a geojson object
     type: object
+    example: '"geometry": {
+      "type": "Point",
+      "coordinates": [125.6, 10.1]
+    }'
   # SHARED CUSTOM PROPERTIES
   name:
     description: Filter by name of the poi object.
@@ -298,10 +293,8 @@ definitions:
         type: "string"
         default: "Feature"
       geometry:
-        type: "object"
         $ref: "#/definitions/location_features_geometry"
       feature_properties:
-        type: "object"
         $ref: "#/definitions/location_features_properties"
     title: "GeoJSON features object"
 
@@ -320,34 +313,13 @@ definitions:
     title: "GeoJSON geometry object"
 
   location_features_properties:
-    title: "GeoJSON properties object"
     properties:
       osm_id:
         type: "number"
       osm_type:
         type: "number"
-      distance:
-        type: "number"
-      category_ids:
-        type: "object"
-        $ref: "#/definitions/location_features_properties_category_ids"
-      osm_tags:
-        type: "object"
-        $ref: "#/definitions/location_features_properties_osm_tags"
-
-  location_features_properties_category_ids:
-    properties:
       category_id:
-        type: "object"
-        properties:
-          category_name:
-            type: "string"
-          category_group:
-            type: "number"
-
-  location_features_properties_osm_tags:
-    type: "object"
-    properties:
+        type: "string"
       name:
         type: "string"
       address:
@@ -362,3 +334,4 @@ definitions:
         type: "string"
       fee:
         type: "string"
+    title: "GeoJSON properties object"
