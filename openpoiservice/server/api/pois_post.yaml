@@ -1,0 +1,365 @@
+swagger: "2.0"
+tags:
+- name: "Pois"
+info:
+  description: |
+            Returns points of interest in the area surrounding a geometry (geometry and/or bbox).
+  version: "0.1"
+  title: "Openpoiservice"
+  contact:
+    email: "support@openrouteservice.org"
+  license:
+    name: "MIT"
+    url: "https://github.com/swagger-api/swagger-ui/blob/master/LICENSE"
+consumes:
+- "application/json"
+schemes:
+- "https"
+produces:
+- "application/json"
+host: "api.openrouteservice.org"
+security:
+- UserSecurity: [api_key]
+paths:
+  "/pois":
+    post:
+      parameters:
+        - name: "api_key"
+          in: "query"
+          description: |
+            Insert your API Key here.
+          type: "string"
+          required: true
+          default: "your-api-key"
+        - in: body
+          name: "body"
+          required: true
+          description: body for a post request
+          schema:
+            $ref: '#/definitions/LocationsBodyPois'
+            # this does not work yet..
+            # https://swagger.io/docs/specification/describing-request-body/
+            # oneOf:
+            #- $ref: '#/definitions/LocationsBodyPois'
+            #- $ref: '#/definitions/LocationsBodyStats'
+            #- $ref: '#/definitions/LocationsBodyList'
+      responses:
+        200:
+          description: Standard response for successfully processed requests.
+          schema:
+            $ref: '#/definitions/LocationsPoiResponse'
+            # oneOf:
+            #- $ref: '#/definitions/LocationsPoiResponse'
+            #- $ref: '#/definitions/LocationsStatsResponse'
+            #- $ref: '#/definitions/LocationsListResponse'
+        400:
+          description: Unable to parse JSON request.
+        401:
+          description: Required parameter is missing.
+        402:
+          description: Invalid parameter format.
+        403:
+          description: Invalid parameter value.
+        404:
+          description: Parameter value exceeds the maximum allowed limit.
+        499:
+          description: Unknown internal error.
+
+securityDefinitions:
+  UserSecurity:
+    name: "api_key"
+    description: |
+      Add your API Key as the value of the api_key parameter to your request.
+    type: "apiKey"
+    in: "query"
+definitions:
+  LocationsBodyPois:
+    example: {
+      "request": "pois",
+      "geometry": {
+          "bbox": [
+              [8.74189636230469, 53.07144289415349],
+              [8.814767341613771, 53.091060308703845]
+          ]
+      },
+      "limit": 200
+    }
+    type: object
+    required:
+      - request
+      - geometry
+    properties:
+      request:
+        type: string
+        example: pois
+      geometry:
+        type: object
+        properties:
+          buffer:
+            $ref: "#/definitions/buffer"
+          bbox:
+            $ref: "#/definitions/bbox"
+          geojson:
+            $ref: "#/definitions/geojson"
+      filters:
+        type: object
+        properties:
+          category_group_ids:
+            $ref: "#/definitions/category_group_ids"
+          category_ids:
+            $ref: "#/definitions/category_ids"
+          # CUSTOM FILTERS
+          name:
+            $ref: "#/definitions/name"
+          wheelchair:
+            $ref: "#/definitions/wheelchair"
+          smoking:
+            $ref: "#/definitions/smoking"
+          fee:
+            $ref: "#/definitions/fee"
+      limit:
+        $ref: "#/definitions/limit"
+      sortby:
+        $ref: "#/definitions/sortby"
+    title:  "Openpoiservice poi request"
+
+  LocationsBodyStats:
+    required:
+      - request
+      - geometry
+    properties:
+      request:
+        type: string
+        example: stats
+      geometry:
+        type: object
+        properties:
+          buffer:
+            $ref: "#/definitions/buffer"
+          bbox:
+            $ref: "#/definitions/bbox"
+          geojson:
+            $ref: "#/definitions/geojson"
+      filters:
+        type: object
+        properties:
+          category_group_ids:
+            $ref: "#/definitions/category_group_ids"
+          category_ids:
+            $ref: "#/definitions/category_ids"
+          # CUSTOM FILTERS NOT SUPPORTED YET!
+          #name:
+          #  $ref: "#/definitions/name"
+          #wheelchair:
+          #  $ref: "#/definitions/wheelchair"
+          #smoking:
+          #  $ref: "#/definitions/smoking"
+          #fee:
+          #  $ref: "#/definitions/fee"
+    title:  "Openpoiservice category statistics"
+
+  LocationsBodyList:
+    required:
+      - request
+    properties:
+      request:
+        type: string
+        example: list
+    title: "Openpoiservice category list"
+
+  # SHARED PROPERTIES
+  category_group_ids:
+    type: array
+    items:
+      type: integer
+      format: int64
+    example: [420]
+  category_ids:
+    type: array
+    items:
+      type: integer
+      format: int64
+    example: [601, 280]
+  limit:
+    type: integer
+    format: int64
+    example: 1000
+  buffer:
+    type: integer
+    format: int64
+    example: 500
+  sortby:
+    type: string
+    example: category
+    enum:
+    - category
+    - distance
+  bbox:
+    type: array
+    #items:
+    #  type: array
+    #  minItems: 2
+    #  maxItems: 2
+    #  items:
+    #    type: float
+    minItems: 2
+    maxItems: 2
+    example: [[53.075051,8.798952],[53.080785,8.907160]]
+    description: The pattern for this bbox string is minlon,minlat,maxlon,maxlat
+
+  geojson:
+    description: This is a GeoJSON object. Is either Point, Polygon or LineString.
+    type: object
+  # SHARED CUSTOM PROPERTIES
+  name:
+    description: Filter by name of the poi object.
+    type: array
+    example: ["Tankstelle",...]
+  wheelchair:
+    description: Filter example.
+    type: array
+    example: ["yes", "no", "limited", "designated"]
+  smoking:
+    description: Filter example.
+    type: array
+    example: ["dedicated","yes","no","separated","isolated","outside"]
+  fee:
+    description: Filter example.
+    type: array
+    example: ["yes", "no"]
+
+  # List response object
+  LocationsListResponse:
+    type: object
+    title: "Openpoiservice category list response"
+    description: "Openpoiservice category list"
+
+  # Poi response object
+  LocationsPoiResponse:
+    type: "object"
+    properties:
+      type:
+        type: "string"
+        default: "FeatureCollection"
+      features:
+        type: "array"
+        items:
+          $ref: "#/definitions/location_features"
+    title: "Openpoiservice poi response"
+
+  # Stats response object
+  LocationsStatsResponse:
+    type: "object"
+    properties:
+      places:
+        type: "object"
+        $ref: "#/definitions/places_object"
+
+    title: "Openpoiservice stats response"
+
+  places_object:
+    type: object
+    properties:
+      category_group_id:
+        type: object
+        $ref: "#/definitions/stats_object"
+      total_count:
+        type: integer
+    additionalProperties:
+      type: object
+      $ref: "#/definitions/stats_object"
+    title: "Places object"
+
+  stats_object:
+    type: object
+    properties:
+      categories:
+        type: object
+        $ref: "#/definitions/category_object"
+      name:
+        type: string
+        description: name of group
+      total_count:
+        type: integer
+    title: "Stats object"
+
+  category_object:
+    type: object
+    properties:
+      category_id:
+        type: integer
+    additionalProperties:
+      type: object
+
+  location_features:
+    type: "object"
+    properties:
+      type:
+        type: "string"
+        default: "Feature"
+      geometry:
+        type: "object"
+        $ref: "#/definitions/location_features_geometry"
+      feature_properties:
+        type: "object"
+        $ref: "#/definitions/location_features_properties"
+    title: "GeoJSON features object"
+
+  location_features_geometry:
+    properties:
+      type:
+        type: "string"
+        default: "Point"
+      coordinates:
+        type: "array"
+        items:
+          type: "number"
+          format: "double"
+        maxItems: 2
+        minItems: 2
+    title: "GeoJSON geometry object"
+
+  location_features_properties:
+    title: "GeoJSON properties object"
+    properties:
+      osm_id:
+        type: "number"
+      osm_type:
+        type: "number"
+      distance:
+        type: "number"
+      category_ids:
+        type: "object"
+        $ref: "#/definitions/location_features_properties_category_ids"
+      osm_tags:
+        type: "object"
+        $ref: "#/definitions/location_features_properties_osm_tags"
+
+  location_features_properties_category_ids:
+    properties:
+      category_id:
+        type: "object"
+        properties:
+          category_name:
+            type: "string"
+          category_group:
+            type: "number"
+
+  location_features_properties_osm_tags:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      address:
+        type: "string"
+      website:
+        type: "string"
+      opening_hours:
+        type: "string"
+      wheelchair:
+        type: "string"
+      distance:
+        type: "string"
+      fee:
+        type: "string"
+
