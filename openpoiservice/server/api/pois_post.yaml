@@ -3,14 +3,15 @@ tags:
 - name: "Pois"
 info:
   description: |
-            Returns points of interest in the area surrounding a geometry (geometry and/or bbox).
+            Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
+            Find more examples on https://github.com/GIScience/openpoiservice.
   version: "0.1"
   title: "Openpoiservice"
   contact:
     email: "support@openrouteservice.org"
   license:
     name: "MIT"
-    url: "https://github.com/swagger-api/swagger-ui/blob/master/LICENSE"
+    url: "https://github.com/GIScience/openpoiservice/blob/master/LICENSE"
 consumes:
 - "application/json"
 schemes:
@@ -23,6 +24,101 @@ security:
 paths:
   "/pois":
     post:
+      description: |
+        Examples:
+        ```
+        ##### POIS around a buffered point
+        curl -X POST \
+          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
+          -H 'Content-Type: application/json' \
+          -d '{
+          "request": "pois",
+          "geometry": {
+            "bbox": [
+              [8.8034, 53.0756],
+              [8.7834, 53.0456]
+            ],
+            "geojson": {
+              "type": "Point",
+              "coordinates": [8.8034, 53.0756]
+            },
+            "buffer": 250
+          }
+        }'
+
+        ##### POIs of given categories
+        curl -X POST \
+          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
+          -H 'Content-Type: application/json' \
+          -d '{
+          "request": "pois",
+          "geometry": {
+            "bbox": [
+              [8.8034, 53.0756],
+              [8.7834, 53.0456]
+            ],
+            "geojson": {
+              "type": "Point",
+              "coordinates": [8.8034, 53.0756]
+            },
+            "buffer": 100
+          },
+          "limit": 200,
+          "filters": {
+            "category_ids": [180, 245]
+          }
+        }'
+
+        ##### POIs of given category groups
+        curl -X POST \
+          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
+          -H 'Content-Type: application/json' \
+          -d '{
+          "request": "pois",
+          "geometry": {
+            "bbox": [
+              [8.8034, 53.0756],
+              [8.7834, 53.0456]
+            ],
+            "geojson": {
+              "type": "Point",
+              "coordinates": [8.8034, 53.0756]
+            },
+            "buffer": 100
+          },
+          "limit": 200,
+          "filters": {
+            "category_group_ids": [160]
+          }
+        }'
+
+        ##### POI Statistics
+        curl -X POST \
+          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
+          -H 'Content-Type: application/json' \
+          -d '{
+          "request": "stats",
+          "geometry": {
+            "bbox": [
+              [8.8034, 53.0756],
+              [8.7834, 53.0456]
+            ],
+            "geojson": {
+              "type": "Point",
+              "coordinates": [8.8034, 53.0756]
+            },
+            "buffer": 100
+          }
+        }'
+
+        ##### POI Categories as a list
+        curl -X POST \
+          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
+          -H 'content-type: application/json' \
+          -d '{
+            "request": "list"
+        }'
+        ```
       parameters:
         - name: "api_key"
           in: "query"
@@ -77,10 +173,15 @@ definitions:
     example: {
       "request": "pois",
       "geometry": {
-          "bbox": [
-              [8.74189636230469, 53.07144289415349],
-              [8.814767341613771, 53.091060308703845]
-          ]
+        "bbox": [
+          [8.458614349365236, 55.470054514892844],
+          [8.473613262176515, 55.47323501110393]
+        ],
+        "geojson": {
+          "type": "Point",
+          "coordinates": [8.458614349365236, 55.470054514892844]
+        },
+        "buffer": 100
       },
       "limit": 200
     }

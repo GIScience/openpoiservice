@@ -217,54 +217,101 @@ Finally, `request=list` will return a JSON object generated from
 
 ### Examples
 
-##### POIs
+##### POIS around a buffered point
+
 ```sh
 curl -X POST \
   http://localhost:5000/pois \
-  -H 'Cache-Control: no-cache' \
   -H 'Content-Type: application/json' \
   -d '{
-    "geometry": {
-        "geojson": { 
-			"type": "Point",
-        	"coordinates": [8.8034, 53.0756]
-        },
-        "buffer": 50
+  "request": "pois",
+  "geometry": {
+    "bbox": [
+      [8.8034, 53.0756],
+      [8.7834, 53.0456]
+    ],
+    "geojson": {
+      "type": "Point",
+      "coordinates": [8.8034, 53.0756]
     },
-    "limit": 2000,
-    "request": "pois",
-    "sortby": "distance",
-     "filters": {
-     	"category_ids": [488],
-    	"wheelchair": ["yes"]
-    } 
+    "buffer": 250  
+  }
+}'
+```
+
+##### POIs of given categories
+```sh
+curl -X POST \
+  http://localhost:5000/pois \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "request": "pois",
+  "geometry": {
+    "bbox": [
+      [8.8034, 53.0756],
+      [8.7834, 53.0456]
+    ],
+    "geojson": {
+      "type": "Point",
+      "coordinates": [8.8034, 53.0756]
+    },
+    "buffer": 100  
+  },
+  "limit": 200,
+  "filters": {
+    "category_ids": [180, 245]
+  } 
+}'
+```
+
+##### POIs of given category groups
+
+```sh
+curl -X POST \
+  http://localhost:5000/pois \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "request": "pois",
+  "geometry": {
+    "bbox": [
+      [8.8034, 53.0756],
+      [8.7834, 53.0456]
+    ],
+    "geojson": {
+      "type": "Point",
+      "coordinates": [8.8034, 53.0756]
+    },
+    "buffer": 100  
+  },
+  "limit": 200,
+  "filters": {
+    "category_group_ids": [160]
+  } 
 }'
 ```
 
 ##### POI Statistics
 ```sh
 curl -X POST \
-  http://localhost:5000/pois \
-  -H 'Cache-Control: no-cache' \
+  http://129.206.7.157:5005/pois \
   -H 'Content-Type: application/json' \
   -d '{
-    "geometry": {
-        "geojson": { 
-			"type": "Point",
-        	"coordinates": [8.8034, 53.0756]
-        },
-        "buffer": 50
+  "request": "stats",
+  "geometry": {
+    "bbox": [
+      [8.8034, 53.0756],
+      [8.7834, 53.0456]
+    ],
+    "geojson": {
+      "type": "Point",
+      "coordinates": [8.8034, 53.0756]
     },
-    "limit": 2000,
-    "request": "stats",
-    "sortby": "distance",
-     "filters": {
-     	"category_ids": [488]
-     } 
+    "buffer": 100  
+  }
 }'
 ```
 
-##### POI Category List
+##### POI Categories as a list
 
 ```sh
 curl -X POST \
