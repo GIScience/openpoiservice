@@ -100,7 +100,8 @@ def places():
                 raise api_exceptions.InvalidUsage(str(error), status_code=401)
             # query stats
             if all_args['request'] == 'list':
-                return jsonify(categories_tools.categories_object)
+                r = Response(json.dumps(categories_tools.categories_object), mimetype='application/json; charset=utf-8')
+                return r
 
             if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
                 all_args['filters']['category_ids'] = categories_tools.unify_categories(all_args['filters'])
@@ -123,9 +124,8 @@ def places():
             features["information"] = query_info
 
             # query pois
-            return Response(json.dumps(features), mimetype='application/json')
-            # cant use jsonify directly for tests, error since upgrade python36, wtf?
-            # return jsonify(request_pois(all_args))
+            r = Response(json.dumps(features), mimetype='application/json; charset=utf-8')
+            return r
 
     else:
 
