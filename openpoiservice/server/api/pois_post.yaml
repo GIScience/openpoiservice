@@ -141,26 +141,33 @@ paths:
             #- $ref: '#/definitions/LocationsBodyList'
       responses:
         200:
-          description: Standard response for successfully processed requests.
+          description: "Standard response for successfully processed requests."
           schema:
             $ref: '#/definitions/LocationsPoiResponse'
             # oneOf:
             #- $ref: '#/definitions/LocationsPoiResponse'
             #- $ref: '#/definitions/LocationsStatsResponse'
             #- $ref: '#/definitions/LocationsListResponse'
-        400:
-          description: Unable to parse JSON request.
         401:
-          description: Required parameter is missing.
-        402:
-          description: Invalid parameter format.
+          description: "Authorization field missing."
         403:
-          description: Invalid parameter value.
-        404:
-          description: Parameter value exceeds the maximum allowed limit.
-        499:
-          description: Unknown internal error.
-
+          description: "Key not authorised."
+        500:
+          description: |
+            An unexpected error was encountered and more detailed internal
+            errorcode is provided.
+            | Internal Code | Description                                        |
+            |:-------------:|----------------------------------------------------|
+            | 4000 |  Invalid JSON object in request |
+            | 4001 |  Category or category group ids missing |
+            | 4002 |  Geometry is missing |
+            | 4003 |  Bounding box and or geojson not present in request |
+            | 4004 |  Buffer is missing |
+            | 4005 |  Geometry length does not meet the restrictions |
+            | 4006 |  Unsupported HTTP method |
+            | 4007 |  GeoJSON parsing error |
+            | 4008 |  Geometry size does not meet the restrictions |
+            | 4099 |  Unknown internal error |
 securityDefinitions:
   UserSecurity:
     name: "api_key"
