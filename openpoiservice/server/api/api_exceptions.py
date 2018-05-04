@@ -1,15 +1,10 @@
+from openpoiservice.server.api import error_codes
+
+
 class InvalidUsage(Exception):
-    status_code = 400
 
-    def __init__(self, message, status_code=None, payload=None):
+    def __init__(self, status_code=500, error_code=None, message=None):
         """
-        INVALID_JSON_FORMAT = 400
-        MISSING_PARAMETER = 401
-        INVALID_PARAMETER_FORMAT = 402
-        INVALID_PARAMETER_VALUE = 403
-        PARAMETER_VALUE_EXCEEDS_MAXIMUM = 404
-        UNKNOWN = 499
-
         :param message: custom message
         :type message: string
 
@@ -22,13 +17,20 @@ class InvalidUsage(Exception):
 
         # type: (object, object, object) -> object
         Exception.__init__(self)
-        self.message = message
+
         if status_code is not None:
             self.status_code = status_code
-        self.payload = payload
+
+            if message is None:
+                message = error_codes[error_code]
+            else:
+                message = message
+
+            self.error = {
+                "code": error_code,
+                "message": message
+            }
 
     def to_dict(self):
-        rv = dict(self.payload or ())
-        rv['message'] = self.message
+        rv = dict(self.error or ())
         return rv
-
