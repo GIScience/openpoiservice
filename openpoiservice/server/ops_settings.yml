@@ -18,6 +18,7 @@ provider_parameters:
   table_name: ops_planet_pois
   db_name: gis
   user_name: gis_admin
+  #user_name: admin
   password: admin
   host: localhost
   port: 5432
