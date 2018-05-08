@@ -230,43 +230,43 @@ def parse_geometries(geometry):
                     message='Your linestring geometry is too long ({} meters), check the server restrictions.'.format(
                         length))
 
-            elif geojson_obj.geom_type == 'Polygon':
+        elif geojson_obj.geom_type == 'Polygon':
 
-                check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
-
-                # check if area not too large
-                area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area
-                if area > ops_settings['maximum_area']:
-                    raise api_exceptions.InvalidUsage(
-                        message='Your polygon geometry is too large ({} square meters), check the server '
-                                'restrictions.'.format(area),
-                        status_code=500, error_code=4008)
-
-            else:
-                # type not supported
-                raise api_exceptions.InvalidUsage(error_code=4007,
-                                                  message='GeoJSON type {} not supported'.format(geojson_obj.geom_type),
-                                                  status_code=500)
-
-            geometry['geom'] = geojson_obj
-
-        # parse bbox, can be provided additionally to geometry
-        if 'bbox' in geometry:
-
-            try:
-                geojson_obj = MultiPoint(parse_geometry(geometry['bbox']))
-            except ValueError as e:
-                raise api_exceptions.InvalidUsage(status_code=500, error_code=4007, message=str(e))
-
-            geometry['bbox'] = check_validity(geojson_obj).envelope
-
-            # print(geometry['bbox'].wkt)
+            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
 
             # check if area not too large
-            area = transform_geom(geometry['bbox'], 'epsg:4326', 'epsg:3857').area
+            area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area
             if area > ops_settings['maximum_area']:
-                raise api_exceptions.InvalidUsage(error_code=4008, status_code=500,
-                                                  message='Your polygon geometry is too large ({} square meters), '
-                                                          'check the server restrictions.'.format(area))
+                raise api_exceptions.InvalidUsage(
+                    message='Your polygon geometry is too large ({} square meters), check the server '
+                            'restrictions.'.format(area),
+                    status_code=500, error_code=4008)
 
-        return geometry
+        else:
+            # type not supported
+            raise api_exceptions.InvalidUsage(error_code=4007,
+                                              message='GeoJSON type {} not supported'.format(geojson_obj.geom_type),
+                                              status_code=500)
+
+        geometry['geom'] = geojson_obj
+
+    # parse bbox, can be provided additionally to geometry
+    if 'bbox' in geometry:
+
+        try:
+            geojson_obj = MultiPoint(parse_geometry(geometry['bbox']))
+        except ValueError as e:
+            raise api_exceptions.InvalidUsage(status_code=500, error_code=4007, message=str(e))
+
+        geometry['bbox'] = check_validity(geojson_obj).envelope
+
+        # print(geometry['bbox'].wkt)
+
+        # check if area not too large
+        area = transform_geom(geometry['bbox'], 'epsg:4326', 'epsg:3857').area
+        if area > ops_settings['maximum_area']:
+            raise api_exceptions.InvalidUsage(error_code=4008, status_code=500,
+                                              message='Your polygon geometry is too large ({} square meters), '
+                                                      'check the server restrictions.'.format(area))
+
+    return geometry
