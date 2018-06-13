@@ -3,7 +3,7 @@ accomodation:
     children:
         tourism:
             alpine_hut: 101
-            appartment: 102
+            apartment: 102
             camp_site: 103
             caravan_site: 104
             chalet: 105
@@ -42,7 +42,7 @@ education:
             college: 151
             driving_school: 152
             kindergarten: 153
-            lanuage_school: 154
+            language_school: 154
             music_school: 155
             school: 156
             university: 157
@@ -153,7 +153,7 @@ leisure_and_entertainment:
             golf_course: 273
             hackerspace: 274
             horse_riding: 275
-            ice_ring: 276
+            ice_rink: 276
             marina: 277
             miniature_golf: 278
             nature_reserve: 279
@@ -186,7 +186,7 @@ leisure_and_entertainment:
             planetarium: 304
             social_centre: 305
             spa: 306
-            stripclu: 307
+            stripclub: 307
         tourism:
             aquarium: 308
             theme_park: 309
@@ -247,7 +247,7 @@ shops:
     children:
         shop:
             agrarian: 421
-            alkohol: 422
+            alcohol: 422
             antiques: 423
             art: 424
             bag: 425
@@ -277,7 +277,7 @@ shops:
             computer: 449
             confectionery: 450
             convenience: 451
-            copy: 452
+            copyshop: 452
             cosmetics: 453
             dairy: 454
             deli: 455
@@ -336,7 +336,7 @@ shops:
             photo: 508
             pyrotechnics: 509
             radiotechnics: 510
-            seefood: 511
+            seafood: 511
             second_hand: 512
             security: 513
             shoes: 514
