@@ -72,6 +72,7 @@ facilities:
             waste_disposal: 181
             water_point: 182
         emergency:
+            access_point: 205
             defibrillator: 165
             fire_hydrant: 167
 
@@ -91,7 +92,6 @@ healthcare:
             clinic: 202
             dentist: 203
             doctors: 204
-            emergency_access_point: 205
             hospital: 206
             nursing_home: 207
             pharmacy: 208
@@ -161,7 +161,6 @@ leisure_and_entertainment:
             picnic_table: 281
             pitch: 282
             playground: 283
-            public_bath: 285
             sauna: 286
             slipway: 287
             sports_centre: 288
@@ -184,6 +183,7 @@ leisure_and_entertainment:
             gambling: 302
             nightclub: 303
             planetarium: 304
+            public_bath: 285
             social_centre: 305
             spa: 306
             stripclub: 307
@@ -235,11 +235,11 @@ service:
             dry_cleaning: 393
             glaziery: 394
             hairdresser: 395
+            laundry: 396
             massage: 397
             tailor: 399
             tattoo: 400
         amenity:
-            laundry: 396
             photo_booth: 398
 
 shops:
@@ -318,7 +318,6 @@ shops:
             lamps: 490
             lottery: 491
             mall: 492
-            marketplace: 493
             medical_supply: 494
             mobile_phone: 495
             model: 496
@@ -353,12 +352,14 @@ shops:
             trophy: 525
             tyres: 526
             variety_store: 527
-            vending_machine: 528
             video: 529
             video_games: 530
             watches: 531
             weapons: 532
             wine: 533
+        amenity:
+            marketplace: 493
+            vending_machine: 528
 
 sustenance:
     id: 560
