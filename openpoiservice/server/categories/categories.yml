@@ -40,12 +40,12 @@ education:
     children:
         amenity:
             college: 151
-            driving_school:  152
-            kindergarten:  153
-            lanuage_school:  154
-            music_school:  155
-            school:  156
-            university:  157
+            driving_school: 152
+            kindergarten: 153
+            lanuage_school: 154
+            music_school: 155
+            school: 156
+            university: 157
 
 facilities:
     id: 160
@@ -59,17 +59,17 @@ facilities:
             hunting_stand: 168
             internet_cafe: 169
             kneipp_water_cure: 170
-            post_box:  171
+            post_box: 171
             recycling: 172
             recycling_station: 173
             sanitary_dump_station: 174
             shelter: 175
-            shower:  176
+            shower: 176
             table: 177
             telephone: 178
             toilets: 179
-            waste_basket:  180
-            waste_disposal:  181
+            waste_basket: 180
+            waste_disposal: 181
             water_point: 182
         emergency:
             defibrillator: 165
@@ -81,20 +81,20 @@ financial:
         amenity:
             atm: 191
             bank: 192
-            bureau_de_change:  193
+            bureau_de_change: 193
 
 healthcare:
     id: 200
     children:
         amenity:
-            baby_hatch:  201
-            clinic:  202
+            baby_hatch: 201
+            clinic: 202
             dentist: 203
             doctors: 204
-            emergency_access_point:  205
+            emergency_access_point: 205
             hospital: 206
-            nursing_home:  207
-            pharmacy:  208
+            nursing_home: 207
+            pharmacy: 208
             retirement_home: 209
             social_facility: 210
         healthcare:
@@ -104,34 +104,34 @@ historic:
     id: 220
     children:
         historic:
-            aircraft:  221
-            aqueduct:  222
+            aircraft: 221
+            aqueduct: 222
             archaeological_site: 223
-            castle:  224
-            cannon:  225
+            castle: 224
+            cannon: 225
             city_gate: 226
             citywalls: 227
             battlefield: 228
-            boundary_stone:  229
-            building:  230
-            farm:  231
-            fort:  232
+            boundary_stone: 229
+            building: 230
+            farm: 231
+            fort: 232
             gallows: 233
-            highwater_mark:  234
-            locomotive:  235
+            highwater_mark: 234
+            locomotive: 235
             manor: 236
-            memorial:  237
+            memorial: 237
             milestone: 238
             monastery: 239
-            monument:  240
+            monument: 240
             optical_telegraph: 241
             pillory: 242
             ruins: 243
-            rune_stone:  244
-            ship:  245
-            tomb:  246
+            rune_stone: 244
+            ship: 245
+            tomb: 246
             wayside_cross: 247
-            wayside_shrine:  248
+            wayside_shrine: 248
             wreck: 249
 
 leisure_and_entertainment:
@@ -139,28 +139,28 @@ leisure_and_entertainment:
     children:
         leisure:
             adult_gaming_centre: 261
-            amusement_arcade:  262
-            beach_resort:  263
+            amusement_arcade: 262
+            beach_resort: 263
             bandstand: 264
             bird_hide: 265
-            common:  266
+            common: 266
             dance: 267
-            dog_park:  268
+            dog_park: 268
             firepit: 269
             fishing: 270
-            fitness_centre:  271
-            garden:  272
+            fitness_centre: 271
+            garden: 272
             golf_course: 273
             hackerspace: 274
-            horse_riding:  275
-            ice_ring:  276
-            marina:  277
-            miniature_golf:  278
-            nature_reserve:  279
-            park:  280
-            picnic_table:  281
+            horse_riding: 275
+            ice_ring: 276
+            marina: 277
+            miniature_golf: 278
+            nature_reserve: 279
+            park: 280
+            picnic_table: 281
             pitch: 282
-            playground:  283
+            playground: 283
             public_bath: 285
             sauna: 286
             slipway: 287
@@ -170,26 +170,26 @@ leisure_and_entertainment:
             swimming_area: 291
             swimming_pool: 292
             track: 293
-            turkish_bath:  294
-            water_park:  295
+            turkish_bath: 294
+            water_park: 295
             wildlife_hide: 296
         highway:
              raceway: 284
         amenity:
             brothel: 297
-            casino:  298
-            cinema:  299
+            casino: 298
+            cinema: 299
             dive_centre: 300
-            dojo:  301
-            gambling:  302
+            dojo: 301
+            gambling: 302
             nightclub: 303
             planetarium: 304
             social_centre: 305
             spa: 306
             stripclu: 307
         tourism:
-            aquarium:  308
-            theme_park:  309
+            aquarium: 308
+            theme_park: 309
             zoo: 310
 
 natural:
@@ -213,15 +213,15 @@ public_places:
         amenity:
             embassy: 361
             crematorium: 362
-            community_centre:  363
-            courthouse:  364
+            community_centre: 363
+            courthouse: 364
             coworking_space: 365
             crypt: 366
             fire_station: 367
-            grave_yard:  368
-            police:  369
+            grave_yard: 368
+            police: 369
             post_office: 370
-            prison:  371
+            prison: 371
             ranger_station: 372
             rescue_station: 373
             townhall: 374
@@ -230,13 +230,13 @@ service:
     id: 390
     children:
         shop:
-            beauty:  391
-            estate_agent:  392
-            dry_cleaning:  393
-            glaziery:  394
+            beauty: 391
+            estate_agent: 392
+            dry_cleaning: 393
+            glaziery: 394
             hairdresser: 395
             massage: 397
-            tailor:  399
+            tailor: 399
             tattoo: 400
         amenity:
             laundry: 396
@@ -246,48 +246,48 @@ shops:
     id: 420
     children:
         shop:
-            agrarian:  421
+            agrarian: 421
             alkohol: 422
-            antiques:  423
+            antiques: 423
             art: 424
             bag: 425
-            bakery:  426
+            bakery: 426
             bed: 427
             beverages: 428
             bicycle: 429
             books: 430
-            boutique:  431
-            brewing_supplies:  432
+            boutique: 431
+            brewing_supplies: 432
             business_machines: 433
             butcher: 434
-            cafe:  435
-            camera:  436
+            cafe: 435
+            camera: 436
             candles: 437
             car: 438
             car_parts: 439
-            carpet:  440
+            carpet: 440
             curtain: 441
-            cheese:  442
+            cheese: 442
             chemist: 443
             chocolate: 444
             clock: 445
-            clocks:  446
+            clocks: 446
             clothes: 447
-            coffee:  448
-            computer:  449
+            coffee: 448
+            computer: 449
             confectionery: 450
             convenience: 451
             copy: 452
             cosmetics: 453
             dairy: 454
-            deli:  455
-            department_store:  456
-            doityourself:  457
-            electrical:  458
+            deli: 455
+            department_store: 456
+            doityourself: 457
+            electrical: 458
             electronics: 459
-            erotic:  460
+            erotic: 460
             e-cigarette: 461
-            farm:  462
+            farm: 462
             fashion: 463
             fishing: 464
             florist: 465
@@ -295,18 +295,18 @@ shops:
             furniture: 467
             games: 468
             garden_centre: 469
-            garden_furniture:  470
+            garden_furniture: 470
             gas: 471
             general: 472
-            gift:  473
+            gift: 473
             greengrocer: 474
             grocery: 475
             interior_decoration: 476
-            hairdresser_supply:  477
-            hardware:  478
-            hearing_aids:  479
+            hairdresser_supply: 477
+            hardware: 478
+            hearing_aids: 479
             herbalist: 480
-            hifi:  481
+            hifi: 481
             houseware: 482
             hunting: 483
             insurance: 484
@@ -324,33 +324,33 @@ shops:
             model: 496
             motorcycle: 497
             music: 498
-            musical_instrument:  499
+            musical_instrument: 499
             nutrition_supplements: 500
             newsagent: 501
-            optician:  502
+            optician: 502
             organic: 503
             outdoor: 504
             paint: 505
-            pastry:  506
+            pastry: 506
             perfumery: 507
             photo: 508
-            pyrotechnics:  509
+            pyrotechnics: 509
             radiotechnics: 510
             seefood: 511
             second_hand: 512
-            security:  513
+            security: 513
             shoes: 514
-            spices:  515
-            sports:  516
-            stationery:  517
+            spices: 515
+            sports: 516
+            stationery: 517
             supermarket: 518
             swimming_pool: 519
             tea: 520
-            ticket:  521
+            ticket: 521
             tiles: 522
             tobacco: 523
-            toys:  524
-            trophy:  525
+            toys: 524
+            trophy: 525
             tyres: 526
             variety_store: 527
             vending_machine: 528
@@ -358,7 +358,7 @@ shops:
             video_games: 530
             watches: 531
             weapons: 532
-            wine:  533
+            wine: 533
 
 sustenance:
     id: 560
@@ -367,10 +367,10 @@ sustenance:
             bar: 561
             bbq: 562
             biergarten: 563
-            cafe:  564
-            drinking_water:  565
+            cafe: 564
+            drinking_water: 565
             fast_food: 566
-            food_court:  567
+            food_court: 567
             ice_cream: 568
             pub: 569
             restaurant: 570
@@ -385,22 +385,22 @@ transport:
             heliport: 599
         amenity:
             bicycle_parking: 583
-            bicycle_rental:  584
-            bicycle_repair_station:  585
-            boat_sharing:  586
+            bicycle_rental: 584
+            bicycle_repair_station: 585
+            boat_sharing: 586
             bus_station: 587
             bus_stop: 588
             car_rental: 589
             car_repair: 590
             car_sharing: 591
             car_wash: 592
-            charging_station:  593
+            charging_station: 593
             ev_charging: 594
-            ferry_terminal:  595
+            ferry_terminal: 595
             fuel: 596
-            motorcycle_parking:  600
+            motorcycle_parking: 600
             parking: 601
-            parking_entrance:  602
+            parking_entrance: 602
             parking_space: 603
             taxi: 606
         railway:
@@ -413,7 +413,7 @@ tourism:
     children:
         tourism:
             artwork: 621
-            attraction:  622
+            attraction: 622
             information: 624
             picnic_site: 625
             viewpoint: 627
