@@ -6,6 +6,7 @@ import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography, Geometry
 from geoalchemy2.elements import WKBElement, WKTElement
 from shapely import wkb
+from shapely.geometry import MultiPoint
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func, cast, Integer, ARRAY
@@ -236,10 +237,12 @@ class QueryBuilder(object):
         """
 
         geojson_features = []
+        lat_lngs = []
 
         for q_idx, q in enumerate(query):
 
             geometry = wkb.loads(str(q[3]), hex=True)
+            lat_lngs.append((geometry.x, geometry.y))
 
             properties = dict(
                 osm_id=int(q[0]),
@@ -265,15 +268,14 @@ class QueryBuilder(object):
             properties["osm_tags"] = key_values
 
             geojson_feature = geojson.Feature(geometry=geometry,
-                                              properties=properties
-                                              )
+                                              properties=properties)
             geojson_features.append(geojson_feature)
 
             # limit reached
             if q_idx == limit - 2:
                 break
 
-        feature_collection = geojson.FeatureCollection(geojson_features)
+        feature_collection = geojson.FeatureCollection(geojson_features, bbox=MultiPoint(lat_lngs).bounds)
 
         logger.info("Amount of features {}".format(len(geojson_features)))
 
