@@ -261,11 +261,11 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type)
-            self.store_poi(self.poi_object)
-
             for category in categories:
                 self.store_categories(my_uuid, category)
+                
+            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type)
+            self.store_poi(self.poi_object)
 
     def parse_coords_for_ways(self, coords):
         """
