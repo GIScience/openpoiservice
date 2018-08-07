@@ -2,6 +2,8 @@
 
 import yaml
 import os
+import copy
+
 
 class CategoryTools(object):
 
@@ -42,7 +44,7 @@ class CategoryTools(object):
         self.category_index = {}
         self.category_ids_index = {}
 
-        for k, v in self.categories_object.items():
+        for k, v in copy.deepcopy(self.categories_object).items():
 
             group_name = k
             group_id = v['id']
