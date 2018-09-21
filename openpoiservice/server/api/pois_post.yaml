@@ -1,10 +1,10 @@
 swagger: "2.0"
 tags:
 - name: "Pois"
-info:
   description: |
-            Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
-            Find more examples on https://github.com/GIScience/openpoiservice.
+    Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
+    Find more examples on https://github.com/GIScience/openpoiservice.
+info:
   version: "0.1"
   title: "Openpoiservice"
   contact:
@@ -24,6 +24,8 @@ security:
 paths:
   "/pois":
     post:
+      tags:
+      - "Pois"
       description: |
         Examples:
         ```
