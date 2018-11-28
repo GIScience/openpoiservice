@@ -1,9 +1,7 @@
 swagger: "2.0"
 tags:
 - name: "Pois"
-  description: |
-    Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
-    Find more examples on https://github.com/GIScience/openpoiservice.
+  description: "Obtain POIs of an area"
 info:
   version: "0.1"
   title: "Openpoiservice"
@@ -26,7 +24,11 @@ paths:
     post:
       tags:
       - "Pois"
+      summary: "Pois Service"
       description: |
+        Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
+        Find more examples on [github](https://github.com/GIScience/openpoiservice).
+
         Examples:
         ```
         ##### POIS around a buffered point
@@ -122,25 +124,27 @@ paths:
         }'
         ```
       parameters:
-        - name: "api_key"
-          in: "query"
-          description: |
-            Insert your API Key here.
-          type: "string"
-          required: true
-          default: "your-api-key"
-        - in: body
-          name: "body"
-          required: true
-          description: body for a post request
-          schema:
-            $ref: '#/definitions/LocationsBodyPois'
-            # this does not work yet..
-            # https://swagger.io/docs/specification/describing-request-body/
-            # oneOf:
-            #- $ref: '#/definitions/LocationsBodyPois'
-            #- $ref: '#/definitions/LocationsBodyStats'
-            #- $ref: '#/definitions/LocationsBodyList'
+      - name: "api_key"
+        in: "query"
+        description: |
+          Insert your API Key here.
+        type: "string"
+        required: true
+        default: "your-api-key"
+      - in: body
+        name: "body"
+        required: true
+        description: body for a post request
+        default: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
+        schema:
+          example: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
+          $ref: '#/definitions/LocationsBodyPois'
+          # this does not work yet..
+          # https://swagger.io/docs/specification/describing-request-body/
+          # oneOf:
+          #- $ref: '#/definitions/LocationsBodyPois'
+          #- $ref: '#/definitions/LocationsBodyStats'
+          #- $ref: '#/definitions/LocationsBodyList'
       responses:
         200:
           description: "Standard response for successfully processed requests."
@@ -183,8 +187,8 @@ definitions:
       "request": "pois",
       "geometry": {
         "bbox": [
-          [8.458614349365236, 55.470054514892844],
-          [8.473613262176515, 55.47323501110393]
+        [8.458614349365236, 55.470054514892844],
+        [8.473613262176515, 55.47323501110393]
         ],
         "geojson": {
           "type": "Point",
@@ -196,8 +200,8 @@ definitions:
     }
     type: object
     required:
-      - request
-      - geometry
+    - request
+    - geometry
     properties:
       request:
         type: string
@@ -235,8 +239,8 @@ definitions:
 
   LocationsBodyStats:
     required:
-      - request
-      - geometry
+    - request
+    - geometry
     properties:
       request:
         type: string
@@ -270,7 +274,7 @@ definitions:
 
   LocationsBodyList:
     required:
-      - request
+    - request
     properties:
       request:
         type: string
