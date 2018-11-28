@@ -6,6 +6,7 @@ import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography, Geometry
 from geoalchemy2.elements import WKBElement, WKTElement
 from shapely import wkb
+from shapely.geometry import MultiPoint, Point
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func, cast, Integer, ARRAY
@@ -91,7 +92,7 @@ class QueryBuilder(object):
                 elif params['sortby'] == 'category':
                     sortby_group.append(bbox_query.c.category)
 
-            start = timer()
+            # start = timer()
 
             keys_agg = func.array_agg(Tags.key).label('keys')
             values_agg = func.array_agg(Tags.value).label('values')
@@ -116,10 +117,10 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.geom) \
                 # .all()
 
-            end = timer()
-            print(end - start)
+            # end = timer()
+            # print(end - start)
 
-            print(str(pois_query))
+            #print(str(pois_query))
             # for dude in pois_query:
             # print(dude)
 
@@ -236,10 +237,16 @@ class QueryBuilder(object):
         """
 
         geojson_features = []
+        lat_lngs = []
 
         for q_idx, q in enumerate(query):
 
             geometry = wkb.loads(str(q[3]), hex=True)
+            x = float(format(geometry.x, ".6f"))
+            y = float(format(geometry.y, ".6f"))
+            trimmed_point = Point(x, y)
+
+            lat_lngs.append((trimmed_point.x, trimmed_point.y))
 
             properties = dict(
                 osm_id=int(q[0]),
@@ -264,16 +271,15 @@ class QueryBuilder(object):
 
             properties["osm_tags"] = key_values
 
-            geojson_feature = geojson.Feature(geometry=geometry,
-                                              properties=properties
-                                              )
+            geojson_feature = geojson.Feature(geometry=trimmed_point,
+                                              properties=properties)
             geojson_features.append(geojson_feature)
 
             # limit reached
             if q_idx == limit - 2:
                 break
 
-        feature_collection = geojson.FeatureCollection(geojson_features)
+        feature_collection = geojson.FeatureCollection(geojson_features, bbox=MultiPoint(lat_lngs).bounds)
 
         logger.info("Amount of features {}".format(len(geojson_features)))
 

@@ -3,8 +3,6 @@ import setuptools
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
 
 setuptools.setup(
     name="openpoiservice",

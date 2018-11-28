@@ -2,6 +2,7 @@
 
 import yaml
 import os
+import copy
 
 
 class CategoryTools(object):
@@ -43,7 +44,7 @@ class CategoryTools(object):
         self.category_index = {}
         self.category_ids_index = {}
 
-        for k, v in self.categories_object.items():
+        for k, v in copy.deepcopy(self.categories_object).items():
 
             group_name = k
             group_id = v['id']
@@ -55,6 +56,7 @@ class CategoryTools(object):
             for tag_name, pois in group_children.items():
 
                 if tag_name in self.category_index:
+
                     self.category_index[tag_name].update(pois)
                 else:
                     self.category_index[tag_name] = pois
