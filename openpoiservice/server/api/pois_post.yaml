@@ -31,11 +31,9 @@ paths:
 
         Examples:
         ```
-        ##### POIS around a buffered point
-        curl -X POST \
-          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
-          -H 'Content-Type: application/json' \
-          -d '{
+        #### JSON bodies for POST requests
+        ##### Pois around a buffered point
+        {
           "request": "pois",
           "geometry": {
             "bbox": [
@@ -48,13 +46,10 @@ paths:
             },
             "buffer": 250
           }
-        }'
+        }
 
-        ##### POIs of given categories
-        curl -X POST \
-          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
-          -H 'Content-Type: application/json' \
-          -d '{
+        ##### Pois given categories
+        {
           "request": "pois",
           "geometry": {
             "bbox": [
@@ -71,13 +66,10 @@ paths:
           "filters": {
             "category_ids": [180, 245]
           }
-        }'
+        }
 
-        ##### POIs of given category groups
-        curl -X POST \
-          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
-          -H 'Content-Type: application/json' \
-          -d '{
+        ##### Pois given category groups
+        {
           "request": "pois",
           "geometry": {
             "bbox": [
@@ -94,13 +86,10 @@ paths:
           "filters": {
             "category_group_ids": [160]
           }
-        }'
+        }
 
-        ##### POI Statistics
-        curl -X POST \
-          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
-          -H 'Content-Type: application/json' \
-          -d '{
+        ##### Pois statistics
+        {
           "request": "stats",
           "geometry": {
             "bbox": [
@@ -113,15 +102,12 @@ paths:
             },
             "buffer": 100
           }
-        }'
+        }
 
-        ##### POI Categories as a list
-        curl -X POST \
-          https://api.openrouteservice.org/pois?api_key=INSERT_YOUR_KEY \
-          -H 'content-type: application/json' \
-          -d '{
+        ##### Pois categories as a list
+        {
             "request": "list"
-        }'
+        }
         ```
       parameters:
       - name: "api_key"
