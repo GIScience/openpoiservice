@@ -24,6 +24,7 @@ class GeoFabrikSpider(scrapy.Spider):
             regions = ['Europe']
             #regions = ['Asia', 'Europe', 'North America']
 
+
             if subregion in regions:
                 link_selector = 'a::attr(href)'
 
@@ -43,13 +44,14 @@ class GeoFabrikSpider(scrapy.Spider):
 
             head, tail = os.path.split(sub_region)
 
-            # print(head, tail)
-            # print('does it exist?', tail)
+            print(head, tail)
+            print('does it exist?', tail)
 
             if os.path.exists(tail):
                 print('{} already downloaded'.format(tail))
             else:
                 print('Starting download of {}'.format(tail))
+
                 download_link = urlparse.urljoin(response.url, sub_region)
                 subprocess.call(['wget', download_link])
                 sleep(120)  # few minutes

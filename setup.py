@@ -1,15 +1,17 @@
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 
 setuptools.setup(
     name="openpoiservice",
     version="0.1.7",
+    install_requires=requirements,
     author="Timothy Ellersiek",
     author_email="timothy@openrouteservice.org",
     description="POI service consuming OpenStreetMap data",
-    keywords='OSM ORS openrouteservice openstreetmap POI points of interest',
+    keywords='OSM ORS openrouteservice OpenStreetMap POI points of interest',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/GIScience/openpoiservice",

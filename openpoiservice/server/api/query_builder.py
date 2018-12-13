@@ -120,7 +120,7 @@ class QueryBuilder(object):
             # end = timer()
             # print(end - start)
 
-            #print(str(pois_query))
+            # print(str(pois_query))
             # for dude in pois_query:
             # print(dude)
 
