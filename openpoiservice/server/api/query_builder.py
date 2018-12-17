@@ -270,6 +270,9 @@ class QueryBuilder(object):
                     key_values[key] = q[5][idx]
 
             properties["osm_tags"] = key_values
+            for tag in properties['osm_tags']:
+                if tag == None:
+                    del properties['osm_tags']
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
