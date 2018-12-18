@@ -117,14 +117,33 @@ paths:
         type: "string"
         required: true
         default: "your-api-key"
-      - in: body
-        name: "body"
+      - name: "body"
+        in: body
         required: true
+        #        requiredParams:
+        #        - request
+        #        - geometry
         description: body for a post request
         default: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
-        schema:
-          example: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
-          $ref: '#/definitions/LocationsBodyPois'
+        #        example: {
+        #          "request": "pois",
+        #          "geometry": {
+        #            "bbox": [
+        #            [8.458614349365236, 55.470054514892844],
+        #            [8.473613262176515, 55.47323501110393]
+        #            ],
+        #            "geojson": {
+        #              "type": "Point",
+        #              "coordinates": [8.458614349365236, 55.470054514892844]
+        #            },
+        #            "buffer": 100
+        #          },
+        #          "limit": 200
+        #        }
+        type: object
+        example: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
+        props:
+          $ref: '#/definitions/LocationsBodyPoisProps'
           # this does not work yet..
           # https://swagger.io/docs/specification/describing-request-body/
           # oneOf:
@@ -168,59 +187,39 @@ securityDefinitions:
     type: "apiKey"
     in: "query"
 definitions:
-  LocationsBodyPois:
-    example: {
-      "request": "pois",
-      "geometry": {
-        "bbox": [
-        [8.458614349365236, 55.470054514892844],
-        [8.473613262176515, 55.47323501110393]
-        ],
-        "geojson": {
-          "type": "Point",
-          "coordinates": [8.458614349365236, 55.470054514892844]
-        },
-        "buffer": 100
-      },
-      "limit": 200
-    }
-    type: object
-    required:
-    - request
-    - geometry
-    properties:
-      request:
-        type: string
-        example: pois
-      geometry:
-        type: object
-        properties:
-          buffer:
-            $ref: "#/definitions/buffer"
-          bbox:
-            $ref: "#/definitions/bbox"
-          geojson:
-            $ref: "#/definitions/geojson"
-      filters:
-        type: object
-        properties:
-          category_group_ids:
-            $ref: "#/definitions/category_group_ids"
-          category_ids:
-            $ref: "#/definitions/category_ids"
-          # CUSTOM FILTERS
-          name:
-            $ref: "#/definitions/name"
-          wheelchair:
-            $ref: "#/definitions/wheelchair"
-          smoking:
-            $ref: "#/definitions/smoking"
-          fee:
-            $ref: "#/definitions/fee"
-      limit:
-        $ref: "#/definitions/limit"
-      sortby:
-        $ref: "#/definitions/sortby"
+  LocationsBodyPoisProps:
+    request:
+      type: string
+      example: pois
+    geometry:
+      type: object
+      properties:
+        buffer:
+          $ref: "#/definitions/buffer"
+        bbox:
+          $ref: "#/definitions/bbox"
+        geojson:
+          $ref: "#/definitions/geojson"
+    filters:
+      type: object
+      properties:
+        category_group_ids:
+          $ref: "#/definitions/category_group_ids"
+        category_ids:
+          $ref: "#/definitions/category_ids"
+        # CUSTOM FILTERS
+        name:
+          $ref: "#/definitions/name"
+        wheelchair:
+          $ref: "#/definitions/wheelchair"
+        smoking:
+          $ref: "#/definitions/smoking"
+        fee:
+          $ref: "#/definitions/fee"
+    limit:
+      $ref: "#/definitions/limit"
+    sortby:
+      $ref: "#/definitions/sortby"
     title:  "Openpoiservice poi request"
 
   LocationsBodyStats:
