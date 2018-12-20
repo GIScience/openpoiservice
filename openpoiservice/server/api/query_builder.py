@@ -264,15 +264,13 @@ class QueryBuilder(object):
                 }
             properties["category_ids"] = category_ids_obj
 
-            key_values = {}
-            for idx, key in enumerate(q[4]):
-                if key != "null":
+            if q[5][0] is not None:
+                key_values = {}
+                for idx, key in enumerate(q[4]):
                     key_values[key] = q[5][idx]
-
-            properties["osm_tags"] = key_values
-            for tag in properties['osm_tags']:
-                if tag == None:
-                    del properties['osm_tags']
+                properties["osm_tags"] = key_values
+            else:
+                pass
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
