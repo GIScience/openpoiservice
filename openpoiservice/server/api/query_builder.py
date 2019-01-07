@@ -269,8 +269,6 @@ class QueryBuilder(object):
                 for idx, key in enumerate(q[4]):
                     key_values[key] = q[5][idx]
                 properties["osm_tags"] = key_values
-            else:
-                pass
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
