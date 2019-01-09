@@ -221,20 +221,15 @@ The default base url is `http://localhost:5000/`.
 
 The openpoiservice holds the endpoint `/pois`:
 
-+----------------+-----------+-----------------------------------+
 | Method allowed | Parameter | Values                            |
-+================+===========+===================================+
+|----------------|:----------|:----------------------------------|
 | POST           | request   | pois, stats, list                 |
-|                +-----------+-----------------------------------+
 |                | geometry  | bbox, geojson, buffer             |
-|                +-----------+-----------------------------------+
 |                | filter    | category_group_ids, category_ids, | 
-|                |           | name, wheelchair, smoking, fee    |
-|                +-----------+-----------------------------------+ 
+|                |           | name, wheelchair, smoking, fee    | 
 |                | limit     | integer                           |
-|                +-----------+-----------------------------------+
 |                | sortby    | category, distance                |
-+----------------+-----------+-----------------------------------+
+
 
 ### Examples
 
