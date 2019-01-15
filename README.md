@@ -215,6 +215,20 @@ returning a JSON object with the absolute numbers of pois of a certain group.
 Finally, `request=list` will return a JSON object generated from 
 `openpoiservice/server/categories/categories.yml`.
 
+### Endpoints
+
+The default base url is `http://localhost:5000/`.
+
+The openpoiservice holds the endpoint `/pois`:
+
+| Method allowed | Parameter | Values \[optional\]                            			     |
+|----------------|:----------|:----------------------------------------------------------------------|
+| POST           | request   | pois, stats, list                 				     |
+|                | geometry  | bbox, geojson, buffer             				     |
+|                | filter    | category_group_ids, category_ids, \[name, wheelchair, smoking, fee\]  | 
+|                | limit     | integer                           				     |
+|                | sortby    | category, distance                				     |
+
 ### Examples
 
 ##### POIS around a buffered point
