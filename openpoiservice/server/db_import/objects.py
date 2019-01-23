@@ -1,5 +1,9 @@
 # openpoiservice/server/poi_entity.py
 
+from openpoiservice.server import ops_settings
+from geopy.geocoders import * # get_geocoder_for_service
+import json
+
 
 class PoiObject(object):
 
@@ -16,7 +20,7 @@ class PoiObject(object):
                                                   float(lat_lng[1]))
 
         # add geocoder connector here...
-        self.address = None
+        self.address = AddressObject(lat_lng).address_request()
 
 
 class TagsObject(object):
@@ -26,3 +30,23 @@ class TagsObject(object):
         self.osmid = int(osmid)
         self.key = key
         self.value = value
+
+
+class AddressObject(object):
+
+    def __init__(self, lat_lng):
+        self.lat_lng = lat_lng[::-1]
+
+    def address_request(self):
+
+        for geocoder, settings in ops_settings['geocoder'].items():
+            if geocoder == 'pelias':
+                domain = ops_settings['geocoder']['pelias']['domain']
+                api_key = ops_settings['geocoder']['pelias']['api_key']
+                geolocator = Pelias(domain=domain, api_key=api_key)
+                response = geolocator.reverse(query=self.lat_lng)
+                return json.dumps(response.raw['properties'], sort_keys=True)
+            else:
+                geolocator = get_geocoder_for_service(geocoder)
+                response = geolocator().reverse(query=self.lat_lng)
+                return json.dumps(response.raw['address'], sort_keys=True)

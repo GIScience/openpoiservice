@@ -183,7 +183,8 @@ class OsmImporter(object):
             uuid=poi_object.uuid,
             osm_id=poi_object.osmid,
             osm_type=poi_object.type,
-            geom=poi_object.geom
+            geom=poi_object.geom,
+            address=poi_object.address
         ))
 
         if self.pois_cnt % 1000 == 0:

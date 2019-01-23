@@ -14,7 +14,7 @@ class Pois(db.Model):
     uuid = db.Column(db.LargeBinary, primary_key=True)
     osm_id = db.Column(db.BigInteger, nullable=False, index=True)
     osm_type = db.Column(db.Integer, nullable=False)
-    # address = db.Column(db.Text, nullable=True)
+    address = db.Column(db.Text, nullable=True)
     geom = db.Column(Geography(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False)
 
     tags = db.relationship("Tags", backref='{}'.format(ops_settings['provider_parameters']['table_name']),

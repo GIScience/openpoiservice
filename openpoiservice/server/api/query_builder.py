@@ -270,6 +270,10 @@ class QueryBuilder(object):
                     key_values[key] = q[5][idx]
                 properties["osm_tags"] = key_values
 
+            # if q[7] is not None:
+            properties["address"] = q[7]
+            print(properties['address'])
+
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
             geojson_features.append(geojson_feature)
