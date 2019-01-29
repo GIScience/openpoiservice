@@ -2,6 +2,7 @@
 
 from openpoiservice.server import db, ops_settings
 from geoalchemy2 import Geography
+from sqlalchemy.dialects.postgresql import JSONB
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,6 @@ class Pois(db.Model):
     uuid = db.Column(db.LargeBinary, primary_key=True)
     osm_id = db.Column(db.BigInteger, nullable=False, index=True)
     osm_type = db.Column(db.Integer, nullable=False)
-    address = db.Column(db.Text, nullable=True)
     geom = db.Column(Geography(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False)
 
     tags = db.relationship("Tags", backref='{}'.format(ops_settings['provider_parameters']['table_name']),
@@ -22,6 +22,7 @@ class Pois(db.Model):
 
     categories = db.relationship("Categories", backref='{}'.format(ops_settings['provider_parameters']['table_name']),
                                  lazy='dynamic')
+    address = db.Column(JSONB) # ,  nullable=True)
 
     def __repr__(self):
         return '<osm id %r>' % self.osm_id

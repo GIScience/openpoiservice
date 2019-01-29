@@ -3,7 +3,7 @@
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
-from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+from openpoiservice.server.db_import.objects import PoiObject, TagsObject, AddressObject
 from openpoiservice.server.utils.decorators import get_size
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
@@ -14,6 +14,7 @@ import sys
 from timeit import Timer
 from bisect import bisect_left
 from collections import deque
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,7 @@ class OsmImporter(object):
         self.tags_object = None
         self.poi_object = None
         self.process_ways_length = None
+        # self.address = None
 
     def parse_relations(self, relations):
         """
@@ -262,7 +264,9 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type)
+            address = AddressObject(lat_lng).address_request() # json.dumps()
+
+            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type, address)
             self.store_poi(self.poi_object)
 
             for category in categories:

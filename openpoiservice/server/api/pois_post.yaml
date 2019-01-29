@@ -220,6 +220,8 @@ definitions:
       $ref: "#/definitions/limit"
     sortby:
       $ref: "#/definitions/sortby"
+    address:
+      $ref: "#/definitions/geocoder"
     title:  "Openpoiservice poi request"
 
   LocationsBodyStats:
@@ -293,6 +295,11 @@ definitions:
     enum:
     - category
     - distance
+  address:
+    type:
+    example: pelias
+    enum:
+      - pelias
   bbox:
     type: array
     #items:
@@ -433,6 +440,8 @@ definitions:
       osm_tags:
         type: "object"
         $ref: "#/definitions/location_features_properties_osm_tags"
+      address:
+        type: "json string" # "object"
 
   location_features_properties_category_ids:
     properties:

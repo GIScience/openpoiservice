@@ -7,7 +7,7 @@ import json
 
 class PoiObject(object):
 
-    def __init__(self, uuid, categories, osmid, lat_lng, osm_type):
+    def __init__(self, uuid, categories, osmid, lat_lng, osm_type, address):
         self.uuid = uuid
         self.osmid = int(osmid)
         self.type = int(osm_type)
@@ -18,9 +18,9 @@ class PoiObject(object):
 
         self.geom = 'SRID={};POINT({} {})'.format(4326, float(lat_lng[0]),
                                                   float(lat_lng[1]))
+        self.address = address
 
-        # add geocoder connector here...
-        self.address = AddressObject(lat_lng).address_request()
+        # self.address = AddressObject(lat_lng).address_request()
 
 
 class TagsObject(object):
@@ -45,8 +45,13 @@ class AddressObject(object):
                 api_key = ops_settings['geocoder']['pelias']['api_key']
                 geolocator = Pelias(domain=domain, api_key=api_key)
                 response = geolocator.reverse(query=self.lat_lng)
-                return json.dumps(response.raw['properties'], sort_keys=True)
+                return json.dumps(response.raw['properties'])
+                # return json.dumps(response.raw['properties'], sort_keys=True, ensure_ascii=False)
+                # json_data = json.dumps(response.raw['properties'], ensure_ascii=False)
+                # return json.loads(json_data)
             else:
                 geolocator = get_geocoder_for_service(geocoder)
                 response = geolocator().reverse(query=self.lat_lng)
-                return json.dumps(response.raw['address'], sort_keys=True)
+                return response.raw['address']
+                # json_data = json.dumps(response.raw['address'], sort_keys=True)
+                # return json.loads(json_data)

@@ -13,6 +13,7 @@ from sqlalchemy import func, cast, Integer, ARRAY
 from sqlalchemy import dialects
 import geojson as geojson
 import logging
+import json
 from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,7 @@ class QueryBuilder(object):
                        bbox_query.c.osm_type,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
                        bbox_query.c.geom,
+                       bbox_query.c.address.op('->')('label'),
                        keys_agg,
                        values_agg,
                        categories_agg) \
@@ -115,12 +117,13 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.osm_id) \
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
+                .group_by(bbox_query.c.address) \
                 # .all()
 
             # end = timer()
             # print(end - start)
 
-            # print(str(pois_query))
+            # print(str(pois_query))q
             # for dude in pois_query:
             # print(dude)
 
@@ -240,6 +243,7 @@ class QueryBuilder(object):
         lat_lngs = []
 
         for q_idx, q in enumerate(query):
+            print(q)
 
             geometry = wkb.loads(str(q[3]), hex=True)
             x = float(format(geometry.x, ".6f"))
@@ -254,8 +258,15 @@ class QueryBuilder(object):
                 distance=float(q[2])
             )
 
+            if q[4] is not None:
+                address_data = json.loads(q[4])
+                address_dict = {}
+                for k_add, v_add in address_data.items():
+                    address_dict[k_add] = v_add
+                properties['address'] = address_dict
+
             category_ids_obj = {}
-            for c_id in set(q[6]):
+            for c_id in set(q[7]):
                 category_name = categories_tools.category_ids_index[c_id]['poi_name']
                 category_group = categories_tools.category_ids_index[c_id]['poi_group']
                 category_ids_obj[c_id] = {
@@ -264,15 +275,13 @@ class QueryBuilder(object):
                 }
             properties["category_ids"] = category_ids_obj
 
-            if q[5][0] is not None:
+            if q[6][0] is not None:
                 key_values = {}
-                for idx, key in enumerate(q[4]):
-                    key_values[key] = q[5][idx]
+                for idx, key in enumerate(q[5]):
+                    key_values[key] = q[6][idx]
                 properties["osm_tags"] = key_values
 
-            # if q[7] is not None:
-            properties["address"] = q[7]
-            print(properties['address'])
+            print(properties)
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
