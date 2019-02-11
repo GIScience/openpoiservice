@@ -80,7 +80,6 @@ class OsmImporter(object):
         self.tags_object = None
         self.poi_object = None
         self.process_ways_length = None
-        # self.address = None
 
     def parse_relations(self, relations):
         """
@@ -180,14 +179,24 @@ class OsmImporter(object):
         :type poi_object: object
         """
 
+        ######
         self.pois_cnt += 1
-        self.poi_objects.append(Pois(
-            uuid=poi_object.uuid,
-            osm_id=poi_object.osmid,
-            osm_type=poi_object.type,
-            geom=poi_object.geom,
-            address=poi_object.address
-        ))
+        # print(self.pois_cnt)
+        if poi_object.address is not None:
+            self.poi_objects.append(Pois(
+                uuid=poi_object.uuid,
+                osm_id=poi_object.osmid,
+                osm_type=poi_object.type,
+                geom=poi_object.geom,
+                address=poi_object.address
+            ))
+        else:
+            self.poi_objects.append(Pois(
+                uuid=poi_object.uuid,
+                osm_id=poi_object.osmid,
+                osm_type=poi_object.type,
+                geom=poi_object.geom
+            ))
 
         if self.pois_cnt % 1000 == 0:
             logger.info('Pois: {}, tags: {}, categories: {}'.format(self.pois_cnt, self.tags_cnt, self.categories_cnt))
@@ -264,9 +273,14 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            address = AddressObject(lat_lng).address_request() # json.dumps()
+            if ops_settings['geocoder'] is not None:
+                address = AddressObject(lat_lng).address_request()
+            else:
+                address = None
 
             self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type, address)
+            # address=poi_object.address
+
             self.store_poi(self.poi_object)
 
             for category in categories:

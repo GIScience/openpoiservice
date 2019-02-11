@@ -50,6 +50,10 @@ def parse_import(osm_file):
     coords = OSMParser(concurrency=1, coords_callback=osm_importer.parse_coords_for_ways)
     coords.parse(osm_file)
 
+    # Checks if geocoder is provided
+    if ops_settings['geocoder'] is not None:
+        logger.info('Importing addresses...')
+
     logger.info('Storing remaining pois')
     osm_importer.save_remainder()
 

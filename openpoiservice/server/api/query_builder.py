@@ -104,10 +104,11 @@ class QueryBuilder(object):
                        bbox_query.c.osm_type,
                        bbox_query.c.geom.ST_Distance(type_coerce(geom, Geography)),
                        bbox_query.c.geom,
-                       bbox_query.c.address.op('->')('label'),
                        keys_agg,
                        values_agg,
-                       categories_agg) \
+                       categories_agg,
+                       bbox_query.c.address
+                       ) \
                 .order_by(*sortby_group) \
                 .filter(*category_filters) \
                 .filter(*custom_filters) \
@@ -117,15 +118,8 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.osm_id) \
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
-                .group_by(bbox_query.c.address) \
+                .group_by(bbox_query.c.address)
                 # .all()
-
-            # end = timer()
-            # print(end - start)
-
-            # print(str(pois_query))q
-            # for dude in pois_query:
-            # print(dude)
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query, params['limit'])
@@ -242,6 +236,11 @@ class QueryBuilder(object):
         geojson_features = []
         lat_lngs = []
 
+        # for v in query.statement.c:
+        #     print(v)
+        for v in query:
+            print(v)
+
         for q_idx, q in enumerate(query):
             print(q)
 
@@ -258,15 +257,8 @@ class QueryBuilder(object):
                 distance=float(q[2])
             )
 
-            if q[4] is not None:
-                address_data = json.loads(q[4])
-                address_dict = {}
-                for k_add, v_add in address_data.items():
-                    address_dict[k_add] = v_add
-                properties['address'] = address_dict
-
             category_ids_obj = {}
-            for c_id in set(q[7]):
+            for c_id in set(q[6]):
                 category_name = categories_tools.category_ids_index[c_id]['poi_name']
                 category_group = categories_tools.category_ids_index[c_id]['poi_group']
                 category_ids_obj[c_id] = {
@@ -275,11 +267,21 @@ class QueryBuilder(object):
                 }
             properties["category_ids"] = category_ids_obj
 
-            if q[6][0] is not None:
+            # Checks if Tags are available
+            if q[5][0] is not None:
                 key_values = {}
-                for idx, key in enumerate(q[5]):
-                    key_values[key] = q[6][idx]
+                for idx, key in enumerate(q[4]):
+                    key_values[key] = q[5][idx]
                 properties["osm_tags"] = key_values
+
+            # Checks if addresses are available
+            if q[7] is not None:
+                #####
+                address_data = json.loads(q[7])
+                address_dict = {}
+                for k_add, v_add in address_data.items():
+                    address_dict[k_add] = v_add
+                properties['address'] = address_dict
 
             print(properties)
 
