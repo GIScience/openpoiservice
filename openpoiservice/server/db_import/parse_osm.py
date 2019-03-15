@@ -1,7 +1,7 @@
 # openpoiservice/server/parse_osm.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server import categories_tools, ops_settings, geocoder, geocode_categories
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject, AddressObject
 from openpoiservice.server.utils.decorators import get_size
@@ -14,7 +14,6 @@ import sys
 from timeit import Timer
 from bisect import bisect_left
 from collections import deque
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -179,10 +178,8 @@ class OsmImporter(object):
         :type poi_object: object
         """
 
-        ######
         self.pois_cnt += 1
-        # print(self.pois_cnt)
-        if poi_object.address is not None:
+        if geocoder is not None:
             self.poi_objects.append(Pois(
                 uuid=poi_object.uuid,
                 osm_id=poi_object.osmid,
@@ -273,13 +270,12 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            if ops_settings['geocoder'] is not None:
-                address = AddressObject(lat_lng).address_request()
-            else:
-                address = None
+            address = None
+            if geocoder is not None and categories[0] in geocode_categories:
+                address = AddressObject(lat_lng, geocoder).address_request()
+                time.sleep(1)
 
             self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type, address)
-            # address=poi_object.address
 
             self.store_poi(self.poi_object)
 

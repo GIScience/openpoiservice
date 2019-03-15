@@ -1,10 +1,11 @@
 # openpoiservice/server/poi_entity.py
 
-from openpoiservice.server import ops_settings
-from geopy.geocoders import * # get_geocoder_for_service
 import json
-from flask import jsonify, Response
+import logging
+from geopy.geocoders import get_geocoder_for_service
+from geopy.extra.rate_limiter import RateLimiter
 
+logger = logging.getLogger(__name__)
 
 class PoiObject(object):
 
@@ -31,29 +32,47 @@ class TagsObject(object):
         self.value = value
 
 
+class GeocoderSetup(object):
+    """Initialises geocoder"""
+
+    def __init__(self, geocoder_name):
+        self.geocoder_name = geocoder_name
+        self.geocoder = None
+
+    def define_geocoder(self):
+
+        # returns error if no valid geocoder is provided
+        try:
+            self.geocoder_settings = get_geocoder_for_service(self.geocoder_name[0])
+
+            if self.geocoder_name[1] is not None:
+                self.geocoder = self.geocoder_settings(**self.geocoder_name[1])
+
+            else:
+                self.geocoder = self.geocoder_settings()
+
+        except Exception as err:
+            logger.error(err)
+
+        return self.geocoder
+
+
 class AddressObject(object):
 
-    def __init__(self, lat_lng):
+    def __init__(self, lat_lng, geocoder):
         self.lat_lng = lat_lng[::-1]
+        self.geocoder = geocoder
 
     def address_request(self):
 
-        # try:
-        geocoder_settings = list(ops_settings['geocoder'].items())[0]
-        geolocator = get_geocoder_for_service(geocoder_settings[0])
+        # address_delaied = RateLimiter(self.geocoder.reverse, min_delay_seconds=1)
+        response = self.geocoder.reverse(query=self.lat_lng)
 
-        if list(ops_settings['geocoder'].values())[0] is not None:
-            setup_geolocator = geolocator(domain=geocoder_settings[1]['domain'],
-                                          api_key=geocoder_settings[1]['api_key'])
-        else:
-            setup_geolocator = geolocator()
-
-        response = setup_geolocator.reverse(query=self.lat_lng)
         # Checks if address for location is available
         if response is not None:
-            return json.dumps(response.raw['properties'])
+            try:
+                return json.dumps(response.raw)
+            except AttributeError:
+                return json.dumps(response)
 
-        # except AttributeError:
-        #     pass
-
-
+        return None

@@ -1,7 +1,7 @@
 # openpoiservice/server/query_builder.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server import categories_tools, ops_settings, geocoder
 import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography, Geometry
 from geoalchemy2.elements import WKBElement, WKTElement
@@ -107,8 +107,7 @@ class QueryBuilder(object):
                        keys_agg,
                        values_agg,
                        categories_agg,
-                       bbox_query.c.address
-                       ) \
+                       bbox_query.c.address) \
                 .order_by(*sortby_group) \
                 .filter(*category_filters) \
                 .filter(*custom_filters) \
@@ -119,7 +118,6 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
                 .group_by(bbox_query.c.address)
-                # .all()
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query, params['limit'])
@@ -144,12 +142,9 @@ class QueryBuilder(object):
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
         elif 'bbox' not in geometry and 'geom' in geometry:
-
             geom = geometry['geom'].wkt
-
             filters.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0)
-            )
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0))
 
         return filters, geom
 
@@ -236,13 +231,7 @@ class QueryBuilder(object):
         geojson_features = []
         lat_lngs = []
 
-        # for v in query.statement.c:
-        #     print(v)
-        for v in query:
-            print(v)
-
         for q_idx, q in enumerate(query):
-            print(q)
 
             geometry = wkb.loads(str(q[3]), hex=True)
             x = float(format(geometry.x, ".6f"))
@@ -275,15 +264,15 @@ class QueryBuilder(object):
                 properties["osm_tags"] = key_values
 
             # Checks if addresses are available
-            if q[7] is not None:
-                #####
-                address_data = json.loads(q[7])
-                address_dict = {}
-                for k_add, v_add in address_data.items():
-                    address_dict[k_add] = v_add
-                properties['address'] = address_dict
-
-            print(properties)
+            try:
+                if q[7] is not None:
+                    address_dict = {}
+                    address_data = json.loads(q[7])
+                    for key, value in address_data.items():
+                        address_dict[key] = value
+                    properties['address'] = address_dict
+            except IndexError:
+                pass
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)

@@ -94,3 +94,16 @@ class CategoryTools(object):
                                 categories.append(category_id)
 
         return categories
+
+    def generate_geocode_categories(self):
+
+        geocode_categories = {}
+
+        for category in self.categories_object.items():
+            if 'geocoder' not in category[1]:
+                for child in category[1]['children'].values():
+                    for id in child.values():
+                        geocode_categories[id] = {}
+
+        return geocode_categories
+

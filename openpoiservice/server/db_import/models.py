@@ -1,6 +1,6 @@
 # openpoiservice/server/models.py
 
-from openpoiservice.server import db, ops_settings
+from openpoiservice.server import db, ops_settings, geocoder
 from geoalchemy2 import Geography
 import logging
 
@@ -22,8 +22,7 @@ class Pois(db.Model):
     categories = db.relationship("Categories", backref='{}'.format(ops_settings['provider_parameters']['table_name']),
                                  lazy='dynamic')
 
-    if ops_settings['geocoder'] is not None:
-        address = db.Column(db.String, nullable=True)
+    address = db.Column(db.String, nullable=True)
 
     def __repr__(self):
         return '<osm id %r>' % self.osm_id

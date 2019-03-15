@@ -2,10 +2,9 @@
 
 from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.utils.decorators import timeit, processify
-from openpoiservice.server import ops_settings
+from openpoiservice.server import ops_settings, geocoder
 from imposm.parser import OSMParser
 import logging
-import time
 
 # from guppy import hpy
 from collections import deque
@@ -51,7 +50,7 @@ def parse_import(osm_file):
     coords.parse(osm_file)
 
     # Checks if geocoder is provided
-    if ops_settings['geocoder'] is not None:
+    if geocoder is not None:
         logger.info('Importing addresses...')
 
     logger.info('Storing remaining pois')

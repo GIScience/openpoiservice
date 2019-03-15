@@ -49,6 +49,7 @@ education:
 
 facilities:
     id: 160
+    geocoder: False
     children:
         amenity:
             compressed_air: 161

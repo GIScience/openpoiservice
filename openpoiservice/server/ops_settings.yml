@@ -16,13 +16,12 @@ concurrent_workers: 4
 # Database parameters
 provider_parameters:
   table_name: ops_planet_pois
-  db_name: gis
-  user_name: gis_admin
+  db_name: opsdb
+  user_name: postgres
   table_schema: public
-  #user_name: admin
-  password: admin
+  password: ops
   host: localhost
-  port: 5434
+  port: 5432
   port_tests: 5432
 # add any additional tags you want to save to the database
 column_mappings:
@@ -40,3 +39,27 @@ column_mappings:
   phone:
   # https://wiki.openstreetmap.org/wiki/Key:website
   website:
+# choose one geopy geocoder and provide all needed parameters - https://geopy.readthedocs.io/
+geocoder:
+#  ArcGIS:
+#    domain: 'geocode.arcgis.com'
+  pelias:
+    domain: 'api.geocode.earth'
+    api_key: ''
+#    timeout: 60
+#  nominatim:
+#    timeout: 60
+#   GeocodeFarm:
+#     timeout: 60
+#  AzureMaps:
+#    subscription_key: ''
+#    domain: 'atlas.microsoft.com'
+#  Baidu:
+#    api_key: ''
+#  BANFrance:
+#    domain: 'api-adresse.data.gouv.fr'
+#  Bing:
+#    api_key: ''
+#restrictions:
+#  quota: 40
+#  per: min
