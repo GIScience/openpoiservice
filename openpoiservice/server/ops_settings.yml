@@ -43,15 +43,15 @@ column_mappings:
 geocoder:
 #  ArcGIS:
 #    domain: 'geocode.arcgis.com'
-  pelias:
-    domain: 'api.geocode.earth'
-    api_key: ''
+#  pelias:
+#    domain: 'api.geocode.earth'
+#    api_key: ''
 #    timeout: 60
 #  nominatim:
 #    timeout: 60
-#   GeocodeFarm:
-#     timeout: 60
-#  AzureMaps:
+#  GeocodeFarm:
+#    timeout: 60
+#  Azure:
 #    subscription_key: ''
 #    domain: 'atlas.microsoft.com'
 #  Baidu:
@@ -60,6 +60,3 @@ geocoder:
 #    domain: 'api-adresse.data.gouv.fr'
 #  Bing:
 #    api_key: ''
-#restrictions:
-#  quota: 40
-#  per: min

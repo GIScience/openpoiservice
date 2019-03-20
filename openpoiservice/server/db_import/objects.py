@@ -3,7 +3,7 @@
 import json
 import logging
 from geopy.geocoders import get_geocoder_for_service
-from geopy.extra.rate_limiter import RateLimiter
+# from geopy.extra.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -41,20 +41,26 @@ class GeocoderSetup(object):
 
     def define_geocoder(self):
 
-        # returns error if no valid geocoder is provided
+        # returns warning if no valid geocoder is provided
         try:
             self.geocoder_settings = get_geocoder_for_service(self.geocoder_name[0])
 
+        except Exception as err_geocoder:
+            logger.warning(err_geocoder)
+            return err_geocoder
+
+        # returns warning if no valid geocoder settings are provided
+        try:
             if self.geocoder_name[1] is not None:
                 self.geocoder = self.geocoder_settings(**self.geocoder_name[1])
 
             else:
                 self.geocoder = self.geocoder_settings()
+            return self.geocoder
 
-        except Exception as err:
-            logger.error(err)
-
-        return self.geocoder
+        except Exception as err_parameter:
+            logger.warning(err_parameter)
+            return err_parameter
 
 
 class AddressObject(object):
@@ -70,9 +76,10 @@ class AddressObject(object):
 
         # Checks if address for location is available
         if response is not None:
-            try:
-                return json.dumps(response.raw)
-            except AttributeError:
-                return json.dumps(response)
+            return json.dumps(response.raw)
+            # try:
+            #     return json.dumps(response.raw)
+            # except AttributeError:
+            #     return json.dumps(response)
 
         return None
