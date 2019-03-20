@@ -23,8 +23,8 @@ ops_settings = yaml.safe_load(open(os.path.join(basedir, 'ops_settings.yml')))
 geocoder = None
 geocode_categories = None
 if ops_settings['geocoder'] is not None:
-        geocoder = GeocoderSetup(list(ops_settings['geocoder'].items())[0]).define_geocoder()
-        geocode_categories = CategoryTools('categories.yml').generate_geocode_categories()
+    geocoder = GeocoderSetup(list(ops_settings['geocoder'].items())[0]).define_geocoder()
+    geocode_categories = CategoryTools('categories.yml').generate_geocode_categories()
 
 
 if "TESTING" in os.environ:
