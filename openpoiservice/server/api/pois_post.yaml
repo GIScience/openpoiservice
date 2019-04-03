@@ -28,7 +28,87 @@ paths:
       description: |
         Returns points of interest in the area surrounding a geometry which can either be a bounding box, polygon or buffered linestring or point.
         Find more examples on [github](https://github.com/GIScience/openpoiservice).
-
+      parameters:
+      - name: "Authorization"
+        in: "header"
+        description: |
+          Insert your API Key here.
+        type: "string"
+        required: true
+        default: "your-api-key"
+      - name: "body"
+        in: body
+        required: true
+        #        requiredParams:
+        #        - request
+        #        - geometry
+        description: body for a post request
+        default: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
+        #        example: {
+        #          "request": "pois",
+        #          "geometry": {
+        #            "bbox": [
+        #            [8.458614349365236, 55.470054514892844],
+        #            [8.473613262176515, 55.47323501110393]
+        #            ],
+        #            "geojson": {
+        #              "type": "Point",
+        #              "coordinates": [8.458614349365236, 55.470054514892844]
+        #            },
+        #            "buffer": 100
+        #          },
+        #          "limit": 200
+        #        }
+        type: object
+        example: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
+        props:
+          $ref: '#/definitions/LocationsBodyPoisProps'
+          # this does not work yet..
+          # https://swagger.io/docs/specification/describing-request-body/
+          # oneOf:
+          #- $ref: '#/definitions/LocationsBodyPois'
+          #- $ref: '#/definitions/LocationsBodyStats'
+          #- $ref: '#/definitions/LocationsBodyList'
+      responses:
+        200:
+          description: "Standard response for successfully processed requests."
+          schema:
+            $ref: '#/definitions/LocationsPoiResponse'
+            # oneOf:
+            #- $ref: '#/definitions/LocationsPoiResponse'
+            #- $ref: '#/definitions/LocationsStatsResponse'
+            #- $ref: '#/definitions/LocationsListResponse'
+        401:
+          description: "Authorization field missing."
+        403:
+          description: "Key not authorised."
+        500:
+          description: |
+            An unexpected error was encountered and more detailed internal
+            errorcode is provided.
+            | Internal Code | Description                                        |
+            |:-------------:|----------------------------------------------------|
+            | 4000 |  Invalid JSON object in request |
+            | 4001 |  Category or category group ids missing |
+            | 4002 |  Geometry is missing |
+            | 4003 |  Bounding box and or geojson not present in request |
+            | 4004 |  Buffer is missing |
+            | 4005 |  Geometry length does not meet the restrictions |
+            | 4006 |  Unsupported HTTP method |
+            | 4007 |  GeoJSON parsing error |
+            | 4008 |  Geometry size does not meet the restrictions |
+            | 4099 |  Unknown internal error |
+securityDefinitions:
+  UserSecurity:
+    name: "api_key"
+    description: |
+      Add your API Key in the header Authorization field.
+    type: "apiKey"
+    in: "header"
+definitions:
+  LocationsBodyPoisProps:
+    request:
+      description: |
         Examples:
         ```
         #### JSON bodies for POST requests
@@ -109,118 +189,54 @@ paths:
             "request": "list"
         }
         ```
-      parameters:
-      - name: "api_key"
-        in: "query"
-        description: |
-          Insert your API Key here.
-        type: "string"
-        required: true
-        default: "your-api-key"
-      - in: body
-        name: "body"
-        required: true
-        description: body for a post request
-        default: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
-        schema:
-          example: '{"request":"pois","geometry":{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":250}}'
-          $ref: '#/definitions/LocationsBodyPois'
-          # this does not work yet..
-          # https://swagger.io/docs/specification/describing-request-body/
-          # oneOf:
-          #- $ref: '#/definitions/LocationsBodyPois'
-          #- $ref: '#/definitions/LocationsBodyStats'
-          #- $ref: '#/definitions/LocationsBodyList'
-      responses:
-        200:
-          description: "Standard response for successfully processed requests."
-          schema:
-            $ref: '#/definitions/LocationsPoiResponse'
-            # oneOf:
-            #- $ref: '#/definitions/LocationsPoiResponse'
-            #- $ref: '#/definitions/LocationsStatsResponse'
-            #- $ref: '#/definitions/LocationsListResponse'
-        401:
-          description: "Authorization field missing."
-        403:
-          description: "Key not authorised."
-        500:
-          description: |
-            An unexpected error was encountered and more detailed internal
-            errorcode is provided.
-            | Internal Code | Description                                        |
-            |:-------------:|----------------------------------------------------|
-            | 4000 |  Invalid JSON object in request |
-            | 4001 |  Category or category group ids missing |
-            | 4002 |  Geometry is missing |
-            | 4003 |  Bounding box and or geojson not present in request |
-            | 4004 |  Buffer is missing |
-            | 4005 |  Geometry length does not meet the restrictions |
-            | 4006 |  Unsupported HTTP method |
-            | 4007 |  GeoJSON parsing error |
-            | 4008 |  Geometry size does not meet the restrictions |
-            | 4099 |  Unknown internal error |
-securityDefinitions:
-  UserSecurity:
-    name: "api_key"
-    description: |
-      Add your API Key as the value of the api_key parameter to your request.
-    type: "apiKey"
-    in: "query"
-definitions:
-  LocationsBodyPois:
-    example: {
-      "request": "pois",
-      "geometry": {
-        "bbox": [
-        [8.458614349365236, 55.470054514892844],
-        [8.473613262176515, 55.47323501110393]
-        ],
-        "geojson": {
-          "type": "Point",
-          "coordinates": [8.458614349365236, 55.470054514892844]
-        },
-        "buffer": 100
-      },
-      "limit": 200
-    }
-    type: object
-    required:
-    - request
-    - geometry
-    properties:
-      request:
-        type: string
-        example: pois
-      geometry:
-        type: object
-        properties:
-          buffer:
-            $ref: "#/definitions/buffer"
-          bbox:
-            $ref: "#/definitions/bbox"
-          geojson:
-            $ref: "#/definitions/geojson"
-      filters:
-        type: object
-        properties:
-          category_group_ids:
-            $ref: "#/definitions/category_group_ids"
-          category_ids:
-            $ref: "#/definitions/category_ids"
-          # CUSTOM FILTERS
-          name:
-            $ref: "#/definitions/name"
-          wheelchair:
-            $ref: "#/definitions/wheelchair"
-          smoking:
-            $ref: "#/definitions/smoking"
-          fee:
-            $ref: "#/definitions/fee"
-      limit:
-        $ref: "#/definitions/limit"
-      sortby:
-        $ref: "#/definitions/sortby"
+      type: string
+      enum: ['pois', 'stats', 'list']
+      example: pois
+      required: true
+    geometry:
+      # 'default' is used instead of 'example' and 'required: true':
+      # if 'list' is selected the parameter would be disabled and still be required
+      # which is currently not supported in the API playground request validation
+      default: '{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":200}'
+      type: object
+      description: "The geometry object which is a geojson or a bounding box object, optionally buffered."
+      properties:
+        buffer:
+          $ref: "#/definitions/buffer"
+        bbox:
+          $ref: "#/definitions/bbox"
+        geojson:
+          $ref: "#/definitions/geojson"
+      validWhen:
+      - ref: 'body.props.request'
+        valueNot: 'list'
+    filters:
+      type: object
+      example: '{"fee":"no"}'
+      description: "Filters in terms of osm_tags which should be applied to the query."
+      properties:
+        category_group_ids:
+          $ref: "#/definitions/category_group_ids"
+        category_ids:
+          $ref: "#/definitions/category_ids"
+        # CUSTOM FILTERS
+        name:
+          $ref: "#/definitions/name"
+        wheelchair:
+          $ref: "#/definitions/wheelchair"
+        smoking:
+          $ref: "#/definitions/smoking"
+        fee:
+          $ref: "#/definitions/fee"
+      validWhen:
+      - ref: 'body.props.request'
+        value: 'pois'
+    limit:
+      description: "The limit of objects to be returned in the response."
+      $ref: "#/definitions/limit"
+    sortby:
+      description: "Either you can sort by category or the distance to the geometry object provided in the request."
+      $ref: "#/definitions/sortby"
     title:  "Openpoiservice poi request"
 
   LocationsBodyStats:
@@ -281,6 +297,9 @@ definitions:
       format: int64
     example: [601, 280]
   limit:
+    validWhen:
+    - ref: 'body.props.request'
+      value: 'pois'
     type: integer
     format: int64
     example: 1000
@@ -294,6 +313,9 @@ definitions:
     enum:
     - category
     - distance
+    validWhen:
+    - ref: 'body.props.request'
+      value: 'pois'
   bbox:
     type: array
     #items:
@@ -330,12 +352,14 @@ definitions:
 
   # List response object
   LocationsListResponse:
+    description: "The POI categories list JSON response"
     type: object
     title: "Openpoiservice category list response"
     description: "Openpoiservice category list"
 
   # Poi response object
   LocationsPoiResponse:
+    description: "The POI response GeoJSON FeatureCollection"
     type: "object"
     properties:
       type:
@@ -349,6 +373,7 @@ definitions:
 
   # Stats response object
   LocationsStatsResponse:
+    description: "The POI stats JSON response"
     type: "object"
     properties:
       places:
