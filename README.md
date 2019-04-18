@@ -74,19 +74,19 @@ $ docker-compose up -d -f /path/to/docker-compose.yml
 Once the container is built you can either, create the empty database:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py create_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py create-db
 ```
 
 Delete the database:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py drop_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py drop-db
 ```
 
 Or import the OSM data:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py import_data
+$ docker exec -it container_name /ops_venv/bin/python manage.py import-data
 ```
 
 
