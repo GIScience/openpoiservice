@@ -94,12 +94,12 @@ $ docker exec -it container_name /ops_venv/bin/python manage.py import-data
 
 1. Create and activate a virtualenv
 2. This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
-OpenStreetMap data. To this end, **make sure** `google's protobuf` is installed on your system:
+OpenStreetMap data. To this end, **make sure** `google's protobuf` is installed on your system.
+Please note that this software is developed and tested under (protobuf 3.0.0)[https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0]. 
 
-- **Ubuntu (16.04 and earlier, supported on 17.10)**: most likely you will have to install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md) if 
+- **Ubuntu (16.04 and earlier)**: most likely you will have to install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md) if 
 [https://imposm.org/docs/imposm.parser/latest/install.html#requirements](https://imposm.org/docs/imposm.parser/latest/install.html#requirements) doesn't
 do the job.
-- **OS X**  Using homebrew` on OS X `brew install protobuf` will suffice.
 3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
 
 
