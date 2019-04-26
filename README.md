@@ -74,34 +74,29 @@ $ docker-compose up -d -f /path/to/docker-compose.yml
 Once the container is built you can either, create the empty database:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py create_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py create-db
 ```
 
 Delete the database:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py drop_db
+$ docker exec -it container_name /ops_venv/bin/python manage.py drop-db
 ```
 
 Or import the OSM data:
 
 ```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py import_data
+$ docker exec -it container_name /ops_venv/bin/python manage.py import-data
 ```
 
+### Protocol Buffers (protobuf) for imposm.parser 
 
-### Run in a Virtual Environment
+This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
+OpenStreetMap pbf files which uses `google's protobuf library` under its hood.
 
-1. Create and activate a virtualenv
-2. This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
-OpenStreetMap data. To this end, **make sure** `google's protobuf` is installed on your system:
+**The imposm.parser requirement will not build with pip unless you are running [protobuf 3.0.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0).** 
 
-- **Ubuntu (16.04 and earlier, supported on 17.10)**: most likely you will have to install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md) if 
-[https://imposm.org/docs/imposm.parser/latest/install.html#requirements](https://imposm.org/docs/imposm.parser/latest/install.html#requirements) doesn't
-do the job.
-- **OS X**  Using homebrew` on OS X `brew install protobuf` will suffice.
-3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
-
+To this end, please make sure that you are running the aforementioned version of protobuf if `pip install -r requirements.txt` fails (install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md)) 
 
 ### Prepare settings.yml
 
@@ -214,6 +209,20 @@ returning a JSON object with the absolute numbers of pois of a certain group.
 
 Finally, `request=list` will return a JSON object generated from 
 `openpoiservice/server/categories/categories.yml`.
+
+### Endpoints
+
+The default base url is `http://localhost:5000/`.
+
+The openpoiservice holds the endpoint `/pois`:
+
+| Method allowed | Parameter | Values \[optional\]                            			     |
+|----------------|:----------|:----------------------------------------------------------------------|
+| POST           | request   | pois, stats, list                 				     |
+|                | geometry  | bbox, geojson, buffer             				     |
+|                | filter    | category_group_ids, category_ids, \[name, wheelchair, smoking, fee\]  | 
+|                | limit     | integer                           				     |
+|                | sortby    | category, distance                				     |
 
 ### Examples
 
