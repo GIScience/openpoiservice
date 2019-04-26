@@ -3,7 +3,6 @@ import setuptools
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-
 setuptools.setup(
     name="openpoiservice",
     version="0.1.7",

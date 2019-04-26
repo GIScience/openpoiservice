@@ -102,9 +102,9 @@ securityDefinitions:
   UserSecurity:
     name: "api_key"
     description: |
-      Add your API Key as the value of the api_key parameter to your request.
+      Add your API Key in the header Authorization field.
     type: "apiKey"
-    in: "query"
+    in: "header"
 definitions:
   LocationsBodyPoisProps:
     request:
@@ -199,6 +199,7 @@ definitions:
       # which is currently not supported in the API playground request validation
       default: '{"bbox":[[8.8034,53.0756],[8.7834,53.0456]],"geojson":{"type":"Point","coordinates":[8.8034,53.0756]},"buffer":200}'
       type: object
+      description: "The geometry object which is a geojson or a bounding box object, optionally buffered."
       properties:
         buffer:
           $ref: "#/definitions/buffer"
@@ -212,6 +213,7 @@ definitions:
     filters:
       type: object
       example: '{"fee":"no"}'
+      description: "Filters in terms of osm_tags which should be applied to the query."
       properties:
         category_group_ids:
           $ref: "#/definitions/category_group_ids"
@@ -230,8 +232,10 @@ definitions:
       - ref: 'body.props.request'
         value: 'pois'
     limit:
+      description: "The limit of objects to be returned in the response."
       $ref: "#/definitions/limit"
     sortby:
+      description: "Either you can sort by category or the distance to the geometry object provided in the request."
       $ref: "#/definitions/sortby"
     title:  "Openpoiservice poi request"
 
@@ -348,12 +352,14 @@ definitions:
 
   # List response object
   LocationsListResponse:
+    description: "The POI categories list JSON response"
     type: object
     title: "Openpoiservice category list response"
     description: "Openpoiservice category list"
 
   # Poi response object
   LocationsPoiResponse:
+    description: "The POI response GeoJSON FeatureCollection"
     type: "object"
     properties:
       type:
@@ -367,6 +373,7 @@ definitions:
 
   # Stats response object
   LocationsStatsResponse:
+    description: "The POI stats JSON response"
     type: "object"
     properties:
       places:

@@ -89,19 +89,14 @@ Or import the OSM data:
 $ docker exec -it container_name /ops_venv/bin/python manage.py import-data
 ```
 
+### Protocol Buffers (protobuf) for imposm.parser 
 
-### Run in a Virtual Environment
+This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
+OpenStreetMap pbf files which uses `google's protobuf library` under its hood.
 
-1. Create and activate a virtualenv
-2. This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
-OpenStreetMap data. To this end, **make sure** `google's protobuf` is installed on your system.
-Please note that this software is developed and tested under (protobuf 3.0.0)[https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0]. 
+**The imposm.parser requirement will not build with pip unless you are running [protobuf 3.0.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0).** 
 
-- **Ubuntu (16.04 and earlier)**: most likely you will have to install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md) if 
-[https://imposm.org/docs/imposm.parser/latest/install.html#requirements](https://imposm.org/docs/imposm.parser/latest/install.html#requirements) doesn't
-do the job.
-3. Afterwards you can install the necessary requirements via pipwith `pip install -r requirements.txt`
-
+To this end, please make sure that you are running the aforementioned version of protobuf if `pip install -r requirements.txt` fails (install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md)) 
 
 ### Prepare settings.yml
 
