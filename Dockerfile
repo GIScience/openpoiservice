@@ -31,7 +31,6 @@ RUN /bin/bash -c "source /ops_venv/bin/activate"
 RUN /ops_venv/bin/pip3 install -r /deploy/app/requirements.txt
 
 COPY openpoiservice /deploy/app/openpoiservice
-COPY ops_settings_docker.yml /deploy/app/openpoiservice/server/ops_settings.yml
 
 WORKDIR /deploy/app
 

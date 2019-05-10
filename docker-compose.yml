@@ -5,6 +5,7 @@ services:
   build: .
   volumes:
   - ./osm:/deploy/app/osm
+  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   ports:
    - "5000:5000"
   mem_limit: 28g
