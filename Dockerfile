@@ -1,7 +1,7 @@
 # gunicorn-flask
 
 # requires this ubuntu version due to protobuf library update
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
 RUN apt-get update
