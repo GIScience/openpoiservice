@@ -475,8 +475,6 @@ definitions:
     properties:
       name:
         type: "string"
-      address:
-        type: "string"
       website:
         type: "string"
       opening_hours:

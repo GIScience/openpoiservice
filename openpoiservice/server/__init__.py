@@ -6,6 +6,7 @@ from flasgger import Swagger
 from flask_cors import CORS
 from openpoiservice.server.categories.categories import CategoryTools
 from openpoiservice.server.api import api_exceptions
+from openpoiservice.server.db_import.objects import GeocoderSetup
 import yaml
 import os
 import time
@@ -18,6 +19,13 @@ logger = logging.getLogger(__name__)
 """load custom settings for openpoiservice"""
 basedir = os.path.abspath(os.path.dirname(__file__))
 ops_settings = yaml.safe_load(open(os.path.join(basedir, 'ops_settings.yml')))
+
+geocoder = None
+geocode_categories = None
+if ops_settings['geocoder'] is not None:
+    geocoder = GeocoderSetup(list(ops_settings['geocoder'].items())[0]).define_geocoder()
+    geocode_categories = CategoryTools('categories.yml').generate_geocode_categories()
+
 
 if "TESTING" in os.environ:
     ops_settings['provider_parameters']['table_name'] = ops_settings['provider_parameters']['table_name'] + '_test'

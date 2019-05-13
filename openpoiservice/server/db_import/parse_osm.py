@@ -1,9 +1,9 @@
 # openpoiservice/server/parse_osm.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server import categories_tools, ops_settings, geocoder, geocode_categories
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
-from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+from openpoiservice.server.db_import.objects import PoiObject, TagsObject, AddressObject
 from openpoiservice.server.utils.decorators import get_size
 import shapely as shapely
 from shapely.geometry import Point, Polygon, LineString, MultiPoint
@@ -179,12 +179,21 @@ class OsmImporter(object):
         """
 
         self.pois_cnt += 1
-        self.poi_objects.append(Pois(
-            uuid=poi_object.uuid,
-            osm_id=poi_object.osmid,
-            osm_type=poi_object.type,
-            geom=poi_object.geom
-        ))
+        if geocoder is not None:
+            self.poi_objects.append(Pois(
+                uuid=poi_object.uuid,
+                osm_id=poi_object.osmid,
+                osm_type=poi_object.type,
+                geom=poi_object.geom,
+                address=poi_object.address
+            ))
+        else:
+            self.poi_objects.append(Pois(
+                uuid=poi_object.uuid,
+                osm_id=poi_object.osmid,
+                osm_type=poi_object.type,
+                geom=poi_object.geom
+            ))
 
         if self.pois_cnt % 1000 == 0:
             logger.info('Pois: {}, tags: {}, categories: {}'.format(self.pois_cnt, self.tags_cnt, self.categories_cnt))
@@ -261,7 +270,13 @@ class OsmImporter(object):
                     self.tags_object = TagsObject(my_uuid, osmid, tag, value)
                     self.store_tags(self.tags_object)
 
-            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type)
+            address = None
+            if geocoder is not None and categories[0] in geocode_categories:
+                address = AddressObject(lat_lng, geocoder).address_request()
+                time.sleep(1)
+
+            self.poi_object = PoiObject(my_uuid, categories, osmid, lat_lng, osm_type, address)
+
             self.store_poi(self.poi_object)
 
             for category in categories:

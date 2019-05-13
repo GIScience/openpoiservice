@@ -1,7 +1,7 @@
 # openpoiservice/server/query_builder.py
 
 from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server import categories_tools, ops_settings, geocoder
 import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography, Geometry
 from geoalchemy2.elements import WKBElement, WKTElement
@@ -13,6 +13,7 @@ from sqlalchemy import func, cast, Integer, ARRAY
 from sqlalchemy import dialects
 import geojson as geojson
 import logging
+import json
 from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,8 @@ class QueryBuilder(object):
                        bbox_query.c.geom,
                        keys_agg,
                        values_agg,
-                       categories_agg) \
+                       categories_agg,
+                       bbox_query.c.address) \
                 .order_by(*sortby_group) \
                 .filter(*category_filters) \
                 .filter(*custom_filters) \
@@ -115,14 +117,7 @@ class QueryBuilder(object):
                 .group_by(bbox_query.c.osm_id) \
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
-                # .all()
-
-            # end = timer()
-            # print(end - start)
-
-            # print(str(pois_query))
-            # for dude in pois_query:
-            # print(dude)
+                .group_by(bbox_query.c.address)
 
             # response as geojson feature collection
             features = self.generate_geojson_features(pois_query, params['limit'])
@@ -147,12 +142,9 @@ class QueryBuilder(object):
                                              type_coerce(geom_bbox, Geography)), Pois.geom, 0))
 
         elif 'bbox' not in geometry and 'geom' in geometry:
-
             geom = geometry['geom'].wkt
-
             filters.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0)
-            )
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0))
 
         return filters, geom
 
@@ -264,11 +256,23 @@ class QueryBuilder(object):
                 }
             properties["category_ids"] = category_ids_obj
 
+            # Checks if Tags are available
             if q[5][0] is not None:
                 key_values = {}
                 for idx, key in enumerate(q[4]):
                     key_values[key] = q[5][idx]
                 properties["osm_tags"] = key_values
+
+            # Checks if addresses are available
+            try:
+                if q[7] is not None:
+                    address_dict = {}
+                    address_data = json.loads(q[7])
+                    for key, value in address_data.items():
+                        address_dict[key] = value
+                    properties['address'] = address_dict
+            except IndexError:
+                pass
 
             geojson_feature = geojson.Feature(geometry=trimmed_point,
                                               properties=properties)
