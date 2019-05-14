@@ -1,14 +1,14 @@
 # gunicorn-flask
 
 # requires this ubuntu version due to protobuf library update
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
 RUN apt-get update
 RUN apt-get install -y python3-pip python-virtualenv nano wget git locales
 
 # Install protobuf
-RUN apt-get install -y build-essential protobuf-compiler libprotobuf-dev
+RUN apt-get install -y build-essential protobuf-compiler=3.0.0-9.1ubuntu1 libprotobuf-dev=3.0.0-9.1ubuntu1
 
 # Set the locale
 RUN locale-gen en_US.UTF-8
@@ -31,7 +31,6 @@ RUN /bin/bash -c "source /ops_venv/bin/activate"
 RUN /ops_venv/bin/pip3 install -r /deploy/app/requirements.txt
 
 COPY openpoiservice /deploy/app/openpoiservice
-COPY ops_settings_docker.yml /deploy/app/openpoiservice/server/ops_settings.yml
 
 WORKDIR /deploy/app
 

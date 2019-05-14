@@ -60,7 +60,7 @@ the OSM files don't exceed 5 GB of disk space, 16 GB of memory will suffice to i
 
 ### Run as Docker Container (Flask + Gunicorn)
 
-Make your necessary changes to the settings in the file `ops_settings_docker.yml`. This file will be copied to the docker container.
+Make your necessary changes to the settings in the file `ops_settings_docker.yml` and to categories if you need inside `categories_docker.yml`. These files are mounted as volumes to the docker container.
 If you are planning to import a different osm file, please download it to the `osm folder` (any folder within will be scanned
 for osm files) as this will be a shared volume. 
 
