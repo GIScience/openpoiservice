@@ -8,7 +8,7 @@ RUN apt-get update
 RUN apt-get install -y python3-pip python-virtualenv nano wget git locales
 
 # Install protobuf
-RUN apt-get install -y build-essential protobuf-compiler libprotobuf-dev
+RUN apt-get install -y build-essential protobuf-compiler=3.0.0-9.1ubuntu1 libprotobuf-dev=3.0.0-9.1ubuntu1
 
 # Set the locale
 RUN locale-gen en_US.UTF-8
