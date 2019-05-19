@@ -31,7 +31,8 @@ returned in the response - this will help you find the object directly on [OpenS
 ## Installation
 
 You can either run **openpoiservice** on your host machine in a virtual environment or simply with docker. The Dockerfile 
-provided installs a WSGI server (gunicorn) which starts the flask service on port 5000. 
+provided installs a WSGI server (gunicorn) which starts the flask service on port 5000.
+
 
 ### Technical specs for storing and importing OSM files
 
@@ -64,12 +65,42 @@ Make your necessary changes to the settings in the file `ops_settings_docker.yml
 If you are planning to import a different osm file, please download it to the `osm folder` (any folder within will be scanned
 for osm files) as this will be a shared volume. 
 
-Afterwards run:
+### Docker-compose
 
+#### All-in-one docker image
+
+This docker compose will allow you to run openpoiservice with `psql/postgis` image. This will allow you to deploy this project fast.
+
+**Important :** The database is not exposed, you won't be able to access it from outside the container. If you want to acces it simply add those lines to the database definition inside the `docker-compose-with-postgis.yml`:
 
 ```sh
-$ docker-compose up -d -f /path/to/docker-compose.yml
+ports:
+   - <PORT YOU WANT>:5432
 ```
+
+Don't forget to change the host name and port inside `ops_settings_docker.yml` by the one given to docker container for database.
+
+* Hostname default value : `psql_postgis_db`
+* Port default value : `5432`
+
+
+**Notes :** If openpoiservice can't connect to the database, it's probably because you don't have the same settings inside `ops_settings_docker.yml` and `docker-compose-with-postgis.yml`.
+
+Command to use to run all-in-one docker container
+
+```sh
+docker-compose up -d -f /path/to/docker-compose-with-postgis.yml
+```
+
+#### Only deploy openpoiservice
+
+This will only run openpoiservice inside a container, meaning that you will need to handle the database yourself and connect it to this container.
+
+```sh
+docker-compose up -d -f /path/to/docker-compose.yml
+```
+
+#### After deploy
 
 Once the container is built you can either, create the empty database:
 
