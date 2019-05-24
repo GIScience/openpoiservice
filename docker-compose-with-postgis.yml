@@ -36,5 +36,4 @@ services:
    - poi_network
 
 networks:
- bridge:
-  driver: poi_network
+ poi_network:
