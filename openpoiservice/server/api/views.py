@@ -230,7 +230,7 @@ def parse_geometries(geometry):
                     message='Your linestring geometry is too long ({} meters), check the server restrictions.'.format(
                         length))
 
-        elif geojson_obj.geom_type == 'Polygon':
+        elif geojson_obj.geom_type == 'Polygon' or geojson_obj.geom_type == 'MultiPolygon':
 
             check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
 
