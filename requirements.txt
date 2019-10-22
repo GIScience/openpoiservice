@@ -1,5 +1,5 @@
 coverage==4.4.2
-Flask==0.12.2
+Flask==1.0
 Flask-DebugToolbar==0.10.1
 Flask-SQLAlchemy==2.3.2
 Flask-Testing==0.6.2
