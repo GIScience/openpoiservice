@@ -11,7 +11,7 @@ addons:
   postgresql: "9.5"
   apt:
     packages:
-    - postgresql-9.5-postgis-2.3
+    - postgresql-9.5-postgis-2.4
 
 before_install:
   - sudo apt-get update
