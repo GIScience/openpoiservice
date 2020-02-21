@@ -7,6 +7,10 @@ python:
 services:
   - postgresql
 
+env:
+  global:
+    - PGPORT=5434
+
 addons:
   postgresql: "9.5"
   apt:
@@ -19,9 +23,9 @@ before_install:
 
 # database creation
 before_script:
-  - psql -c "CREATE DATABASE gis;" -U postgres
-  - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres
-  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis
+  - psql -c "CREATE DATABASE gis;" -U postgres -p 5434 -h localhost
+  - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres -p 5434 -h localhost
+  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis -p 5434 -h localhost
 
 install:
   - pip install -r requirements.txt
