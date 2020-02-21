@@ -4,7 +4,7 @@ Flask-DebugToolbar==0.10.1
 Flask-SQLAlchemy==2.3.2
 Flask-Testing==0.6.2
 psycopg2-binary==2.8.2
-PyYAML==3.12
+PyYAML
 GeoAlchemy2==0.4.2
 voluptuous==0.10.5
 geojson==2.3.0
