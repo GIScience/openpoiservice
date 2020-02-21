@@ -5,6 +5,7 @@ from flask.cli import FlaskGroup
 from openpoiservice.server import create_app, db
 from openpoiservice.server.db_import import parser
 import os
+import sys
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,9 +21,9 @@ def test():
 
     tests = unittest.TestLoader().discover('openpoiservice/tests', pattern='test*.py')
     result = unittest.TextTestRunner(verbosity=2).run(tests)
-    if result.wasSuccessful():
-        return 0
-    return 1
+    if not result.wasSuccessful():
+        sys.exit(1)
+    sys.exit(0)
 
 
 @cli.command()
