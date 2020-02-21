@@ -11,7 +11,7 @@ addons:
   postgresql: "9.5"
   apt:
     packages:
-    - postgresql-9.5-postgis-2.3
+    - postgresql-9.5-postgis-2.4
 
 before_install:
   - sudo apt-get update
@@ -19,9 +19,10 @@ before_install:
 
 # database creation
 before_script:
-  - psql -c "CREATE DATABASE gis;" -U postgres
-  - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres
-  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis
+  - psql -c "\conninfo" -U postgres -h localhost
+  - psql -c "CREATE DATABASE gis;" -U postgres -h localhost
+  - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres -h localhost
+  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis -h localhost
 
 install:
   - pip install -r requirements.txt
