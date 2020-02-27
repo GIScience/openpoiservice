@@ -1,5 +1,7 @@
 # openpoiservice/server/config.py
 
+import os
+
 from openpoiservice.server import ops_settings
 pg_settings = ops_settings['provider_parameters']
 
@@ -35,8 +37,12 @@ class DevelopmentConfig(BaseConfig):
 class TestingConfig(BaseConfig):
     """Testing configuration."""
 
+    port = pg_settings['port']
+    if 'TRAVIS' in os.environ:
+        port = 5432
+
     SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pg_settings['user_name'], pg_settings['password'],
-                                                                   pg_settings['host'], pg_settings['port'],
+                                                                   pg_settings['host'], port,
                                                                    pg_settings['db_name'])
     DEBUG_TB_ENABLED = False
     PRESERVE_CONTEXT_ON_EXCEPTION = False

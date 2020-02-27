@@ -118,9 +118,9 @@ def places():
 
             # check restrictions and parse geometry
             all_args['geometry'] = parse_geometries(all_args['geometry'])
-
             features = []
-            if all_args['geometry']['geojson']['type'] == 'MultiPolygon':
+            gj = all_args['geometry'].get('geojson')
+            if gj and gj.get('type') == 'MultiPolygon':
                 polygons = list(all_args['geometry']['geom'])
 
                 for polygon in polygons:
@@ -222,6 +222,8 @@ def parse_geometries(geometry):
         try:
             g2 = shape(g1)
         except ValueError as e:
+            raise api_exceptions.InvalidUsage(status_code=500, error_code=4007, message=str(e))
+        except AttributeError as e:
             raise api_exceptions.InvalidUsage(status_code=500, error_code=4007, message=str(e))
 
         # parse geom if valid
