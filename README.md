@@ -89,7 +89,7 @@ Don't forget to change the host name and port inside `ops_settings_docker.yml` b
 Command to use to run all-in-one docker container
 
 ```sh
-docker-compose up -d -f /path/to/docker-compose-with-postgis.yml
+docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
 ```
 
 #### Only deploy openpoiservice
@@ -97,7 +97,7 @@ docker-compose up -d -f /path/to/docker-compose-with-postgis.yml
 This will only run openpoiservice inside a container, meaning that you will need to handle the database yourself and connect it to this container.
 
 ```sh
-docker-compose up -d -f /path/to/docker-compose.yml
+docker-compose -f /path/to/docker-compose.yml up -d
 ```
 
 #### After deploy
