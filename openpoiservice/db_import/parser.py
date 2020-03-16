@@ -4,11 +4,11 @@ from pathlib import Path
 import multiprocessing as mp
 
 from .osm_reader import OsmReader
-from openpoiservice.server import ops_settings
-from openpoiservice.server.utils.decorators import timeit
+from openpoiservice import ops_settings
+from openpoiservice.utils.decorators import timeit
 
-# h = hpy()
 logger = logging.getLogger(__name__)
+
 
 def parse_import(osm_file):
     """

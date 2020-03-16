@@ -1,4 +1,4 @@
-from openpoiservice.server.api import error_codes
+from openpoiservice.api import error_codes
 
 
 class InvalidUsage(Exception):

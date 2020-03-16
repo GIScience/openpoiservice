@@ -115,6 +115,4 @@ ENV/
 
 .idea
 
-openpoiservice/server/ops_settings.yml
-osm_1
-osm_2
+conf/config.yml

@@ -1,19 +1,16 @@
 # openpoiservice/server/query_builder.py
 
-from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice import db
+from openpoiservice import categories_tools, ops_settings
 import geoalchemy2.functions as geo_func
-from geoalchemy2.types import Geography, Geometry
-from geoalchemy2.elements import WKBElement, WKTElement
+from geoalchemy2.types import Geography
 from shapely import wkb
 from shapely.geometry import MultiPoint, Point
-from openpoiservice.server.db_import.models import Pois, Tags, Categories
+from openpoiservice.db_import.models import Pois, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
-from sqlalchemy import func, cast, Integer, ARRAY
-from sqlalchemy import dialects
+from sqlalchemy import func
 import geojson as geojson
 import logging
-from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
 

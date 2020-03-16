@@ -1,12 +1,11 @@
 import osmium
-from shapely import wkb as wkblib, geometry
+from shapely import wkb as wkblib
 import logging
 import uuid
 from copy import deepcopy
 
-from openpoiservice.server import categories_tools, ops_settings, db
-from openpoiservice.server.db_import.models import Pois, Tags, Categories
-from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+from openpoiservice import categories_tools, ops_settings, db
+from openpoiservice.db_import.models import Pois, Tags, Categories
 
 logger = logging.getLogger(__name__)
 

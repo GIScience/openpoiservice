@@ -1,17 +1,17 @@
 # openpoiservice/server/main/views.py
 
-from flask import Blueprint, request, jsonify, Response
-from openpoiservice.server import categories_tools
-from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Invalid, \
-    Optional, Boolean
-from shapely.geometry import Point, Polygon, LineString, MultiPoint, shape
-from openpoiservice.server import api_exceptions, ops_settings
-from openpoiservice.server.api.query_builder import QueryBuilder
-from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, transform_geom
-from openpoiservice.server.api.query_info import QueryInfo
 import geojson
 import json
 import copy
+from flask import Blueprint, request, Response
+from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, Optional, Boolean
+from shapely.geometry import MultiPoint, shape
+
+from openpoiservice import categories_tools
+from openpoiservice import api_exceptions, ops_settings
+from openpoiservice.api.query_builder import QueryBuilder
+from openpoiservice.utils.geometries import parse_geometry, validate_limit, transform_geom
+from openpoiservice.api.query_info import QueryInfo
 
 
 # from flasgger import validate
