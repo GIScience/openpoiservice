@@ -11,7 +11,6 @@ setuptools.setup(
     author_email="timothy@openrouteservice.org",
     description="POI service consuming OpenStreetMap data",
     keywords='OSM ORS openrouteservice OpenStreetMap POI points of interest',
-    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/GIScience/openpoiservice",
     packages=setuptools.find_packages(),

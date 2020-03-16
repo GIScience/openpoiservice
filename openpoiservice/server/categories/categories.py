@@ -81,7 +81,9 @@ class CategoryTools(object):
 
         if bool(tags):
 
-            for tag_name, tag_value in tags.items():
+            for tag in tags:
+                tag_name = tag.k
+                tag_value = tag.v
 
                 if tag_name:
 

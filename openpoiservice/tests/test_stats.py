@@ -51,7 +51,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'places', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(data[0]['places']['total_count'], 9)
+        self.assertEqual(data[0]['places']['total_count'], 10)
 
 
 if __name__ == '__main__':

@@ -2,11 +2,14 @@
 
 import unittest
 from flask.cli import FlaskGroup
-from openpoiservice.server import create_app, db
-from openpoiservice.server.db_import import parser
 import os
 import sys
+from pathlib import Path
 import logging
+
+from openpoiservice.server import create_app, db, ops_settings
+from openpoiservice.server.db_import import parser
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,12 +51,11 @@ def import_data():
     osm_dir = os.getcwd() + '/osm'
 
     for dirName, subdirList, fileList in os.walk(osm_dir):
-        print('Found directory: %s' % dirName)
         for fname in fileList:
-            if fname.endswith('.osm.pbf') or fname.endswith('.osm'):
-                osm_files.append(os.path.join(dirName, fname))
+            if fname.endswith('.osm') or fname.endswith('.pbf'):
+                osm_files.append(Path(os.path.join(dirName, fname)))
 
-    logger.info("Starting to import OSM data...{}".format(osm_files))
+    logger.info('Starting to import OSM data from\n\t{}'.format("\n\t".join([p.name for p in osm_files])))
     parser.run_import(osm_files)
 
 
