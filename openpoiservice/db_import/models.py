@@ -1,6 +1,6 @@
 # openpoiservice/server/models.py
 
-from openpoiservice.server import db, ops_settings
+from openpoiservice import db, ops_settings
 from geoalchemy2 import Geography
 import logging
 

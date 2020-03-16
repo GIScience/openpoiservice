@@ -27,6 +27,7 @@ flask-cors = "^3.0"
 osmium = "^2.15"
 # Pin werkzeug version until bug is fixed: https://github.com/jarus/flask-testing/issues/143
 werkzeug = "0.16.1"
+# gevent needs to be at min 1.4.0 for gunicorn>20.0
 gevent = "^1.4.0"
 
 [tool.poetry.dev-dependencies]
@@ -34,5 +35,5 @@ coverage = "^5.0"
 tox = "^3.14.5"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
