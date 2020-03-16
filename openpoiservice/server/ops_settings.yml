@@ -17,7 +17,7 @@ response_limit: 2000
 provider_parameters:
   table_name: ops_planet_pois
   db_name: gis
-  user_name: admin
+  user_name: gis_admin
   table_schema: public
   password: admin
   host: localhost
