@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 import logging
 
-from openpoiservice.server import create_app, db, ops_settings
+from openpoiservice.server import create_app, db
 from openpoiservice.server.db_import import parser
 
 
@@ -22,7 +22,7 @@ cli = FlaskGroup(create_app=create_app)
 def test():
     """Runs the unit tests without test coverage."""
 
-    tests = unittest.TestLoader().discover('openpoiservice/tests', pattern='test*.py')
+    tests = unittest.TestLoader().discover('tests', pattern='test*.py')
     result = unittest.TextTestRunner(verbosity=2).run(tests)
     if not result.wasSuccessful():
         sys.exit(1)

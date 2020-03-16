@@ -17,9 +17,9 @@ response_limit: 2000
 provider_parameters:
   table_name: ops_planet_pois
   db_name: gis
-  user_name: gis_admin
+  user_name: nilsnolde
   table_schema: public
-  password: admin
+  password: Manchmal88
   host: localhost
   port: 5432
   port_tests: 5432
