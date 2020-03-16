@@ -8,15 +8,23 @@ from openpoiservice.server import categories_tools, ops_settings, db
 from openpoiservice.server.db_import.models import Pois, Tags, Categories
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 
+logger = logging.getLogger(__name__)
+
 wkb_fac = osmium.geom.WKBFactory()
 wkt_fac = osmium.geom.WKTFactory()
-logger = logging.getLogger(__name__)
+
 
 # TODO: Use logic to pick best memory option based on
 class OsmReader(osmium.SimpleHandler):
     """Let's see where this leads.."""
 
-    def __init__(self):
+    def __init__(self, filename):
+        """
+        This is osmium's parser class.
+
+        :param filename: The OSM file's name.
+        :type filename: str
+        """
         super().__init__()
         self._poi_objects = list()
         self._tag_objects = list()
@@ -24,6 +32,8 @@ class OsmReader(osmium.SimpleHandler):
 
         # Counters
         self.poi_count = 0
+
+        self.filename = filename
 
     @staticmethod
     def extract_tags(tags):
@@ -35,10 +45,7 @@ class OsmReader(osmium.SimpleHandler):
 
         :rtype: dict
         """
-        tags_dict = dict()
-        for tag in tags:
-            tags_dict[tag.k] = tag.v
-        return tags_dict
+        return {tag.k: tag.v for tag in tags}
 
     def node(self, obj_node):
         """
@@ -140,7 +147,7 @@ class OsmReader(osmium.SimpleHandler):
 
         # periodically dump the objects in the DB
         if len(self._poi_objects) % 10000 == 0:
-            logger.info(f"Saved {len(self._poi_objects)} POIs")
+            logger.info(f"{self.filename}: {self.poi_count} POIs")
             self.save_objects()
 
     def save_objects(self):
