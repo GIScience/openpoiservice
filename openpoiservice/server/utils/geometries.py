@@ -35,8 +35,8 @@ def parse_geometry(geometry):
 def transform_geom(g1, src_proj, dest_proj):
     project = partial(
         pyproj.transform,
-        pyproj.Proj(init=src_proj),
-        pyproj.Proj(init=dest_proj))
+        pyproj.Proj(src_proj),
+        pyproj.Proj(dest_proj))
 
     g2 = transform(project, g1)
 

@@ -1,8 +1,9 @@
 language: python
 
 python:
+  - "3.8"
+  - "3.7"
   - "3.6"
-  - "3.5"
 
 services:
   - postgresql
@@ -13,19 +14,13 @@ addons:
     packages:
     - postgresql-9.5-postgis-2.4
 
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev
-
 # database creation
 before_script:
+  - pip install -U poetry tox-travis codecov
   - psql -c "\conninfo" -U postgres -h localhost
   - psql -c "CREATE DATABASE gis;" -U postgres -h localhost
   - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres -h localhost
   - psql -c 'CREATE EXTENSION postgis;' -U postgres -d gis -h localhost
 
-install:
-  - pip install -r requirements.txt
-
 script:
-  - python manage.py test
+  - tox
