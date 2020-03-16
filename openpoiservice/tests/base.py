@@ -1,6 +1,7 @@
 # openpoiservice/server/tests/base.py
 
 from flask_testing import TestCase
+from pathlib import Path
 from openpoiservice.server import db, create_app
 from openpoiservice.server.db_import import parser
 import os
@@ -18,7 +19,7 @@ class BaseTestCase(TestCase):
     def setUp(self):
         db.create_all()
 
-        test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
+        test_file = Path(os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf'))
 
         parser.parse_import(test_file)
 
