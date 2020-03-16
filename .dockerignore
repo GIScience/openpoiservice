@@ -1,4 +1,6 @@
 .git
 osm/**/*
-osm_1/**/*
-osm_2/**/*
+Dockerfile
+.tox
+.venv
+**/*egg-info*/*
