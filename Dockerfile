@@ -1,6 +1,5 @@
 #--- BEGIN Usual Python stuff ---
 FROM python:3.8.2-slim-buster
-# for Alpine, try "apk --no-cache --update add build-base"
 MAINTAINER Nils Nolde <nils@openrouteservice.org>
 
 ENV POETRY_VERSION=1.0.5
@@ -22,6 +21,8 @@ RUN apt-get update -y > /dev/null && \
 COPY conf/. /app/conf/
 COPY openpoiservice/. /app/openpoiservice
 COPY run.sh manage.py /app/
+
+RUN mv /app/conf/config.template.yml /app/conf/config.yml
 
 EXPOSE 5000
 
