@@ -34,6 +34,4 @@ class DevelopmentConfig(BaseConfig):
 
 class TestingConfig(BaseConfig):
     """Testing configuration."""
-    port = pg_settings['port']
-    if 'TRAVIS' in os.environ:
-        port = 5432
+    pass

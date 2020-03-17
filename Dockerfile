@@ -1,40 +1,30 @@
-# gunicorn-flask
+#--- BEGIN Usual Python stuff ---
+FROM python:3.8.2-slim-buster
+MAINTAINER Nils Nolde <nils@openrouteservice.org>
 
-# requires this ubuntu version due to protobuf library update
-FROM ubuntu:18.04
-MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
+ENV POETRY_VERSION=1.0.5
 
-RUN apt-get update
-RUN apt-get install -y python3-pip python-virtualenv nano wget git locales
+WORKDIR /app
 
-# Install protobuf
-RUN apt-get install -y build-essential protobuf-compiler=3.0.0-9.1ubuntu1 libprotobuf-dev=3.0.0-9.1ubuntu1
+COPY pyproject.toml poetry.lock /app/
 
-# Set the locale
-RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+RUN apt-get update -y > /dev/null && \
+    apt-get install -y build-essential > /dev/null && \
+    pip install "poetry==$POETRY_VERSION" && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi && \
+    apt purge -y build-essential && \
+    apt autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
-# Setup flask application
-RUN mkdir -p /deploy/app
+#--- END Usual Python stuff ---
+COPY conf/. /app/conf/
+COPY openpoiservice/. /app/openpoiservice
+COPY run.sh manage.py /app/
 
-COPY config/gunicorn_config.py /deploy/gunicorn_config.py
-COPY manage.py /deploy/app/manage.py
-
-COPY requirements.txt /deploy/app/requirements.txt
-
-RUN virtualenv --python=python3.6 /ops_venv
-
-RUN /bin/bash -c "source /ops_venv/bin/activate"
-
-RUN /ops_venv/bin/pip3 install -r /deploy/app/requirements.txt
-
-COPY openpoiservice /deploy/app/openpoiservice
-
-WORKDIR /deploy/app
+RUN mkdir -p /srv/app/conf
 
 EXPOSE 5000
 
 # Start gunicorn
-CMD ["/ops_venv/bin/gunicorn", "--config", "/deploy/gunicorn_config.py", "manage:app"]
+ENTRYPOINT ["/app/run.sh"]

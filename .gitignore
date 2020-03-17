@@ -116,3 +116,4 @@ ENV/
 .idea
 
 conf/config.yml
+osm/

@@ -44,15 +44,15 @@ def import_data():
     """Imports osm pbf data to postgis."""
 
     osm_files = []
-    current_dir = os.getcwd()
+    osm_dir = os.path.join(os.getcwd(), 'osm')
 
-    for dirName, subdirList, fileList in os.walk(current_dir):
+    for dirName, subdirList, fileList in os.walk(osm_dir):
         for fname in fileList:
             if fname.endswith('.osm') or fname.endswith('.pbf') and not dirName.endswith('tests/data'):
                 osm_files.append(Path(os.path.join(dirName, fname)))
 
     if not osm_files:
-        logger.error(f"No OSM files found in {current_dir}")
+        logger.error(f"No OSM files found in {osm_dir}")
         exit(1)
 
     logger.info('Starting to import OSM data from\n\t{}'.format("\n\t".join([str(p.resolve()) for p in osm_files])))

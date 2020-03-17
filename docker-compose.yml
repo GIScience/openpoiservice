@@ -1,12 +1,61 @@
-version: '2.2'
+version: '2.4'
+
+volumes:
+ postgis-data:
+ dbbackups:
+
 services:
- gunicorn_flask:
-  #network_mode: "host"
-  build: .
+ openpoiservice:
+  image: openrouteservice/openpoiservice:0.1.0
+  container_name: openpoiservice-0.1.0
+  restart: on-failure
+  #build:
+   #context: .
+  links:
+   - postgis:postgis
   volumes:
-  - ./osm:/deploy/app/osm
-  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
-  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+   - ./osm:/app/osm
+   - ./conf:/srv/app/conf
   ports:
-   - "5000:5000"
-  mem_limit: 28g
+   - 5000:5000
+  environment:
+   - APP_SETTINGS=production
+   - POSTGRES_HOST=localhost  # change to postgis service name
+   - POSTGRES_DBNAME=gis
+   - POSTGRES_PORT=5432
+   - POSTGRES_USER=gis_admin
+   - POSTGRES_PASS=admin
+  command: create  # Will immediately create tables and import all PBFs in /osm, uncomment for a pure restart without losing previous data
+
+ # PostGIS docker image
+ postgis:
+  image: kartoza/postgis:12.0
+  container_name: postgis-12.0
+  volumes:
+   - postgis-data:/var/lib/postgresql
+  environment:
+   - POSTGRES_DB=gis
+   - POSTGRES_USER=gis_admin
+   - POSTGRES_PASS=admin
+   - POSTGRES_DBNAME=gis
+   - ALLOW_IP_RANGE=0.0.0.0/0
+   - POSTGRES_MULTIPLE_EXTENSIONS=postgis
+  restart: on-failure
+
+# PostGIS backup image
+ dbbackups:
+   image: kartoza/pg-backup:12.0
+   container_name: postgis-backups-12.0
+   hostname: pg-backups
+   volumes:
+     - dbbackups:/backups
+   links:
+     - postgis:postgis
+   environment:
+     - DUMPPREFIX=ops
+     - POSTGRES_USER=gis_admin
+     - POSTGRES_PASS=admin
+     - POSTGRES_DBNAME=gis
+     - POSTGRES_PORT=5432
+     - POSTGRES_HOST=postgis
+   restart: on-failure
