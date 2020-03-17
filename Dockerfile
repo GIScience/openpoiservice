@@ -22,9 +22,9 @@ COPY conf/. /app/conf/
 COPY openpoiservice/. /app/openpoiservice
 COPY run.sh manage.py /app/
 
-RUN mv /app/conf/config.template.yml /app/conf/config.yml
+RUN mkdir -p /srv/app/conf
 
 EXPOSE 5000
 
 # Start gunicorn
-CMD ["/app/run.sh", "create"]
+ENTRYPOINT ["/app/run.sh"]

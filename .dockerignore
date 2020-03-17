@@ -4,3 +4,4 @@ Dockerfile
 .tox
 .venv
 **/*egg-info*/*
+conf/config.yml

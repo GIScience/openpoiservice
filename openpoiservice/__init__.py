@@ -19,15 +19,25 @@ logger = logging.getLogger(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(basedir, '..', 'conf/config.yml')) as f:
     ops_settings = yaml.safe_load(f)
+    if os.environ.get('POSTGRES_HOST'):
+        ops_settings['provider_parameters']['host'] = os.environ.get('POSTGRES_HOST')
+    if os.environ.get('POSTGRES_DBNAME'):
+        ops_settings['provider_parameters']['db_name'] = os.environ.get('POSTGRES_DBNAME')
+    if os.environ.get('POSTGRES_PORT'):
+        ops_settings['provider_parameters']['port'] = os.environ.get('POSTGRES_PORT')
+    if os.environ.get('POSTGRES_USER'):
+        ops_settings['provider_parameters']['user_name'] = os.environ.get('POSTGRES_USER')
+    if os.environ.get('POSTGRES_PASS'):
+        ops_settings['provider_parameters']['password'] = os.environ.get('POSTGRES_PASS')
+    if os.environ.get('APP_SETTINGS') == 'testing':
+        ops_settings['provider_parameters']['table_name'] += '_tests'
+
 
 config_map = {
     'development': 'conf.config_flask.DevelopmentConfig',
     'production': 'conf.config_flask.ProductionConfig',
     'testing': 'conf.config_flask.TestingConfig'
 }
-
-if os.environ.get('APP_SETTINGS') == 'testing':
-    ops_settings['provider_parameters']['table_name'] += '_tests'
 
 db = SQLAlchemy()
 
