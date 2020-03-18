@@ -13,22 +13,29 @@ else
 fi
 
 if ! test -f /srv/app/conf/config.yml; then
-  mv /app/conf/config.template.yml /app/conf/config.yml
+  cp /app/conf/config.template.yml /app/conf/config.yml
   cp /app/conf/config.template.yml /srv/app/conf/config.yml
 else
   cp /srv/app/conf/config.yml /app/conf
 fi
 
 # If create is true
-create=${1}
+cmd=${1}
 
-if [ "${create}" == "create" ]; then
-  cd /app
+cd /app
+
+if [ "${cmd}" == 'all' ]; then
   python manage.py drop-db
   python manage.py create-db
   python manage.py import-data
-elif [ -n "${create}" ]; then
-  echo "Command ${create} not recognized"
+elif [ "${cmd}" == 'create-db' ]; then
+  python manage.py create-db
+elif [ "${cmd}" == 'drop-db' ]; then
+  python manage.py drop-db
+elif [ "${cmd}" == 'import-data' ]; then
+  python manage.py import-data
+elif [ -n "${cmd}" ]; then
+  echo "Command ${cmd} not recognized"
   exit 1
 fi
 

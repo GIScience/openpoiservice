@@ -27,4 +27,4 @@ RUN mkdir -p /srv/app/conf
 EXPOSE 5000
 
 # Start gunicorn
-ENTRYPOINT ["/app/run.sh"]
+ENTRYPOINT ["/bin/bash", "/app/run.sh"]
