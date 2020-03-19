@@ -19,13 +19,13 @@ services:
   ports:
    - 5000:5000
   environment:
-   - APP_SETTINGS=production
-   - POSTGRES_HOST=localhost  # change to postgis service name
+   - APP_SETTINGS=production  # or development
+   - POSTGRES_HOST=postgis  # change to localhost if host PostGIS is active
    - POSTGRES_DBNAME=gis
    - POSTGRES_PORT=5432
    - POSTGRES_USER=gis_admin
    - POSTGRES_PASS=admin
-  command: create  # Will immediately create tables and import all PBFs in /osm, uncomment for a pure restart without losing previous data
+  command: all  # Will immediately create tables and import all PBFs in /osm, uncomment for a pure restart without losing previous data
 
  # PostGIS docker image
  postgis:
