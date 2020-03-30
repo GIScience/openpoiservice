@@ -82,7 +82,7 @@ def create_app(script_info=None):
             diff = time.time() - g.start
             logger.info("Request took: {} seconds".format(diff))
 
-    # error handlers
+    # _error handlers
     @app.errorhandler(401)
     def unauthorized_page(error):
         return jsonify({"error_message": 401})
@@ -101,7 +101,10 @@ def create_app(script_info=None):
 
     @app.errorhandler(api_exceptions.InvalidUsage)
     def handle_invalid_usage(error):
-        response = jsonify(error.to_dict())
+        response_obj = {
+            "error": error.to_dict()
+        }
+        response = jsonify(response_obj)
         response.status_code = error.status_code
         return response
 

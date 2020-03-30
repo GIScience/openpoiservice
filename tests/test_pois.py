@@ -124,17 +124,17 @@ class TestPoisBlueprint(BaseTestCase):
     def test_request_poi_missing_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry),
                                     content_type='application/json')
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
     def test_request_poi_missing_geometry_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry_geom),
                                     content_type='application/json')
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
     def test_request_poi_missing_geometry_type(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry_type),
                                     content_type='application/json')
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
 
     def test_request_poi_point_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_point_geom),

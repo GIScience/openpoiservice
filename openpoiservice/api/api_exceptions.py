@@ -14,8 +14,6 @@ class InvalidUsage(Exception):
         :param payload: the optional payload
         :type payload: string
         """
-
-        # type: (object, object, object) -> object
         Exception.__init__(self)
 
         if status_code is not None:
@@ -26,11 +24,11 @@ class InvalidUsage(Exception):
             else:
                 message = message
 
-            self.error = {
+            self._error = {
                 "code": error_code,
                 "message": message
             }
 
     def to_dict(self):
-        rv = dict(self.error or ())
+        rv = dict(self._error or ())
         return rv
