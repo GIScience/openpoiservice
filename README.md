@@ -1,228 +1,183 @@
-# Openpoiservice 
+# OpenPoiService 
 
 [![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
 
-Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from 
-OpenStreetMap.org data and thereby **exploits** it's notion of tags...
+**OpenPoiServer** is a flask application which hosts a highly customizable database for points of interest derived from 
+[OpenStreetMap.org](https://openrouteservice.org) data.
 
 > OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
 > map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
 > or other structured items. 
 
-This service consumes OSM tags on nodes, ways and relations by grouping them into predefined categories. 
-If it picks up an OSM object tagged with one of the osm keys defined in `categories.yml` it will import this 
-point of interest with specific additional tags which may be defined in `ops_settings.yml`. Any additional tag, 
-for instance `wheelchair` or `smoking` may then be used to query the service via the API after import.
+## Introduction
 
-For instance, if you want to request all pois accessible by wheelchair within a geometry, you could add then add 
-`wheelchair: ['yes', 'dedicated]` in `filters` within the body of your HTTP POST request. 
+**OpenPoiServer** consumes OSM tags on nodes, ways and relations by grouping them into predefined categories. 
+If it picks up an OSM object tagged with one of the OSM keys defined in `categories.yml` it will import this 
+point of interest with specific additional tags which may be defined in [`config.yml`](conf/config.template.yml). 
+Any additional tag, for instance `wheelchair` or `smoking`, may then be used to filter POIs via the API after the import, see [Examples](#Examples).
 
-You may pass 3 different types of geometry within the request to the database. Currently "Point" and "LineString" with
-a corresponding and buffer are supported as well as a polygon. Points of interest will be returned within the given geometry.
+You may pass 3 different types of geometry within the request to the database:
 
-You can control the maximum size of geometries and further restrictions in the settings file of this service.
+- `Point` geometry with a buffer
+- `LineString` geometry with a buffer
+- `Polygon` geometry
 
-#### Import Process 
+POIs will be returned within the (buffered) geometry, complete with OSM ID and their `osm_type` (node: 1, way: 2, relation: 3). 
+That helps finding the object on [openstreetmap.org](https://openstreetmap.org).
 
-The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 3), 
-ways (osm_type 2) and nodes (osm_type 1) in order. Which type the specific point of interest originated from will be 
-returned in the response - this will help you find the object directly on [OpenStreetMap.org](OpenStreetMap.org). 
+Furthermore you can control the most sensitive API settings, such as `maximum_area`, `response_limit`.
 
-## Installation
+## Installation and Setup
 
-You can either run **openpoiservice** on your host machine in a virtual environment or simply with docker. The Dockerfile 
-provided installs a WSGI server (gunicorn) which starts the flask service on port 5000.
+You can either host the service on your machine directly or use Docker/docker-compose to virtualize a new environment to run **OpenPoiServer**.
 
+### Docker
 
-### Technical specs for storing and importing OSM files
+The image is available on [Dockerhub](https://docker.hub.com) or can be built locally. 
 
-##### Python version
+The image provides a stable and configurable WSGI server, `gunicorn`.
 
-As this service makes use of the python collections library, in particular the notion of deque's and its functions
-it only supports python 3.5 and greater.
+#### Quickstart
 
-##### Database
-This application uses a psql/postgis setup for storing the points of interest. We highly recommend [using this](https://github.com/kartoza/docker-postgis) 
-docker container.
-
-##### Importer
-Please consider the following technical requirements for parsing & importing osm files.
-
-| Region        | Memory        | 
-| ------------- |:-------------:|
-| Germany       | 8 GB         |
-| Europe        | 32 GB         | 
-| Planet        | 128 GB        | 
-
-**Note:** Openpoiservice will import any osm pbf file located in the osm folder or subdirectory within. 
-This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script for the download
-links to be found in the osm folder) and use a *smaller* instance to import the global data set (as long as
-the OSM files don't exceed 5 GB of disk space, 16 GB of memory will suffice to import the entire planet).
-
-### Run as Docker Container (Flask + Gunicorn)
-
-Make your necessary changes to the settings in the file `ops_settings_docker.yml` and to categories if you need inside `categories_docker.yml`. These files are mounted as volumes to the docker container.
-If you are planning to import a different osm file, please download it to the `osm folder` (any folder within will be scanned
-for osm files) as this will be a shared volume. 
-
-### Docker-compose
-
-#### All-in-one docker image
-
-This docker compose will allow you to run openpoiservice with `psql/postgis` image. This will allow you to deploy this project fast.
-
-**Important :** The database is not exposed, you won't be able to access it from outside the container. If you want to acces it simply add those lines to the database definition inside the `docker-compose-with-postgis.yml`:
-
-```sh
-ports:
-   - <PORT YOU WANT>:5432
+```bash
+docker run -dt \
+    --name openpoiservice \
+    -v $PWD/osm:/app/osm \  # The data volume
+    -v $PWD/conf:/srv/app/conf \  # The configuration
+    #-p 5000:5000 \  # The port to request OpenPoiService
+    --net host \  # if PostGIS is installed on the host
+    openrouteservice/openpoiservice:1.0.0 \  # The image
+    all  # The CMD to be executed
 ```
 
-Don't forget to change the host name and port inside `ops_settings_docker.yml` by the one given to docker container for database.
+Note, that you'll have to have a working PostGIS installation available. The necessary settings can either be in form of environment variables or by editing the mapped `$PWD/conf/config.yml` file and restarting the container. 
 
-* Hostname default value : `psql_postgis_db`
-* Port default value : `5432`
+#### Environment variables
 
+The PostgreSQL specific settings are the same as for Kartoza's excellent [PostGIS image](https://github.com/kartoza/docker-postgis):
 
-**Notes :** If openpoiservice can't connect to the database, it's probably because you don't have the same settings inside `ops_settings_docker.yml` and `docker-compose-with-postgis.yml`.
+- `APP_SETTINGS`: Defines the context for Flask, one of `production` (default), `development`, `testing`. 
+- `POSTGRES_HOST`: The host for the PG installation. Can be a physical IP address or Docker container/service name if containers are linked in a network. Default `localhost`.
+- `POSTGRES_DBNAME`: The database name. Default `gis`.
+- `POSTGRES_PORT`: The PG published port. Default `5432`.
+- `POSTGRES_USER`: The PG user name. Default `gis_admin`.
+- `POSTGRES_PASS`: The PG password for the user name. Default `admin`.
 
-Command to use to run all-in-one docker container
+The PostgreSQL setting can also be set in the `config.yml` file. More on that in the [volumes](#Volumes) section.
 
-```sh
-docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
-```
+#### Volumes
 
-#### Only deploy openpoiservice
+There are two main container locations interesting for mounting to the host:
 
-This will only run openpoiservice inside a container, meaning that you will need to handle the database yourself and connect it to this container.
+- `/app/osm`: the service looks in this directory for PBF files. So in `-v $PWD/osm:/app/osm`, your local directory `./osm` should hold at least one OSM file.
+- `/srv/app/conf`: all config files are located in this directory. If you change any of those and restart the container, the changes will be effective immediately.
+    - `categories.yml`: holds the information which OSM keys are imported to the database. This is important for the `import-data` command.
+    - `config_gunicorn.py`: some basic configuration for the Python server `gunicorn`
+    - `config.yml`: holds important API and Postgres configuration. Most Postgres parameter are alternatively settable as [environment variables](#environment-variables).
 
-```sh
-docker-compose -f /path/to/docker-compose.yml up -d
-```
+#### Commands
 
-#### After deploy
+The entrypoint for a container is `./run.sh` which can take one `CMD` argument of the following:
 
-Once the container is built you can either, create the empty database:
+- `all`: Will do the whole thing: drop previous tables, create new ones and import all data available.
+- `create-db`: Creates the tables.
+- `drop-db`: Drops the tables.
+- `import-data`: Import the available OSM data into the tables.
 
-```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py create-db
-```
+E.g. the following command would import available OSM data into existing tables and remove the container afterward:
 
-Delete the database:
+`docker run --rm -t -v $PWD/osm:/app/osm -v $PWD/conf:/srv/app/conf --net host openrouteservice/openpoiservice:0.1.0 import-data`
 
-```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py drop-db
-```
+### Conventional Installation
 
-Or import the OSM data:
+#### Requirements
 
-```sh
-$ docker exec -it container_name /ops_venv/bin/python manage.py import-data
-```
+Installation can only be confirmed on Linux.
 
-### Protocol Buffers (protobuf) for imposm.parser 
+- Python => 3.6
+- `poetry` as package manager
 
-This repository uses [imposm.parser](https://imposm.org/docs/imposm.parser/latest/index.html) to parse the 
-OpenStreetMap pbf files which uses `google's protobuf library` under its hood.
+#### Workflow
 
-**The imposm.parser requirement will not build with pip unless you are running [protobuf 3.0.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0).** 
+1. Clone the repo and install the dependencies. Depending on your system you might have to additionally install some system libraries.
+    ```bash
+    git clone https://github.com/GIScience/openpoiservice.git
+    cd openpoiservice
+    poetry install --no-dev
+    ```
+2. Download one or more PBF (only) files into the `osm` directory. This is where the service will look for data.
+    ```bash
+    cd osm 
+    wget http://download.geofabrik.de/europe/andorra-latest.osm.pbf
+    wget  http://download.geofabrik.de/europe/faroe-islands-latest.osm.pbf
+    ```
+3. Copy the `conf/config.template.yml` to `conf/config.yml` and adjust the settings as needed.
+    ```bash
+    cp conf/config.template.yml conf/config.yml
+    nano conf/config.yml
+    ```
+4. Create the tables and import the data. This might take a while and depends on your machine specs.
+    ```bash
+   export APP_SETTINGS=production python manage.py create-db
+   export APP_SETTINGS=production python manage.py import-data 
+   ```
+5. Run the service either in Flask or with `gunicorn`.
+    ```bash
+   FLASK_APP=manage flask run
+   #or
+   ./.venv/bin/gunicorn -config conf/config_gunicorn.py manage:app
+   ```
+   
+### Available Flask commands
 
-To this end, please make sure that you are running the aforementioned version of protobuf if `pip install -r requirements.txt` fails (install protobuf [from source](https://github.com/google/protobuf/blob/master/src/README.md)) 
+The following commands are registered in `manage.py` to be used like this `python manage.py <command>`:
 
-### Prepare settings.yml
+- `create-db`: Creates the tables in the PostGIS database registered in `conf/config.yml`
+- `import-data`: Imports all PBF files located in `osm/` directory.
+- `drop-db`: Deletes the tables registered in `conf/config.yml`
+- `test`: Runs the test suite, needs a `APP_SETTINGS=testing`, i.e. `APP_SETTINGS=testing python manage.py test`
 
-Update `openpoiservice/server/ops_settings.yml` with your necessary settings and then run one of the following
-commands.
+## Important aspects for running OpenPoiService
 
-[
-```sh
-$ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig|DevelopmentConfig"
-```
-]
+### Machine specs
 
+Parsing OSM data and extracting geometries of ways and relations is a very heavy task. The problem is that ways and
+relations only reference node IDs, who keep the actual geometry. So, to extract the geometry of a way (or a relation),
+one has to keep a reference of the underlying nodes. We decided to rely on
+`pyosmium`, as it offers the flexiblity of various strategies to cope with the processing. 
+Please see [link]() for a more in-depth explanation of the available strategies. 
 
-### Create the POI DB
+The configuration value `osmium_strategy` can be set in [`conf/config.yml`]().
 
-```sh
-$ python manage.py create_db
-```
-### Drop the POI DB
+Also, we use `multiprocessing` to spawn each PBF file to its own process/core. We use a maxium of `available_cores - 1`. So,
+it can be beneficial to split up a region into multiple PBF files prior to importing, which will considerably speed up 
+the process. However, do note that this will mostly require the same RAM as a single, big PBF file.
 
-```sh
-$ python manage.py drop_db
-```
+That's why we can't and won't give ultimate recommendations to hardware, as it depends on the `osmium` memory/mmap strategy
+and whether you split up the processing on multiple PBF files.
 
-### Parse and import OSM data
+However, for small to medium-sized OSM extracts 16 GB RAM should be sufficient for `flex_mem` strategy, even on multiple cores.
 
-```sh
-$ python manage.py import_data
-```
+### PostGIS-enabled Database
 
-### Run the Application with Flask-Werkzeug
+OpenPoiService requires to have a PostGIS instance running. This can be an existing database system or, highly recommended,
+[Kartoza's docker image](https://github.com/kartoza/docker-postgis). Our provided [`docker-compose.yml`](docker-compose.yml)
+uses Kartoza's PostgreSQL 12.0 with PostGIS 3.0 extension.
 
-```sh
-$ python manage.py run
-```
+## Customization
 
-Per default you can access the application at the address [http://localhost:5000/](http://localhost:5000/)
+### POI categories
 
-> Want to specify a different port?
+OpenPoiService divides OpenStreetMap tags into reasonable categories, which act as parents for OSM tags. Additionally, 
+it can extract a user-settable list of tags from each POI, if present, such as `opening_hours`, `wheelchair`, `smoking` etc.
 
-> ```sh
-> $ python manage.py run -h 0.0.0.0 -p 8080
-> ```
+`conf/categories.yml` contains the pre-set mapping of POI tags which OpenPoiService will extract. As long as you keep 
+the general structure and make sure IDs are not duplicated, you can extend the list to your convenience.
 
-### Tests
+In `conf/config.yml` there's a section `column_mappings` which lists the OSM tags which are extracted for each POI found,
+if they are present.
 
-```sh
-$ export TESTING="True" && python manage.py test
-```
-
-
-### Category IDs and their configuration
-
-`openpoiservice/server/categories/categories.yml` is a list of (**note:** not all!) OpenStreetMap tags with arbitrary category IDs. 
-If you keep the structure as follows, you can manipulate this list as you wish.
- 
- ```yaml
- transport:
-    id: 580
-    children:
-        aeroway:
-            aerodrome: 581        
-            aeroport: 582 
-            helipad: 598         
-            heliport: 599 
-        amenity:
-            bicycle_parking: 583  
-            
- sustenance:
-    id: 560             
-    children:
-        amenity:
-            bar: 561             
-            bbq: 562   
- ...
- ```
- 
- Openpoiservice uses this mapping while it imports pois from the OpenStreetMap data and assigns the custom category IDs
- accordingly.
-
-`column_mappings` in `openpoiservice/server/ops_settings.yml` controls which OSM information will be considered in the database and also if 
-these may be queried by the user via the API , e.g.
-
-```py
-wheelchair:
-
-smoking:
-
-fees:
-```
-
-For instance means that the OpenStreetMap tag [wheelchair](https://wiki.openstreetmap.org/wiki/Key:wheelchair) will be considered
-during import and save to the database. A user may then add a list of common values in the filters object `wheelchair: ['yes', 'dedicated', ...]` 
-which correspond to the OSM common values of the tag itself, e.g. 
-[https://wiki.openstreetmap.org/wiki/Key:wheelchair](https://wiki.openstreetmap.org/wiki/Key:wheelchair).
+Both `categories` and the `column_mappings` can be used in API queries to filter POIs.
 
 ### API Documentation
 
