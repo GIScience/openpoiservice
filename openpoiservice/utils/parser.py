@@ -1,10 +1,11 @@
 # openpoiservice/server/parser.py
+from flask import current_app as app
+
 import logging
 from pathlib import Path
 import multiprocessing as mp
 
-from .osm_reader import OsmReader
-from openpoiservice import ops_settings
+from openpoiservice.utils.osm_reader import OsmReader
 from openpoiservice.utils.decorators import timeit
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def parse_import(osm_file):
 
 @timeit
 def run_import(osm_files_to_import):
-    pool = mp.Pool(ops_settings['concurrent_workers'])
+    pool = mp.Pool(app.config['OPS_CONCURRENT_WORKERS'])
     poi_counts = pool.map(parse_import, osm_files_to_import)
 
     pool.close()

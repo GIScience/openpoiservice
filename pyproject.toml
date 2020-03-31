@@ -29,6 +29,8 @@ osmium = "^2.15"
 werkzeug = "0.16.1"
 # gevent needs to be at min 1.4.0 for gunicorn>20.0
 gevent = "^1.4.0"
+flask-restplus = "^0.13.0"
+python-dotenv = "^0.12.0"
 
 [tool.poetry.dev-dependencies]
 coverage = "^5.0"

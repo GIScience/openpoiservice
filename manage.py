@@ -6,9 +6,13 @@ import os
 import sys
 from pathlib import Path
 import logging
+from dotenv import load_dotenv
 
 from openpoiservice import create_app, db
-from openpoiservice.db_import import parser
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +20,7 @@ logger = logging.getLogger(__name__)
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
+from openpoiservice.utils import parser
 
 @cli.command()
 def test():

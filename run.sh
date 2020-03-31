@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-if ! test -f /srv/app/conf/categories.yml; then
-  cp /app/conf/categories.yml /srv/app/conf
+if ! test -f /srv/app/categories.yml; then
+  cp /app/categories.yml /srv/app/conf
 else
   cp /srv/app/conf/categories.yml /app/conf
 fi
 
-if ! test -f /srv/app/conf/config_gunicorn.py; then
-  cp /app/conf/config_gunicorn.py /srv/app/conf
+if ! test -f /srv/app/gunicorn_config.py; then
+  cp /app/gunicorn_config.py /srv/app/conf
 else
-  cp /srv/app/conf/config_gunicorn.py /app/conf
+  cp /srv/app/gunicorn_config.py /app
 fi
 
 if ! test -f /srv/app/conf/config.yml; then
@@ -39,4 +39,4 @@ elif [ -n "${cmd}" ]; then
   exit 1
 fi
 
-cd /app && /usr/local/bin/gunicorn --config /app/conf/config_gunicorn.py manage:app
+cd /app && /usr/local/bin/gunicorn --config /app/conf/gunicorn_config.py manage:app

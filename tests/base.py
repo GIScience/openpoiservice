@@ -3,7 +3,7 @@
 from flask_testing import TestCase
 from pathlib import Path
 from openpoiservice import db, create_app, config_map
-from openpoiservice.db_import import parser
+from openpoiservice.utils import parser
 import os
 
 app = create_app()

@@ -1,16 +1,18 @@
 # openpoiservice/server/query_builder.py
 
-from openpoiservice import db
-from openpoiservice import categories_tools, ops_settings
+from flask import current_app as app
+
 import geoalchemy2.functions as geo_func
 from geoalchemy2.types import Geography
 from shapely import wkb
 from shapely.geometry import MultiPoint, Point
-from openpoiservice.db_import.models import Pois, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func
 import geojson as geojson
 import logging
+
+from .. import db, categories_tools
+from ..models import Pois, Tags, Categories
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +167,7 @@ class QueryBuilder(object):
         """
 
         custom_filters = []
-        for tag, settings in ops_settings['column_mappings'].items():
+        for tag, settings in app.config['OPS_ADDITIONAL_TAGS']:
             if tag in filters:
                 custom_filters.append(Tags.key == tag.lower())
                 custom_filters.append(Tags.value.in_(filters[tag]))

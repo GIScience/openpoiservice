@@ -1,82 +1,23 @@
-# openpoiservice/server/main/views.py
+from flask import Blueprint, request, make_response, current_app, jsonify
 
-import geojson
-import json
 import copy
-from flask import Blueprint, request, Response
-from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, Optional, Boolean
-from shapely.geometry import MultiPoint, shape
+import json
+import geojson
+from shapely.geometry import shape, MultiPoint
+from voluptuous.error import MultipleInvalid
 
-from openpoiservice import categories_tools
-from openpoiservice import api_exceptions, ops_settings
-from openpoiservice.api.query_builder import QueryBuilder
-from openpoiservice.utils.geometries import parse_geometry, validate_limit, transform_geom
-from openpoiservice.api.query_info import QueryInfo
+from .. import categories_tools
+from . import api_exceptions
+from .schemas import get_schema
+from .query_info import QueryInfo
+from .query_builder import QueryBuilder
+from ..utils.geometries import validate_limit, transform_geom, parse_geometry
 
-
-# from flasgger import validate
-
-
-def custom_schema():
-    custom_dict = {}
-
-    for tag, settings in ops_settings['column_mappings'].items():
-        custom_dict[tag] = Required(list, msg='Must be a list')
-
-    return custom_dict
+main_bp = Blueprint('api', __name__)
 
 
-geom_schema = {
-
-    Optional('geojson'): Required(object, msg='Must be a geojson object'),
-    Optional('bbox'): Required(All(list, Length(min=2, max=2)),
-                               msg='Must be length of {}'.format(2)),
-    Optional('buffer'): Required(
-        All(Coerce(int), Range(min=0, max=ops_settings['maximum_search_radius_for_points'])),
-        msg='Must be between 1 and {}'.format(
-            ops_settings['maximum_search_radius_for_points']))
-
-}
-
-filters_schema = {
-
-    Optional('category_group_ids'): Required(
-        All(categories_tools.category_group_ids, Length(max=ops_settings['maximum_categories'])),
-        msg='Must be one of {} and have a maximum amount of {}'.format(
-            categories_tools.category_group_ids, ops_settings['maximum_categories'])),
-
-    Optional('category_ids'): Required(
-        All(categories_tools.category_ids, Length(max=ops_settings['maximum_categories'])),
-        msg='Must be one of {} and have a maximum amount of {}'.format(categories_tools.category_ids,
-                                                                       ops_settings['maximum_categories'])),
-
-    Optional('address'): Required(Boolean(Coerce(str)), msg='Must be true or false'),
-
-}
-
-filters_schema.update(custom_schema())
-
-schema = Schema({
-    Required('request'): Required(Any('pois', 'stats', 'list'),
-                                  msg='pois, stats or list missing'),
-
-    Optional('geometry'): geom_schema,
-
-    Optional('filters'): filters_schema,
-
-    Optional('limit'): Required(All(Coerce(int), Range(min=1, max=ops_settings['response_limit'])),
-                                msg='must be between 1 and {}'.format(
-                                    ops_settings['response_limit'])),
-    Optional('sortby'): Required(Any('distance', 'category'), msg='must be distance or category'),
-
-    Optional('id'): Required(Coerce(str), msg='must be a string')
-})
-
-main_blueprint = Blueprint('main', __name__, )
-
-
-@main_blueprint.route('/pois', methods=['POST'])
-def places():
+@main_bp.route('/pois', methods=['POST'])
+def pois():
     """
     Function called when user posts or gets to /places.
 
@@ -85,65 +26,53 @@ def places():
     :type: string
     """
 
-    if request.method == 'POST':
+    if 'application/json' in request.headers['Content-Type'] and request.is_json:
 
-        if 'application/json' in request.headers['Content-Type'] and request.is_json:
+        all_args = request.get_json(silent=True)
 
-            all_args = request.get_json(silent=True)
+        raw_request = copy.deepcopy(all_args)
 
-            raw_request = copy.deepcopy(all_args)
+        if all_args is None:
+            raise api_exceptions.InvalidUsage(status_code=400, error_code=4000)
 
-            if all_args is None:
-                raise api_exceptions.InvalidUsage(status_code=400, error_code=4000)
+        try:
+            schema = get_schema()
+            schema(all_args)
+        except MultipleInvalid as error:
+            raise api_exceptions.InvalidUsage(status_code=400, error_code=4000, message=str(error))
 
-            try:
-                schema(all_args)
-            except MultipleInvalid as error:
-                raise api_exceptions.InvalidUsage(status_code=400, error_code=4000, message=str(error))
+        if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
+            all_args['filters']['category_ids'] = categories_tools.unify_categories(all_args['filters'])
 
-            # query stats
-            if all_args['request'] == 'list':
-                r = Response(json.dumps(categories_tools.categories_object), mimetype='application/json; charset=utf-8')
-                return r
+        if 'limit' not in all_args:
+            all_args['limit'] = current_app.config['OPS_MAX_POIS']
 
-            if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
-                all_args['filters']['category_ids'] = categories_tools.unify_categories(all_args['filters'])
+        if 'geometry' not in all_args:
+            raise api_exceptions.InvalidUsage(status_code=400, error_code=4002)
 
-            if 'limit' not in all_args:
-                all_args['limit'] = ops_settings['response_limit']
+        are_required_geom_present(all_args['geometry'])
 
-            if 'geometry' not in all_args:
-                raise api_exceptions.InvalidUsage(status_code=400, error_code=4002)
+        # check restrictions and parse geometry
+        all_args['geometry'] = parse_geometries(all_args['geometry'])
+        features = []
+        gj = all_args['geometry'].get('geojson')
+        if gj and gj.get('type') == 'MultiPolygon':
+            polygons = list(all_args['geometry']['geom'])
 
-            are_required_geom_present(all_args['geometry'])
-
-            # check restrictions and parse geometry
-            all_args['geometry'] = parse_geometries(all_args['geometry'])
-            features = []
-            gj = all_args['geometry'].get('geojson')
-            if gj and gj.get('type') == 'MultiPolygon':
-                polygons = list(all_args['geometry']['geom'])
-
-                for polygon in polygons:
-                    all_args['geometry']['geom'] = polygon
-                    tmp = request_pois(all_args)
-                    query_info = QueryInfo(raw_request).__dict__
-                    tmp["information"] = query_info
-                    features.append(tmp)
-
-            else:
+            for polygon in polygons:
+                all_args['geometry']['geom'] = polygon
                 tmp = request_pois(all_args)
                 query_info = QueryInfo(raw_request).__dict__
                 tmp["information"] = query_info
                 features.append(tmp)
 
-            # query pois
-            r = Response(json.dumps(features), mimetype='application/json; charset=utf-8')
-            return r
+        else:
+            tmp = request_pois(all_args)
+            query_info = QueryInfo(raw_request).__dict__
+            tmp["information"] = query_info
+            features.append(tmp)
 
-    else:
-
-        raise api_exceptions.InvalidUsage(status_code=405, error_code=4006)
+        return jsonify(features)
 
 
 def request_pois(all_args):
@@ -230,14 +159,14 @@ def parse_geometries(geometry):
         geojson_obj = check_validity(g2)
 
         if geojson_obj.geom_type == 'Point':
-            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_points'])
+            check_for_buffer(geometry, current_app.config['OPS_MAX_RADIUS_POINT'])
 
         elif geojson_obj.geom_type == 'LineString':
-            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_linestrings'])
+            check_for_buffer(geometry, current_app.config['OPS_MAX_RADIUS_LINE'])
 
             # check if linestring not too long
             length = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').length
-            if length > ops_settings['maximum_linestring_length']:
+            if length > current_app.config['OPS_MAX_LENGTH_LINE']:
                 raise api_exceptions.InvalidUsage(
                     status_code=400, error_code=4005,
                     message='Your linestring geometry is too long ({} meters), check the server restrictions.'.format(
@@ -245,11 +174,11 @@ def parse_geometries(geometry):
 
         elif geojson_obj.geom_type == 'Polygon' or geojson_obj.geom_type == 'MultiPolygon':
 
-            check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
+            check_for_buffer(geometry, current_app.config['OPS_MAX_LENGTH_POLY'])
 
             # check if area not too large
             area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area
-            if area > ops_settings['maximum_area']:
+            if area > current_app.config['OPS_MAX_AREA']:
                 raise api_exceptions.InvalidUsage(
                     message='Your polygon geometry is too large ({} square meters), check the server '
                             'restrictions.'.format(area),
@@ -277,7 +206,7 @@ def parse_geometries(geometry):
 
         # check if area not too large
         area = transform_geom(geometry['bbox'], 'epsg:4326', 'epsg:3857').area
-        if area > ops_settings['maximum_area']:
+        if area > current_app.config['OPS_MAX_AREA']:
             raise api_exceptions.InvalidUsage(error_code=4008, status_code=400,
                                               message='Your polygon geometry is too large ({} square meters), '
                                                       'check the server restrictions.'.format(area))

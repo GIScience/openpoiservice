@@ -1,11 +1,12 @@
+from flask import current_app
 import osmium
 from shapely import wkb as wkblib
 import logging
 import uuid
 from copy import deepcopy
 
-from openpoiservice import categories_tools, ops_settings, db
-from openpoiservice.db_import.models import Pois, Tags, Categories
+from openpoiservice import categories_tools, db
+from openpoiservice.models import Pois, Tags, Categories
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ class OsmReader(osmium.SimpleHandler):
         # TODO: since tags table is 1:1 with OSM objects, this doesn't have to be its own table
         # consider putting it in a JSON column instead in the OSM object table
         for tag_key, tag_value in tags.items():
-            if tag_key in ops_settings['column_mappings']:
+            if tag_key in current_app.config['OPS_ADDITIONAL_TAGS']:
                 self._tag_objects.append(Tags(
                     uuid=uid,
                     osm_id=osmid,
