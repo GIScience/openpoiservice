@@ -24,16 +24,6 @@ logger.info(f"""The following database settings are active:
 \tDatabase: {db_engine.url.database}
 \tUser:     {db_engine.url.username}""")
 
-@app.cli.command()
-def test():
-    """Runs the unit tests without test coverage."""
-
-    tests = unittest.TestLoader().discover('tests', pattern='test*.py')
-    result = unittest.TextTestRunner(verbosity=2).run(tests)
-    if not result.wasSuccessful():
-        sys.exit(1)
-    sys.exit(0)
-
 
 @app.cli.command()
 def create_db():

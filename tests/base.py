@@ -6,6 +6,7 @@ from pathlib import Path
 from openpoiservice import db, create_app
 from openpoiservice.utils import parser
 from openpoiservice.logger import logger
+from openpoiservice.utils.env import is_testing
 
 this_path = Path(os.path.dirname(__file__))
 
@@ -13,7 +14,7 @@ class BaseTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        app = create_app('testing')
+        app = create_app()
         app.app_context().push()
         cls.app = app
 
@@ -24,6 +25,9 @@ class BaseTestCase(unittest.TestCase):
 \tHost:     {cls.db.engine.url.host}:{cls.db.engine.url.port}
 \tDatabase: {cls.db.engine.url.database}
 \tUser:     {cls.db.engine.url.username}""")
+
+        if not is_testing():
+            raise EnvironmentError("TESTING env var must be truthy, i.e. 1, on, true, True, TRUE")
 
         cls.db.create_all()
         logger.info("Created tables:\n\t{}".format("\n\t".join(cls.db.metadata.tables.keys())))

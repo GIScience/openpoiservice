@@ -35,7 +35,7 @@ request_stats_category_group_ids_point_geom = dict(
 )
 
 
-class TestPoisBlueprint(BaseTestCase):
+class TestStatsBlueprint(BaseTestCase):
 
     def test_request_stats_category_ids_point_geom(self):
         response = self.client.post('/stats', data=json.dumps(request_stats_category_ids_point_geom),

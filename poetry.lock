@@ -433,6 +433,14 @@ version = "0.8.4"
 
 [[package]]
 category = "main"
+description = "nose extends unittest to make testing easier"
+name = "nose"
+optional = false
+python-versions = "*"
+version = "1.3.7"
+
+[[package]]
+category = "main"
 description = "Python bindings for libosmium, the data processing library for OSM data"
 name = "osmium"
 optional = false
@@ -882,7 +890,7 @@ test = ["zope.event"]
 testing = ["zope.event", "nose", "coverage"]
 
 [metadata]
-content-hash = "70e36f9c4b286c2a1e9ca6d8913873af0f2fa2db2769da0a3cda8df81f063c66"
+content-hash = "b1ad175889e1ffd162c3b27b33a1de124e60dec54362863fbd1c253d58f7039c"
 python-versions = "^3.5"
 
 [metadata.files]
@@ -1186,6 +1194,11 @@ markupsafe = [
 mistune = [
     {file = "mistune-0.8.4-py2.py3-none-any.whl", hash = "sha256:88a1051873018da288eee8538d476dffe1262495144b33ecb586c4ab266bb8d4"},
     {file = "mistune-0.8.4.tar.gz", hash = "sha256:59a3429db53c50b5c6bcc8a07f8848cb00d7dc8bdb431a4ab41920d201d4756e"},
+]
+nose = [
+    {file = "nose-1.3.7-py2-none-any.whl", hash = "sha256:dadcddc0aefbf99eea214e0f1232b94f2fa9bd98fa8353711dacb112bfcbbb2a"},
+    {file = "nose-1.3.7-py3-none-any.whl", hash = "sha256:9ff7c6cc443f8c51994b34a667bbcf45afd6d945be7477b52e97516fd17c53ac"},
+    {file = "nose-1.3.7.tar.gz", hash = "sha256:f1bffef9cbc82628f6e7d7b40d7e255aefaa1adb6a1b1d26c69a8b79e6208a98"},
 ]
 osmium = [
     {file = "osmium-2.15.4-cp27-cp27m-macosx_10_13_x86_64.whl", hash = "sha256:c0aa751a4a852f5066009500ee2226edfebc5110bebb5df1721b0394aee7193b"},

@@ -17,7 +17,6 @@ addons:
 # database creation
 before_script:
   - pip install -U poetry tox-travis codecov
-  - mv conf/config.template.yml conf/config.yml
   - psql -c "\conninfo" -U postgres -h localhost
   - psql -c "CREATE DATABASE gis;" -U postgres -h localhost
   - psql -c "CREATE USER gis_admin WITH PASSWORD 'admin';" -U postgres -h localhost

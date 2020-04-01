@@ -36,7 +36,7 @@ db = SQLAlchemy()
 categories_tools = CategoryTools('config_categories.yml')
 
 
-def create_app(app_settings=None):
+def create_app():
     # instantiate the app
 
     app = Flask(
@@ -53,7 +53,7 @@ def create_app(app_settings=None):
     }
 
     # set config
-    app_settings = app_settings or os.getenv('FLASK_ENV')
+    app_settings = os.getenv('FLASK_ENV', 'production')
     app.config.from_object(config_map[app_settings])
 
     # Set logger verbosity

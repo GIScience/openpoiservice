@@ -70,7 +70,7 @@ The PostgreSQL specific settings are the same as for Kartoza's excellent [PostGI
 - `POSTGRES_DBNAME`: The database name. Default `gis`.
 - `POSTGRES_PORT`: The PG published port. Default `5432`.
 - `POSTGRES_USER`: The PG user name. Default `gis_admin`.
-- `POSTGRES_PASS`: The PG password for the user name. Default `password`.
+- `POSTGRES_PASS`: The PG password for the user name. Default `admin`.
 
 ##### App
 

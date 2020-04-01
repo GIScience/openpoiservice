@@ -2,7 +2,6 @@
 
 
 import unittest
-import json
 
 from tests.base import BaseTestCase
 
