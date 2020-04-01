@@ -4,16 +4,13 @@ from flask import Flask, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
 from flask_cors import CORS
-import yaml
 import os
 import time
-import logging
 
-from openpoiservice.__version__ import __version__
-from openpoiservice.utils.categories import CategoryTools
-from openpoiservice.api import api_exceptions
-
-logger = logging.getLogger(__name__)
+from .__version__ import __version__
+from .logger import logger
+from .utils.categories import CategoryTools
+from .api import api_exceptions
 
 config_map = {
     'development': 'config.DevelopmentConfig',
@@ -42,11 +39,11 @@ def create_app(script_info=None):
         'version': __version__,
         'uiversion': 3
     }
+
     # set config
     app_settings = os.getenv('FLASK_ENV')
-    logger.info(os.getenv('FLASK_ENV'))
     app.config.from_object(config_map[app_settings])
-    logger.info(app_settings)
+
     # set up extensions
     db.init_app(app)
     Swagger(app, template_file='api/pois_post.yaml')

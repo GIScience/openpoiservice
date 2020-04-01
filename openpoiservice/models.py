@@ -2,7 +2,6 @@ from flask import current_app as app
 
 import os
 from geoalchemy2 import Geography
-import logging
 
 from openpoiservice import db
 
@@ -11,13 +10,9 @@ poi_table_name = 'ops_pois' if not is_testing else 'ops_pois_test'
 cat_table_name = 'ops_categories' if not is_testing else 'ops_categories_test'
 tag_table_name = 'ops_tags' if not is_testing else 'ops_tags_test'
 
-logger = logging.getLogger(__name__)
-
 
 class Pois(db.Model):
     __tablename__ = poi_table_name
-
-    logger.info('table name for pois: {}'.format(poi_table_name))
 
     uuid = db.Column(db.LargeBinary, primary_key=True)
     osm_id = db.Column(db.BigInteger, nullable=False, index=True)
@@ -38,8 +33,6 @@ class Pois(db.Model):
 class Categories(db.Model):
     __tablename__ = cat_table_name
 
-    logger.info('Table name for categories: {}'.format(cat_table_name))
-
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     uuid = db.Column(db.LargeBinary, db.ForeignKey('{}.uuid'.format(poi_table_name)),
                      nullable=False, index=True)
@@ -51,8 +44,6 @@ class Categories(db.Model):
 
 class Tags(db.Model):
     __tablename__ = tag_table_name
-
-    logger.info('Table name for tags: {}'.format(tag_table_name))
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     uuid = db.Column(db.LargeBinary, db.ForeignKey('{}.uuid'.format(poi_table_name)),

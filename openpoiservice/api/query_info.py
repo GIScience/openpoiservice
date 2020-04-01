@@ -1,9 +1,7 @@
 # openpoiservice/server/query_info.py
 import time
-import logging
 
-logger = logging.getLogger(__name__)
-
+from ..logger import logger
 
 class QueryInfo(object):
     """ Class that creates the query."""

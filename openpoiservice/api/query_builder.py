@@ -9,12 +9,10 @@ from shapely.geometry import MultiPoint, Point
 from sqlalchemy.sql.expression import type_coerce
 from sqlalchemy import func
 import geojson as geojson
-import logging
 
 from .. import db, categories_tools
+from ..logger import logger
 from ..models import Pois, Tags, Categories
-
-logger = logging.getLogger(__name__)
 
 
 class QueryBuilder(object):
