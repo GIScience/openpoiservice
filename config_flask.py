@@ -19,6 +19,7 @@ class BaseConfig(object):
     POSTGRES_PASS = os.environ.get('POSTGRES_PASS', 'password')
 
     # API settings
+    OPS_LOGGING = os.environ.get('OPS_LOGGING', 'info')
     OPS_OSMIUM = os.environ.get('OPS_OSMIUM', 'flex_mem')
     OPS_CONCURRENT_WORKERS = int(os.environ.get('OPS_CONCURRENT_WORKERS', str(os.cpu_count())))
     OPS_ATTRIBUTION = os.environ.get('OPS_ATTRIBUTION', "openrouteservice.org | OpenStreetMap contributors")
@@ -46,8 +47,11 @@ class DevelopmentConfig(BaseConfig):
     """Production configuration."""
 
     DEBUG_TB_ENABLED = True
+    OPS_LOGGING = 'debug'
 
 
 class TestingConfig(BaseConfig):
     """Testing configuration."""
     TESTING = True
+
+    OPS_LOGGING = 'info'

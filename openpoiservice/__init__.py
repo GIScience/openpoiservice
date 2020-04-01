@@ -7,6 +7,7 @@ from flask_cors import CORS
 
 import os
 import time
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ from .logger import logger
 from .utils.categories import CategoryTools
 from .api import api_exceptions
 
-# Load envs if called from outside flask context
+# Load all envs if called from outside flask context
 this_path = Path(os.path.dirname(__file__))
 dotenv_path = os.path.join(this_path.parent, '.env')
 flaskdotenv_path = os.path.join(this_path.parent, '.flaskenv')
@@ -52,8 +53,17 @@ def create_app(app_settings=None):
     }
 
     # set config
-    app_settings = os.getenv('FLASK_ENV') or app_settings
+    app_settings = app_settings or os.getenv('FLASK_ENV')
     app.config.from_object(config_map[app_settings])
+
+    # Set logger verbosity
+    log_level = app.config.get('OPS_LOGGING')
+    if log_level:
+        if 'Level' in str(logging.getLevelName(log_level.upper())):
+            logger.warning(f"OPS_LOGGING variable has invalid value {log_level}. Continuing with INFO.")
+        else:
+            logger.info(f"Logging level set to {log_level}")
+            logger.setLevel(log_level.upper())
 
     # set up extensions
     db.init_app(app)

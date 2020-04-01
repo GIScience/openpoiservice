@@ -74,6 +74,7 @@ The PostgreSQL specific settings are the same as for Kartoza's excellent [PostGI
 
 ##### App
 
+- `OPS_LOGGING`: Set the logging level for the application, one of \['debug', 'info', 'warning', 'error'\]. Default depends on `FLASK_ENV`.
 - `OPS_OSMIUM`: The [memory strategy](https://osmcode.org/osmium-concepts/#list-of-map-index-classes) used by `osmium` to extract the information. Default: `flex_mem`.
 - `OPS_CONCURRENT_WORKERS`: The amount of parallel processes started for multiple PBFs (one per PBF). Default: CPU cores - 1 (recommended).
 - `OPS_ATTRIBUTION`: The attribution returned by the API. Default: `openrouteservice.org | OpenStreetMap contributors`.

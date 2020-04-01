@@ -16,6 +16,11 @@ from ..utils.geometries import validate_limit, transform_geom, parse_geometry
 main_bp = Blueprint('api', __name__)
 
 
+@main_bp.route('/list', methods=['GET'])
+def list():
+    return jsonify(categories_tools.categories_object)
+
+
 @main_bp.route('/pois', methods=['POST'])
 def pois():
     """

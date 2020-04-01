@@ -1,14 +1,12 @@
 # openpoiservice/server/parser.py
 from flask import current_app as app
 
-import logging
 from pathlib import Path
 import multiprocessing as mp
 
-from openpoiservice.utils.osm_reader import OsmReader
-from openpoiservice.utils.decorators import timeit
-
-logger = logging.getLogger(__name__)
+from ..logger import logger
+from .osm_reader import OsmReader
+from .decorators import timeit
 
 
 def parse_import(osm_file):
