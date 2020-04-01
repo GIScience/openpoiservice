@@ -1,5 +1,4 @@
 # manage.py
-from flask.cli import FlaskGroup
 from sqlalchemy import MetaData
 from sqlalchemy.engine import Engine
 
@@ -7,13 +6,8 @@ import unittest
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
 from openpoiservice import create_app, db
-
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
 
 app = create_app()
 app.app_context().push()
@@ -21,18 +15,16 @@ app.app_context().push()
 db_meta: MetaData = db.metadata
 db_engine: Engine = db.engine
 
-cli = FlaskGroup(create_app=create_app)
-
 # Needs to be loaded after create_app() so that the app context can be built
 from openpoiservice.utils import parser
 from openpoiservice.logger import logger
 
 logger.info(f"""The following database settings are active:
-    Host:       {db_engine.url.host}:{db_engine.url.port}
-    Database:   {db_engine.url.database}
-    User:       {db_engine.url.username}""")
+\tHost:     {db_engine.url.host}:{db_engine.url.port}
+\tDatabase: {db_engine.url.database}
+\tUser:     {db_engine.url.username}""")
 
-@cli.command()
+@app.cli.command()
 def test():
     """Runs the unit tests without test coverage."""
 
@@ -43,21 +35,21 @@ def test():
     sys.exit(0)
 
 
-@cli.command()
+@app.cli.command()
 def create_db():
     """Creates the db tables."""
     db.create_all()
     logger.info("Created tables:\n\t{}".format("\n\t".join(db_meta.tables.keys())))
 
 
-@cli.command()
+@app.cli.command()
 def drop_db():
     """Drops the db tables."""
     db.drop_all()
     logger.info("Dropped tables:\n{}".format("\n".join(db_meta.tables.keys())))
 
 
-@cli.command()
+@app.cli.command()
 def import_data():
     """Imports osm pbf data to postgis."""
 
@@ -77,6 +69,5 @@ def import_data():
     parser.run_import(osm_files)
     sys.exit(0)
 
-
 if __name__ == '__main__':
-    cli()
+    app.cli()

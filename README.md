@@ -11,9 +11,8 @@
 
 ## Introduction
 
-**OpenPoiServer** consumes OSM tags on nodes, ways and relations by grouping them into predefined categories. 
-If it picks up an OSM object tagged with one of the OSM keys defined in `categories.yml` it will import this 
-point of interest with specific additional tags which may be defined in [`config.yml`](conf/config.template.yml). 
+**OpenPoiServer** consumes OSM tags on nodes, ways and relations by grouping them into predefined categories, which can be accessed in [`config_categories.yml`](config_categories.yml).
+If it picks up an OSM object tagged with one of the OSM keys defined in `config_categories.yml` it will import the object with specific additional tags which may be defined via `OPS_ADDITIONAL_TAGS` environment variable. 
 Any additional tag, for instance `wheelchair` or `smoking`, may then be used to filter POIs via the API after the import, see [Examples](#Examples).
 
 You may pass 3 different types of geometry within the request to the database:
@@ -43,27 +42,49 @@ The image provides a stable and configurable WSGI server, `gunicorn`.
 docker run -dt \
     --name openpoiservice \
     -v $PWD/osm:/app/osm \  # The data volume
-    -v $PWD/conf:/srv/app/conf \  # The configuration
+    -v $PWD/conf:/srv/app/conf \  # The config_categories.yml file to be exposed
     #-p 5000:5000 \  # The port to request OpenPoiService
     --net host \  # if PostGIS is installed on the host
+    -e POSTGRES_HOST=localhost \
+    -e POSTGRES_DBNAME=gis \
+    -e POSTGRES_PORT=5432 \
+    -e POSTGRES_USER=admin \
+    -e POSTGRES_PASS=xxx \
     openrouteservice/openpoiservice:1.0.0 \  # The image
     all  # The CMD to be executed
 ```
 
-Note, that you'll have to have a working PostGIS installation available. The necessary settings can either be in form of environment variables or by editing the mapped `$PWD/conf/config.yml` file and restarting the container. 
+Note, that you'll have to have a working PostGIS installation available. The necessary settings can either be in form of in-line environment variables or putting them in a local `.env` file and letting `docker` know about it with `--env-file=.env`.
 
 #### Environment variables
 
+All of OpenPOIService's settings are set via environment variables, which have sensible defaults already.
+
+Best is to set up a `.env` file with the settings that need changing (e.g. `POSTGRES_PASS`). This `.env` is automatically considered `flask` commands are run or when running `docker-compose`. However, for Docker you'll need to inline `--env-file=.env`.
+
+##### PostgreSQL
+
 The PostgreSQL specific settings are the same as for Kartoza's excellent [PostGIS image](https://github.com/kartoza/docker-postgis):
 
-- `APP_SETTINGS`: Defines the context for Flask, one of `production` (default), `development`, `testing`. 
 - `POSTGRES_HOST`: The host for the PG installation. Can be a physical IP address or Docker container/service name if containers are linked in a network. Default `localhost`.
 - `POSTGRES_DBNAME`: The database name. Default `gis`.
 - `POSTGRES_PORT`: The PG published port. Default `5432`.
 - `POSTGRES_USER`: The PG user name. Default `gis_admin`.
-- `POSTGRES_PASS`: The PG password for the user name. Default `admin`.
+- `POSTGRES_PASS`: The PG password for the user name. Default `password`.
 
-The PostgreSQL setting can also be set in the `config.yml` file. More on that in the [volumes](#Volumes) section.
+##### App
+
+- `OPS_OSMIUM`: The [memory strategy](https://osmcode.org/osmium-concepts/#list-of-map-index-classes) used by `osmium` to extract the information. Default: `flex_mem`.
+- `OPS_CONCURRENT_WORKERS`: The amount of parallel processes started for multiple PBFs (one per PBF). Default: CPU cores - 1 (recommended).
+- `OPS_ATTRIBUTION`: The attribution returned by the API. Default: `openrouteservice.org | OpenStreetMap contributors`.
+- `OPS_MAX_POIS`: Maximum amount of POIs returned per request. Default: 2000.
+- `OPS_MAX_CATEGORIES`: Maximum amount of categories which can be specified in a filter. Default: 5.
+- `OPS_MAX_RADIUS_POINT`: Maximum buffer radius for Point geometry requests. Default: 2000.
+- `OPS_MAX_RADIUS_LINE`: Maximum buffer radius for LineString geometry requests. Default: 2000.
+- `OPS_MAX_RADIUS_POLY`: Maximum buffer radius for Polygon geometry requests. Default: 2000.
+- `OPS_MAX_AREA`: Maximum area of Polygon geometry in one request \[sqm\]. Default 50000000.
+- `OPS_MAX_LENGTH_LINE`: Maximum length of a LineString geometry per request \[m]\. Default 500000.
+- `OPS_ADDITIONAL_TAGS`: Extract these tags from PBFs per matched POI as comma-separated list of OSM keys. Default: `name,wheelchair,smoking,fee,opening_hours,phone,website`.
 
 #### Volumes
 
@@ -73,7 +94,6 @@ There are two main container locations interesting for mounting to the host:
 - `/srv/app/conf`: all config files are located in this directory. If you change any of those and restart the container, the changes will be effective immediately.
     - `categories.yml`: holds the information which OSM keys are imported to the database. This is important for the `import-data` command.
     - `config_gunicorn.py`: some basic configuration for the Python server `gunicorn`
-    - `config.yml`: holds important API and Postgres configuration. Most Postgres parameter are alternatively settable as [environment variables](#environment-variables).
 
 #### Commands
 

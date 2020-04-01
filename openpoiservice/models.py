@@ -1,11 +1,16 @@
 from flask import current_app as app
 
 import os
+from distutils.util import strtobool
 from geoalchemy2 import Geography
 
 from openpoiservice import db
 
-is_testing = os.getenv('TESTING')
+try:
+    is_testing = os.getenv('TESTING') if not os.getenv('TESTING', None) else strtobool(os.getenv('TESTING'))
+except ValueError as e:
+    raise ValueError(f"TESTING env var has invalid value \"{os.getenv('TESTING')}\". Only truth values are allowed, such as 0, 1, on, off, True, False.")
+
 poi_table_name = 'ops_pois' if not is_testing else 'ops_pois_test'
 cat_table_name = 'ops_categories' if not is_testing else 'ops_categories_test'
 tag_table_name = 'ops_tags' if not is_testing else 'ops_tags_test'

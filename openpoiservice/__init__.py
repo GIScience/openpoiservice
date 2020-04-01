@@ -4,27 +4,38 @@ from flask import Flask, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
 from flask_cors import CORS
+
 import os
 import time
+from pathlib import Path
+from dotenv import load_dotenv
 
 from .__version__ import __version__
 from .logger import logger
 from .utils.categories import CategoryTools
 from .api import api_exceptions
 
+# Load envs if called from outside flask context
+this_path = Path(os.path.dirname(__file__))
+dotenv_path = os.path.join(this_path.parent, '.env')
+flaskdotenv_path = os.path.join(this_path.parent, '.flaskenv')
+if os.path.exists(dotenv_path):
+    load_dotenv(flaskdotenv_path)
+    load_dotenv(dotenv_path)
+
 config_map = {
-    'development': 'config.DevelopmentConfig',
-    'production': 'config.ProductionConfig',
-    'testing': 'config.TestingConfig'
+    'development': 'config_flask.DevelopmentConfig',
+    'production': 'config_flask.ProductionConfig',
+    'testing': 'config_flask.TestingConfig'
 }
 
 db = SQLAlchemy()
 
 # load categories
-categories_tools = CategoryTools('categories.yml')
+categories_tools = CategoryTools('config_categories.yml')
 
 
-def create_app(script_info=None):
+def create_app(app_settings=None):
     # instantiate the app
 
     app = Flask(
@@ -41,7 +52,7 @@ def create_app(script_info=None):
     }
 
     # set config
-    app_settings = os.getenv('FLASK_ENV')
+    app_settings = os.getenv('FLASK_ENV') or app_settings
     app.config.from_object(config_map[app_settings])
 
     # set up extensions

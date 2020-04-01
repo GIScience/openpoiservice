@@ -6,7 +6,7 @@ from openpoiservice import db, create_app, config_map
 from openpoiservice.utils import parser
 import os
 
-app = create_app()
+app = create_app('testing')
 
 
 class BaseTestCase(TestCase):

@@ -9,7 +9,7 @@ class CategoryTools(object):
 
     def __init__(self, categories_file):
         self.basedir = os.path.abspath(os.path.dirname(__file__))
-        self.categories_object = yaml.safe_load(open(os.path.join(self.basedir, '..', '..', 'conf', categories_file)))
+        self.categories_object = yaml.safe_load(open(os.path.join(self.basedir, '..', '..', categories_file)))
         self.category_group_ids = []
         self.category_ids = []
         self.group_index = {}

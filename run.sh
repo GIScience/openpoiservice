@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
 
-if ! test -f /srv/app/categories.yml; then
-  cp /app/categories.yml /srv/app/conf
+if ! test -f /srv/app/config_categories.yml; then
+  cp /app/config_categories.yml /srv/app/conf
 else
-  cp /srv/app/conf/categories.yml /app/conf
+  cp /srv/app/conf/config_categories.yml /app
 fi
 
-if ! test -f /srv/app/gunicorn_config.py; then
-  cp /app/gunicorn_config.py /srv/app/conf
+if ! test -f /srv/app/wsgi.py; then
+  cp /app/wsgi.py /srv/app/conf
 else
-  cp /srv/app/gunicorn_config.py /app
+  cp /srv/app/wsgi.py /app
 fi
 
-if ! test -f /srv/app/conf/config.yml; then
-  cp /app/conf/config.template.yml /app/conf/config.yml
-  cp /app/conf/config.template.yml /srv/app/conf/config.yml
-else
-  cp /srv/app/conf/config.yml /app/conf
-fi
-
-# If create is true
 cmd=${1}
 
 cd /app
@@ -39,4 +31,4 @@ elif [ -n "${cmd}" ]; then
   exit 1
 fi
 
-cd /app && /usr/local/bin/gunicorn --config /app/conf/gunicorn_config.py manage:app
+cd /app && /usr/local/bin/gunicorn --config /app/wsgi.py manage:app

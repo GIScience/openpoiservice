@@ -4,7 +4,7 @@
 import unittest
 import json
 
-from base import BaseTestCase
+from tests.base import BaseTestCase
 
 # GEOM POINT
 request_poi_point_geom = dict(

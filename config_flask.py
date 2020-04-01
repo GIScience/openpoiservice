@@ -1,4 +1,4 @@
-# openpoiservice/server/config.py
+# openpoiservice/server/config_flask.py
 
 import os
 
@@ -20,7 +20,7 @@ class BaseConfig(object):
 
     # API settings
     OPS_OSMIUM = os.environ.get('OPS_OSMIUM', 'flex_mem')
-    OPS_CONCURRENT_WORKERS = int(os.environ.get('OPS_CONCURRENT_WORKERS', "3"))
+    OPS_CONCURRENT_WORKERS = int(os.environ.get('OPS_CONCURRENT_WORKERS', str(os.cpu_count())))
     OPS_ATTRIBUTION = os.environ.get('OPS_ATTRIBUTION', "openrouteservice.org | OpenStreetMap contributors")
     OPS_MAX_POIS = int(os.environ.get('OPS_MAX_POIS', "2000"))
     OPS_MAX_CATEGORIES = int(os.environ.get('OPS_MAX_CATEGORIES', "5"))
@@ -28,7 +28,7 @@ class BaseConfig(object):
     OPS_MAX_RADIUS_LINE = int(os.environ.get('OPS_MAX_RADIUS_LINE', "2000"))
     OPS_MAX_RADIUS_POLY = int(os.environ.get('OPS_MAX_RADIUS_POLY', "2000"))
     OPS_MAX_AREA = int(os.environ.get('OPS_MAX_AREA', "50000000"))
-    OPS_MAX_LENGTH_LINE = int(os.environ.get('OPS_MAX_LENGTH_LINE', "2000"))
+    OPS_MAX_LENGTH_LINE = int(os.environ.get('OPS_MAX_LENGTH_LINE', "500000"))
 
     OPS_ADDITIONAL_TAGS = os.environ.get('OPS_ADDITIONAL_TAGS', "name,wheelchair,smoking,fee,opening_hours,phone,website").split(',')
 

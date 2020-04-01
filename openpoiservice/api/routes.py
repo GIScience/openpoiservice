@@ -174,7 +174,7 @@ def parse_geometries(geometry):
 
         elif geojson_obj.geom_type == 'Polygon' or geojson_obj.geom_type == 'MultiPolygon':
 
-            check_for_buffer(geometry, current_app.config['OPS_MAX_LENGTH_POLY'])
+            check_for_buffer(geometry, current_app.config['OPS_MAX_RADIUS_POLY'])
 
             # check if area not too large
             area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area

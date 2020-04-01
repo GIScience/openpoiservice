@@ -4,7 +4,7 @@
 import unittest
 import json
 
-from base import BaseTestCase
+from tests.base import BaseTestCase
 
 
 class TestCategoryListBlueprint(BaseTestCase):

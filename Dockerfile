@@ -18,9 +18,8 @@ RUN apt-get update -y > /dev/null && \
     rm -rf /var/lib/apt/lists/*
 
 #--- END Usual Python stuff ---
-COPY conf/. /app/conf/
+COPY run.sh manage.py config_categories.yml wsgi.py /app/
 COPY openpoiservice/. /app/openpoiservice
-COPY run.sh manage.py /app/
 
 RUN mkdir -p /srv/app/conf
 

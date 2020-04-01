@@ -4,7 +4,7 @@
 import unittest
 import json
 
-from base import BaseTestCase
+from tests.base import BaseTestCase
 
 # CATEGORY_IDS
 request_stats_category_ids_point_geom = dict(
