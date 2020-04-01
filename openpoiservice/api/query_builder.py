@@ -165,7 +165,7 @@ class QueryBuilder(object):
         """
 
         custom_filters = []
-        for tag, settings in app.config['OPS_ADDITIONAL_TAGS']:
+        for tag in app.config['OPS_ADDITIONAL_TAGS']:
             if tag in filters:
                 custom_filters.append(Tags.key == tag.lower())
                 custom_filters.append(Tags.value.in_(filters[tag]))

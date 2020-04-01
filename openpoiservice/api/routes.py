@@ -21,6 +21,7 @@ def list():
     return jsonify(categories_tools.categories_object)
 
 
+@main_bp.route('/stats', methods=['POST'])
 @main_bp.route('/pois', methods=['POST'])
 def pois():
     """

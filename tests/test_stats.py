@@ -38,7 +38,7 @@ request_stats_category_group_ids_point_geom = dict(
 class TestPoisBlueprint(BaseTestCase):
 
     def test_request_stats_category_ids_point_geom(self):
-        response = self.client.post('/pois', data=json.dumps(request_stats_category_ids_point_geom),
+        response = self.client.post('/stats', data=json.dumps(request_stats_category_ids_point_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'places', response.data)
@@ -46,7 +46,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(data[0]['places']['total_count'], 6)
 
     def test_request_stats_category_group_ids_point_geom(self):
-        response = self.client.post('/pois', data=json.dumps(request_stats_category_group_ids_point_geom),
+        response = self.client.post('/stats', data=json.dumps(request_stats_category_group_ids_point_geom),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'places', response.data)
