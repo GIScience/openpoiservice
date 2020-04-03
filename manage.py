@@ -6,8 +6,9 @@ import unittest
 import os
 import sys
 from pathlib import Path
-
+from openpoiservice.utils.env import is_testing
 from openpoiservice import create_app, db
+from sqlalchemy import text
 
 app = create_app()
 app.app_context().push()
@@ -57,6 +58,17 @@ def import_data():
 
     logger.info('Starting to import OSM data from\n\t{}'.format("\n\t".join([str(p.resolve()) for p in osm_files])))
     parser.run_import(osm_files)
+
+    prewarm = app.config['POSTGRES_PREWARM']
+    if not is_testing() and prewarm == True:
+        tables = ['ops_pois', 'ops_categories', 'ops_tags']
+        logger.info('Starting to prewarm tables {}'.format(", ".join(tables)))
+        for tbl in tables:
+            sql = text("select pg_prewarm('{}')".format(tbl))
+            result = db.engine.execute(sql)
+            for res in result:
+                logger.info('Prewarmed {} pages in {}'.format(res, tbl))
+
     sys.exit(0)
 
 if __name__ == '__main__':
