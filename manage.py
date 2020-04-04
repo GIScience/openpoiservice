@@ -61,7 +61,12 @@ def import_data():
 
     prewarm = app.config['POSTGRES_PREWARM']
     if not is_testing() and prewarm == True:
-        tables = ['ops_pois', 'ops_categories', 'ops_tags']
+        tables = []
+        for cls in db.Model._decl_class_registry.values():
+            try:
+                tables.append(cls.__tablename__)
+            except:
+                pass
         logger.info('Starting to prewarm tables {}'.format(", ".join(tables)))
         for tbl in tables:
             sql = text("select pg_prewarm('{}')".format(tbl))
