@@ -86,21 +86,22 @@ class OsmReader(osmium.SimpleHandler):
             tags = self.extract_tags(obj_area.tags)
             # Determine centroid
             # TODO: import whole polygons, maybe simplified
-            try:
-                wkb_area = wkb_fac.create_multipolygon(obj_area)
-                geom_multipolygon = wkblib.loads(wkb_area, hex=True)
 
-                for poly in geom_multipolygon:
-                    self.store_objects(
-                        osmid=osmid,
-                        tags=tags,
-                        location=poly.centroid.wkt,
-                        osm_type=osm_type,
-                        categories=cat_included
-                    )
-            except RuntimeError as e:
-                logger.info(e)
-        pass
+            # TODO: polygons with inner rings will fail to parse
+            # check if the polygon has inner rings and if this is the case
+            # just use the outer polygon moving forward
+            # see here: https://github.com/osmcode/libosmium/issues/225
+            wkb_area = wkb_fac.create_multipolygon(obj_area)
+            geom_multipolygon = wkblib.loads(wkb_area, hex=True)
+
+            for poly in geom_multipolygon:
+                self.store_objects(
+                    osmid=osmid,
+                    tags=tags,
+                    location=poly.centroid.wkt,
+                    osm_type=osm_type,
+                    categories=cat_included
+                )
 
     def store_objects(self, osmid, tags, location, osm_type, categories):
         """
