@@ -1,6 +1,7 @@
 # manage.py
 from sqlalchemy import MetaData
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import ProgrammingError
 
 import unittest
 import os
@@ -69,10 +70,14 @@ def import_data():
                 pass
         logger.info('Starting to prewarm tables {}'.format(", ".join(tables)))
         for tbl in tables:
-            sql = text("select pg_prewarm('{}')".format(tbl))
-            result = db.engine.execute(sql)
-            for res in result:
-                logger.info('Prewarmed {} pages in {}'.format(res, tbl))
+            try:
+                sql = text("select pg_prewarm('{}')".format(tbl))
+                result = db.engine.execute(sql)
+                for res in result:
+                    logger.info('Prewarmed {} pages in {}'.format(res, tbl))
+            except ProgrammingError as e:
+               logger.info("pg_prewarm is set to {} but it seems not to be enabled in the database.\n Proceeding without.".format(prewarm))
+               logger.debug(str(e.__dict__['orig']))
 
     sys.exit(0)
 

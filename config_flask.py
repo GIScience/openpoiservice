@@ -16,8 +16,8 @@ class BaseConfig(object):
     POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
     POSTGRES_DBNAME = os.environ.get('POSTGRES_DBNAME', 'gis')
     POSTGRES_PORT = int(os.environ.get('POSTGRES_PORT', '5432'))
-    POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
-    POSTGRES_PASS = os.environ.get('POSTGRES_PASS', 'postgres')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER', 'gis_admin')
+    POSTGRES_PASS = os.environ.get('POSTGRES_PASS', 'admin')
     POSTGRES_PREWARM = bool(strtobool(os.environ.get('POSTGRES_PREWARM', 'true')))
 
     # API settings
