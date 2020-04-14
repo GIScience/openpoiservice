@@ -64,13 +64,14 @@ Best is to set up a `.env` file with the settings that need changing (e.g. `POST
 
 ##### PostgreSQL
 
-The PostgreSQL specific settings are the same as for Kartoza's excellent [PostGIS image](https://github.com/kartoza/docker-postgis):
+The PostgreSQL specific settings required to configure your database connection:
 
 - `POSTGRES_HOST`: The host for the PG installation. Can be a physical IP address or Docker container/service name if containers are linked in a network. Default `localhost`.
 - `POSTGRES_DBNAME`: The database name. Default `gis`.
 - `POSTGRES_PORT`: The PG published port. Default `5432`.
 - `POSTGRES_USER`: The PG user name. Default `gis_admin`.
 - `POSTGRES_PASS`: The PG password for the user name. Default `admin`.
+- `POSTGRES_PREWARM`: If you want to make use the prewarm module which will make sure your database I/O caches are filled up before the first query is made. Make sure that the `pg_prewarm` extension is enabled in your database by adding it to the shared preload libraries before setting this to `true`. Default `false`.
 
 ##### App
 

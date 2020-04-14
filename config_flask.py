@@ -1,6 +1,7 @@
 # openpoiservice/server/config_flask.py
 
 import os
+from distutils.util import strtobool
 
 class BaseConfig(object):
     """Base configuration."""
@@ -17,6 +18,7 @@ class BaseConfig(object):
     POSTGRES_PORT = int(os.environ.get('POSTGRES_PORT', '5432'))
     POSTGRES_USER = os.environ.get('POSTGRES_USER', 'gis_admin')
     POSTGRES_PASS = os.environ.get('POSTGRES_PASS', 'admin')
+    POSTGRES_PREWARM = bool(strtobool(os.environ.get('POSTGRES_PREWARM', 'true')))
 
     # API settings
     OPS_LOGGING = os.environ.get('OPS_LOGGING', 'info')
