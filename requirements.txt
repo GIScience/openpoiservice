@@ -6,7 +6,7 @@ cffi==1.14.4
 click==7.1.2
 constantly==15.1.0
 coverage==5.3.1
-cryptography==3.3.1
+cryptography>=3.0.0
 cssselect==1.1.0
 flasgger==0.9.5
 Flask==1.1.2
