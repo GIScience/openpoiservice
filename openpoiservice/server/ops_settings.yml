@@ -40,3 +40,9 @@ column_mappings:
   phone:
   # https://wiki.openstreetmap.org/wiki/Key:website
   website:
+  # https://wiki.openstreetmap.org/wiki/Key:healthcare:speciality
+  healthcare:speciality:
+  # https://wiki.openstreetmap.org/wiki/Key:vaccination
+  vaccination:
+  #https://wiki.openstreetmap.org/wiki/Key:zero_waste
+  zero_waste:

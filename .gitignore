@@ -118,3 +118,10 @@ ENV/
 openpoiservice/server/ops_settings.yml
 osm_1
 osm_2
+
+osm/*
+!osm/GeoFabrikSpider.py
+!osm/bremen-tests.osm.pbf
+IMPORTANT_NOTES.md
+ops_settings_docker-*.yml
+docker-compose-instance-*.yml
