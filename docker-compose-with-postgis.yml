@@ -30,7 +30,8 @@ services:
    - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
    - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
    - ALLOW_IP_RANGE=0.0.0.0/0
-
+  ports:
+   - 5434:5432
   restart: on-failure
   networks:
    - poi_network

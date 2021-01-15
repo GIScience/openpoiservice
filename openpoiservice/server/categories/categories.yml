@@ -98,6 +98,10 @@ healthcare:
             social_facility: 210
         healthcare:
             blood_donation: 211
+        healthcare:speciality:
+            vaccination: 212
+        vaccination:
+            covid19: 213
 
 historic:
     id: 220
