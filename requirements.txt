@@ -40,7 +40,7 @@ pycparser==2.20
 PyDispatcher==2.0.5
 PyHamcrest==2.0.2
 pyOpenSSL==20.0.1
-pyproj==3.0.0.post1
+pyproj>=2.6.0
 pyrsistent==0.17.3
 PyYAML
 queuelib==1.5.0
