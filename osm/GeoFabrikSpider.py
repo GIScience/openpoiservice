@@ -55,7 +55,7 @@ class GeoFabrikSpider(scrapy.Spider):
             if tail in exclude_subregions:
                 continue
 
-            if os.path.exists(tail):
+            if os.path.exists(f"{head}/{tail}"):
                 print('{} already downloaded'.format(tail))
             else:
                 print('Starting download of {}'.format(tail))

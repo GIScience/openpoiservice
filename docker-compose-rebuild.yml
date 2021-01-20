@@ -3,6 +3,8 @@ services:
  gunicorn_flask:
   #network_mode: "host"
   build: .
+  environment:
+   - REBUILD_DB=1
   volumes:
    - ./osm:/deploy/app/osm
    - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
