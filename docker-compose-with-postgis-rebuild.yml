@@ -1,0 +1,42 @@
+version: '2.2'
+
+volumes:
+ postgis-data:
+
+services:
+ gunicorn_flask:
+  #network_mode: "host"
+  build: .
+  environment:
+   - REBUILD_DB=1
+  volumes:
+  - ./osm:/deploy/app/osm
+  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  ports:
+   - "5000:5000"
+  mem_limit: 28g
+  networks:
+   - poi_network
+
+ # Don't forget to change the host name inside ops_settings_docker.yml by the one given to docker container.
+ # Also port should be set to 5432 (default value) inside the same file since they are on the same network
+ psql_postgis_db:
+  image: kartoza/postgis:11.0-2.5
+  volumes:
+   - postgis-data:/var/lib/postgresql
+  environment:
+   # If you need to create multiple database you can add coma separated databases eg gis,data
+   - POSTGRES_DB=gis
+   - POSTGRES_USER=gis_admin    # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
+   - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
+   - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
+   - ALLOW_IP_RANGE=0.0.0.0/0
+  ports:
+   - 5434:5432
+  restart: on-failure
+  networks:
+   - poi_network
+
+networks:
+ poi_network:

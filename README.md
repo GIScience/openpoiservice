@@ -144,18 +144,18 @@ $ export APP_SETTINGS="openpoiservice.server.config.ProductionConfig|Development
 ### Create the POI DB
 
 ```sh
-$ python manage.py create_db
+$ python manage.py create-db
 ```
 ### Drop the POI DB
 
 ```sh
-$ python manage.py drop_db
+$ python manage.py drop-db
 ```
 
 ### Parse and import OSM data
 
 ```sh
-$ python manage.py import_data
+$ python manage.py import-data
 ```
 
 ### Run the Application with Flask-Werkzeug
