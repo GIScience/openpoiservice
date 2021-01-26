@@ -1,20 +1,19 @@
 # openpoiservice/server/main/views.py
 
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, Response
 from openpoiservice.server import categories_tools
-from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, ALLOW_EXTRA, Invalid, \
-    Optional, Boolean
-from shapely.geometry import Point, Polygon, LineString, MultiPoint, shape
+from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, Optional, Boolean
+from shapely.geometry import MultiPoint, shape
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
-from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, transform_geom
+from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, GeomTransformer
 from openpoiservice.server.api.query_info import QueryInfo
 import geojson
 import json
 import copy
 
 
-# from flasgger import validate
+GeomTransformer.init_transformer()
 
 
 def custom_schema():
@@ -188,17 +187,17 @@ def check_for_buffer(geometry, maximum_search_radius):
         raise api_exceptions.InvalidUsage(status_code=400, error_code=4008)
 
 
-def check_validity(geojson):
+def check_validity(geojson_object):
     """
     Checks if geojson is valid, throws exception otherwise.
-    :param geojson: geojson object
+    :param geojson_object: geojson object
     :return: will return the geo
     """
-    if geojson.is_valid:
-        return geojson
+    if geojson_object.is_valid:
+        return geojson_object
     else:
         raise api_exceptions.InvalidUsage(status_code=400, error_code=4007, message='{} {}'.format(
-            "geojson", geojson.is_valid))
+            "geojson", geojson_object.is_valid))
 
 
 def parse_geometries(geometry):
@@ -240,7 +239,8 @@ def parse_geometries(geometry):
             check_for_buffer(geometry, ops_settings['maximum_search_radius_for_linestrings'])
 
             # check if linestring not too long
-            length = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').length
+            length = GeomTransformer.transform_geom(geojson_obj).length
+            print(f"length {length}")
             if length > ops_settings['maximum_linestring_length']:
                 raise api_exceptions.InvalidUsage(
                     status_code=400, error_code=4005,
@@ -252,7 +252,8 @@ def parse_geometries(geometry):
             check_for_buffer(geometry, ops_settings['maximum_search_radius_for_polygons'])
 
             # check if area not too large
-            area = transform_geom(geojson_obj, 'epsg:4326', 'epsg:3857').area
+            area = GeomTransformer.transform_geom(geojson_obj).area
+            print(f"area {area}")
             if area > ops_settings['maximum_area']:
                 raise api_exceptions.InvalidUsage(
                     message='Your polygon geometry is too large ({} square meters), check the server '
@@ -280,7 +281,8 @@ def parse_geometries(geometry):
         # print(geometry['bbox'].wkt)
 
         # check if area not too large
-        area = transform_geom(geometry['bbox'], 'epsg:4326', 'epsg:3857').area
+        area = GeomTransformer.transform_geom(geometry['bbox']).area
+        print(f"area {area}")
         if area > ops_settings['maximum_area']:
             raise api_exceptions.InvalidUsage(error_code=4008, status_code=400,
                                               message='Your polygon geometry is too large ({} square meters), '
