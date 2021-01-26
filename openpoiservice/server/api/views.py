@@ -240,7 +240,6 @@ def parse_geometries(geometry):
 
             # check if linestring not too long
             length = GeomTransformer.transform_geom(geojson_obj).length
-            print(f"length {length}")
             if length > ops_settings['maximum_linestring_length']:
                 raise api_exceptions.InvalidUsage(
                     status_code=400, error_code=4005,
@@ -253,7 +252,6 @@ def parse_geometries(geometry):
 
             # check if area not too large
             area = GeomTransformer.transform_geom(geojson_obj).area
-            print(f"area {area}")
             if area > ops_settings['maximum_area']:
                 raise api_exceptions.InvalidUsage(
                     message='Your polygon geometry is too large ({} square meters), check the server '
@@ -282,7 +280,6 @@ def parse_geometries(geometry):
 
         # check if area not too large
         area = GeomTransformer.transform_geom(geometry['bbox']).area
-        print(f"area {area}")
         if area > ops_settings['maximum_area']:
             raise api_exceptions.InvalidUsage(error_code=4008, status_code=400,
                                               message='Your polygon geometry is too large ({} square meters), '
