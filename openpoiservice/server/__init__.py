@@ -69,6 +69,10 @@ def create_app(script_info=None):
             logger.info("Request took: {} seconds".format(diff))
 
     # error handlers
+    @app.errorhandler(400)
+    def request_error_page(error):
+        return jsonify({"error_message": 400})
+
     @app.errorhandler(401)
     def unauthorized_page(error):
         return jsonify({"error_message": 401})

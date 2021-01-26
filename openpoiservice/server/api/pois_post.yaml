@@ -3,7 +3,7 @@ tags:
 - name: "Pois"
   description: "Obtain POIs of an area"
 info:
-  version: "0.1"
+  version: "0.2"
   title: "Openpoiservice"
   contact:
     email: "support@openrouteservice.org"
@@ -78,14 +78,9 @@ paths:
             #- $ref: '#/definitions/LocationsPoiResponse'
             #- $ref: '#/definitions/LocationsStatsResponse'
             #- $ref: '#/definitions/LocationsListResponse'
-        401:
-          description: "Authorization field missing."
-        403:
-          description: "Key not authorised."
-        500:
+        400:
           description: |
-            An unexpected error was encountered and more detailed internal
-            errorcode is provided.
+            The request was invalid, and more detailed internal errorcode is provided.
             | Internal Code | Description                                        |
             |:-------------:|----------------------------------------------------|
             | 4000 |  Invalid JSON object in request |
@@ -97,7 +92,13 @@ paths:
             | 4006 |  Unsupported HTTP method |
             | 4007 |  GeoJSON parsing error |
             | 4008 |  Geometry size does not meet the restrictions |
-            | 4099 |  Unknown internal error |
+            | 4009 |  Unsupported Content-Type |
+        401:
+          description: "Authorization field missing."
+        403:
+          description: "Key not authorised."
+        500:
+          description: "Unknown internal error"
 securityDefinitions:
   UserSecurity:
     name: "api_key"

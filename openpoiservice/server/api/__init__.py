@@ -10,5 +10,5 @@ error_codes = {
     4006: 'Unsupported HTTP method',
     4007: 'GeoJSON issue',
     4008: 'Geometry size does not meet the restrictions',
-    4099: 'Unknown internal error'
+    4009: 'Unsupported Content-Type',
 }
