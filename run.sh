@@ -1,4 +1,5 @@
 #!/bin/sh
+# For deployment convenience. 2021-01-26
 if [[ ! -z "$REBUILD_DB" ]]; then
   echo "Rebuilding POI database"
   /ops_venv/bin/python manage.py drop-db
@@ -6,3 +7,4 @@ if [[ ! -z "$REBUILD_DB" ]]; then
   /ops_venv/bin/python manage.py import-data
 fi
 /ops_venv/bin/gunicorn --config /deploy/gunicorn_config.py manage:app
+

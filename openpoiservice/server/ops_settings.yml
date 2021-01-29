@@ -22,7 +22,7 @@ provider_parameters:
   #user_name: admin
   password: admin
   host: localhost
-  port: 5434
+  port: 5432
   port_tests: 5432
 # add any additional tags you want to save to the database
 column_mappings:

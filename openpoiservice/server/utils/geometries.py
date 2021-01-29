@@ -32,17 +32,6 @@ def parse_geometry(geometry):
     return geom
 
 
-def transform_geom(g1, src_proj, dest_proj):
-    project = partial(
-        pyproj.transform,
-        pyproj.Proj(init=src_proj),
-        pyproj.Proj(init=dest_proj))
-
-    g2 = transform(project, g1)
-
-    return g2
-
-
 def validate_limit(radius, limit):
     """
     Returns True if radius is in custom specific limits.
@@ -61,3 +50,17 @@ def validate_limit(radius, limit):
         return True
 
     return False
+
+
+class GeomTransformer:
+    transformer = None
+
+    @staticmethod
+    def init_transformer():
+        GeomTransformer.transformer = pyproj.Transformer.from_crs(pyproj.CRS('epsg:4326'), pyproj.CRS('epsg:3857'), always_xy=True).transform
+
+    @staticmethod
+    def transform_geom(geom):
+        if GeomTransformer.transformer is None:
+            raise RuntimeError("GeomTransformer called before being initialized.")
+        return transform(GeomTransformer.transformer, geom)
