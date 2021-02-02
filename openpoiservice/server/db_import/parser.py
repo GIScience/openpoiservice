@@ -1,11 +1,13 @@
 # openpoiservice/server/parser.py
+from flask_sqlalchemy import SQLAlchemy
 
+from openpoiservice.server.db_import.models import POIs
 from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.utils.decorators import timeit, processify
 from openpoiservice.server import ops_settings
 from imposm.parser import OSMParser
 import logging
-import time
+from pyroaring import BitMap
 
 # from guppy import hpy
 from collections import deque
@@ -16,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 # process this function to free memory after import of each osm file
 
-def parse_import(osm_file):
+def parse_import(osm_file, update_mode=False):
     logger.info('Starting to read {}'.format(osm_file))
 
-    osm_importer = OsmImporter()
+    osm_importer = OsmImporter(update_mode=update_mode)
 
     logger.info('Parsing and importing nodes...')
     nodes = OSMParser(concurrency=ops_settings['concurrent_workers'], nodes_callback=osm_importer.parse_nodes)
@@ -51,9 +53,9 @@ def parse_import(osm_file):
     coords.parse(osm_file)
 
     logger.info('Storing remaining pois')
-    osm_importer.save_remainder()
+    osm_importer.save_buffer()
 
-    logger.info('Found {} pois'.format(osm_importer.pois_cnt))
+    logger.info('Found {} pois'.format(osm_importer.pois_count))
 
     logger.info('Finished import of {}'.format(osm_file))
 
@@ -64,13 +66,35 @@ def parse_import(osm_file):
 
 
 @processify
-def parse_file(osm_file):
-    parse_import(osm_file)
+def parse_file(osm_file, update_mode=False):
+    parse_import(osm_file, update_mode=update_mode)
 
 
 @timeit
 def run_import(osm_files_to_import):
+    update_mode = False
+    separate_db_con = SQLAlchemy()
+    prev_poi_count = len(separate_db_con.session.query(POIs).all())
+    if prev_poi_count > 0:
+        update_mode = True
+        logger.info(f"Data import running in UPDATE MODE. Setting flags on {prev_poi_count} POIs.")
+        separate_db_con.session.query(POIs).update({POIs.delete: True})
+        separate_db_con.session.commit()
+    separate_db_con.engine.dispose()
 
     for osm_file in osm_files_to_import:
+        parse_file(osm_file, update_mode=update_mode)
 
-        parse_file(osm_file)
+    if update_mode:
+        logger.info(f"Updates complete, now performing delete operations...")
+        separate_db_con = SQLAlchemy()
+        to_delete = len(separate_db_con.session.query(POIs).filter_by(delete=True).all())
+        if to_delete > 0:
+            logger.info(f"{to_delete} POIs in the database have been removed from the OSM data, deleting...")
+            separate_db_con.session.query(POIs).filter_by(delete=True).delete()
+            separate_db_con.session.commit()
+        else:
+            logger.info(f"No POIs marked for deletion, nothing to do.")
+        separate_db_con.engine.dispose()
+
+    logger.info(f"Import complete.")

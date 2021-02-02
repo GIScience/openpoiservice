@@ -3,17 +3,14 @@
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 import geoalchemy2.functions as geo_func
-from geoalchemy2.types import Geography, Geometry
-from geoalchemy2.elements import WKBElement, WKTElement
+from geoalchemy2.types import Geography
 from shapely import wkb
 from shapely.geometry import MultiPoint, Point
-from openpoiservice.server.db_import.models import Pois, Tags, Categories
+from openpoiservice.server.db_import.models import POIs, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
-from sqlalchemy import func, cast, Integer, ARRAY
-from sqlalchemy import dialects
+from sqlalchemy import func
 import geojson as geojson
 import logging
-from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +39,7 @@ class QueryBuilder(object):
 
         params = self.payload
 
-        geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
+        geom_filters, geom = self.generate_geom_filters(params['geometry'], POIs)
 
         logger.debug('geometry filters: {}, geometry: {}'.format(geom_filters, geom))
 
@@ -59,7 +56,7 @@ class QueryBuilder(object):
         if params['request'] == 'stats':
 
             bbox_query = db.session \
-                .query(Pois.uuid, Categories.category) \
+                .query(POIs.osm_id, Categories.category) \
                 .filter(*geom_filters) \
                 .filter(*category_filters) \
                 .outerjoin(Categories) \
@@ -78,7 +75,7 @@ class QueryBuilder(object):
         elif params['request'] == 'pois':
 
             bbox_query = db.session \
-                .query(Pois) \
+                .query(POIs) \
                 .filter(*geom_filters) \
                 .subquery()
 
@@ -111,7 +108,6 @@ class QueryBuilder(object):
                 .filter(*custom_filters) \
                 .outerjoin(Tags) \
                 .outerjoin(Categories) \
-                .group_by(bbox_query.c.uuid) \
                 .group_by(bbox_query.c.osm_id) \
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
