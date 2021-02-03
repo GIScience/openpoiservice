@@ -14,7 +14,7 @@ class GeoFabrikSpider(scrapy.Spider):
     start_urls = ['https://download.geofabrik.de/']
     wait_time = 30
 
-    def parse(self, response):
+    def parse(self, response, **kwargs):
 
         regions = ['Asia', 'Europe', 'North America']
         regions_files = ['asia-latest.osm.pbf', 'europe-latest.osm.pbf', 'north-america-latest.osm.pbf']

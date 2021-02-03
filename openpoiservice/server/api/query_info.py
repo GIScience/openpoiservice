@@ -20,8 +20,3 @@ class QueryInfo(object):
         self.version = "0.1"
         self.timestamp = int(time.time())
         self.query = payload
-
-
-
-
-

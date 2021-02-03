@@ -19,6 +19,8 @@ cli = FlaskGroup(create_app=create_app)
 def test():
     """Runs the unit tests without test coverage."""
 
+    db.drop_all()
+
     tests = unittest.TestLoader().discover('openpoiservice/tests', pattern='test*.py')
     result = unittest.TextTestRunner(verbosity=2).run(tests)
     if not result.wasSuccessful():
@@ -47,13 +49,13 @@ def import_data():
     osm_files = []
     osm_dir = os.getcwd() + '/osm'
 
-    for dirName, subdirList, fileList in os.walk(osm_dir):
-        print('Found directory: %s' % dirName)
-        for fname in fileList:
+    for dir_name, subdir_list, file_list in os.walk(osm_dir):
+        print('Found directory: %s' % dir_name)
+        for fname in file_list:
             if fname.endswith('.osm.pbf') or fname.endswith('.osm'):
-                osm_files.append(os.path.join(dirName, fname))
+                osm_files.append(os.path.join(dir_name, fname))
 
-    logger.info("Starting to import OSM data...{}".format(osm_files))
+    logger.info(f"Starting to import OSM data... {osm_files}")
     parser.run_import(osm_files)
 
 

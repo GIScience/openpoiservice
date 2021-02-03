@@ -47,8 +47,7 @@ def processify(func):
 
         if error:
             ex_type, ex_value, tb_str = error
-            message = '%s (in subprocess)\n%s' % (ex_value.args, tb_str)
-            raise ex_type(message)
+            raise RuntimeError(f"{ex_type} in {func}: {ex_value}, {tb_str}")
 
         return ret
 

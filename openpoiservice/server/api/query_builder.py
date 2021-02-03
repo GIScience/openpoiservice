@@ -3,17 +3,14 @@
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 import geoalchemy2.functions as geo_func
-from geoalchemy2.types import Geography, Geometry
-from geoalchemy2.elements import WKBElement, WKTElement
+from geoalchemy2.types import Geography
 from shapely import wkb
 from shapely.geometry import MultiPoint, Point
-from openpoiservice.server.db_import.models import Pois, Tags, Categories
+from openpoiservice.server.db_import.models import POIs, Tags, Categories
 from sqlalchemy.sql.expression import type_coerce
-from sqlalchemy import func, cast, Integer, ARRAY
-from sqlalchemy import dialects
+from sqlalchemy import func
 import geojson as geojson
 import logging
-from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +39,13 @@ class QueryBuilder(object):
 
         params = self.payload
 
-        geom_filters, geom = self.generate_geom_filters(params['geometry'], Pois)
+        geom_filters, geom = self.generate_geom_filters(params['geometry'], POIs)
 
         logger.debug('geometry filters: {}, geometry: {}'.format(geom_filters, geom))
 
         category_filters = []
-        if 'filters' in params:
-            if 'category_ids' in params['filters']:
-                category_filters.append(Categories.category.in_(params['filters']['category_ids']))
+        if 'filters' in params and 'category_ids' in params['filters']:
+            category_filters.append(Categories.category.in_(params['filters']['category_ids']))
 
         # currently only available for request=pois
         custom_filters = []
@@ -59,7 +55,7 @@ class QueryBuilder(object):
         if params['request'] == 'stats':
 
             bbox_query = db.session \
-                .query(Pois.uuid, Categories.category) \
+                .query(POIs.osm_id, Categories.category) \
                 .filter(*geom_filters) \
                 .filter(*category_filters) \
                 .outerjoin(Categories) \
@@ -78,7 +74,7 @@ class QueryBuilder(object):
         elif params['request'] == 'pois':
 
             bbox_query = db.session \
-                .query(Pois) \
+                .query(POIs) \
                 .filter(*geom_filters) \
                 .subquery()
 
@@ -91,8 +87,6 @@ class QueryBuilder(object):
 
                 elif params['sortby'] == 'category':
                     sortby_group.append(bbox_query.c.category)
-
-            # start = timer()
 
             keys_agg = func.array_agg(Tags.key).label('keys')
             values_agg = func.array_agg(Tags.value).label('values')
@@ -111,32 +105,21 @@ class QueryBuilder(object):
                 .filter(*custom_filters) \
                 .outerjoin(Tags) \
                 .outerjoin(Categories) \
-                .group_by(bbox_query.c.uuid) \
                 .group_by(bbox_query.c.osm_id) \
                 .group_by(bbox_query.c.osm_type) \
                 .group_by(bbox_query.c.geom) \
-                # .all()
-
-            # end = timer()
-            # print(end - start)
-
-            # print(str(pois_query))
-            # for dude in pois_query:
-            # print(dude)
 
             # response as geojson feature collection
-            features = self.generate_geojson_features(pois_query, params['limit'])
-
-            return features
+            return self.generate_geojson_features(pois_query, params['limit'])
 
     @staticmethod
-    def generate_geom_filters(geometry, Pois):
+    def generate_geom_filters(geometry, poi):
         filters, geom = [], None
 
         if 'bbox' in geometry and 'geom' not in geometry:
             geom = geometry['bbox'].wkt
             filters.append(
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0))
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), poi.geom, 0))
 
         elif 'bbox' in geometry and 'geom' in geometry:
             geom_bbox = geometry['bbox'].wkt
@@ -144,14 +127,14 @@ class QueryBuilder(object):
             filters.append(  # in bbox
                 geo_func.ST_DWithin(
                     geo_func.ST_Intersection(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']),
-                                             type_coerce(geom_bbox, Geography)), Pois.geom, 0))
+                                             type_coerce(geom_bbox, Geography)), poi.geom, 0))
 
         elif 'bbox' not in geometry and 'geom' in geometry:
 
             geom = geometry['geom'].wkt
 
             filters.append(  # buffer around geom
-                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), Pois.geom, 0)
+                geo_func.ST_DWithin(geo_func.ST_Buffer(type_coerce(geom, Geography), geometry['buffer']), poi.geom, 0)
             )
 
         return filters, geom
@@ -162,7 +145,6 @@ class QueryBuilder(object):
         Generates a list of custom filters used for query.
 
         :param filters:
-        :param query: sqlalchemy flask query
         :return: returns sqlalchemy filters
         :type: list
         """

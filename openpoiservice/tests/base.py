@@ -17,6 +17,7 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         db.create_all()
+        db.engine.dispose()
 
         test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
 

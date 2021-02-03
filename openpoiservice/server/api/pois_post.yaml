@@ -337,7 +337,7 @@ definitions:
   name:
     description: Filter by name of the poi object.
     type: array
-    example: ["Tankstelle",...]
+    example: ["Gas station",...]
   wheelchair:
     description: Filter example.
     type: array
@@ -356,7 +356,6 @@ definitions:
     description: "The POI categories list JSON response"
     type: object
     title: "Openpoiservice category list response"
-    description: "Openpoiservice category list"
 
   # Poi response object
   LocationsPoiResponse:

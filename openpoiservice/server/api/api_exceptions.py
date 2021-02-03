@@ -11,24 +11,19 @@ class InvalidUsage(Exception):
         :param status_code: the HTTP status code
         :type status_code: integer
 
-        :param payload: the optional payload
-        :type payload: string
+        :param error_code: the error code
+        :type error_code: integer
         """
 
-        # type: (object, object, object) -> object
+        # (object, object, object) -> object
         Exception.__init__(self)
 
         if status_code is not None:
             self.status_code = status_code
-
-            if message is None:
-                message = error_codes[error_code]
-            else:
-                message = message
-
+            self.message = error_codes[error_code] if message is None else message
             self.error = {
                 "code": error_code,
-                "message": message
+                "message": self.message
             }
 
     def to_dict(self):
