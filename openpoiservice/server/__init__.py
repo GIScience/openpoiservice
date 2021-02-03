@@ -85,7 +85,7 @@ def create_app(script_info=None):
 
     @app.errorhandler(500)
     def server_error_page(error):
-        return jsonify({"error_message": 500})
+        return jsonify({"code": 500, "message": "Internal server error"})
 
     @app.errorhandler(api_exceptions.InvalidUsage)
     def handle_invalid_usage(error):

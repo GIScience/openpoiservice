@@ -1,6 +1,6 @@
 # Openpoiservice 
 
-[![Build Status](https://travis-ci.org/GIScience/openpoiservice.svg?branch=master)](https://travis-ci.org/GIScience/openpoiservice)
+[![Tests](https://github.com/GIScience/openpoiservice/workflows/run%20tests/badge.svg)](https://github.com/GIScience/openpoiservice/actions?query=workflow%3A%22run+tests%22)
 
 Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from 
 OpenStreetMap.org data and thereby **exploits** it's notion of tags...
