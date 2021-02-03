@@ -19,7 +19,7 @@ provider_parameters:
   db_name: gis
   user_name: gis_admin
   password: admin
-  host: ops-db
+  host: localhost
   port: 5432
   port_tests: 5432
 column_mappings:
