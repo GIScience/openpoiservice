@@ -30,6 +30,7 @@ class Categories(db.Model):
     osm_type = db.Column(db.Integer, nullable=False, index=True)
     osm_id = db.Column(db.BigInteger, nullable=False, index=True)
     category = db.Column(db.Integer, index=True, nullable=False)
+
     __table_args__ = (db.ForeignKeyConstraint([osm_type, osm_id], [POIs.osm_type, POIs.osm_id], ondelete="CASCADE"),)
 
     def __repr__(self):
@@ -45,6 +46,7 @@ class Tags(db.Model):
     osm_id = db.Column(db.BigInteger, nullable=False, index=True)
     key = db.Column(db.Text, nullable=True, index=True)
     value = db.Column(db.Text, nullable=True, index=True)
+
     __table_args__ = (db.ForeignKeyConstraint([osm_type, osm_id], [POIs.osm_type, POIs.osm_id], ondelete="CASCADE"),)
 
     def __repr__(self):

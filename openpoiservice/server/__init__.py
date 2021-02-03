@@ -30,7 +30,6 @@ categories_tools = CategoryTools('categories.yml')
 
 def create_app(script_info=None):
     # instantiate the app
-
     app = Flask(
         __name__
     )
@@ -42,7 +41,6 @@ def create_app(script_info=None):
         'version': 0.1,
         'uiversion': 3
     }
-
 
     # set config
     app_settings = os.getenv('APP_SETTINGS', 'openpoiservice.server.config.ProductionConfig')

@@ -2,7 +2,6 @@
 import os
 import unittest
 import json
-
 from base import BaseTestCase
 from openpoiservice.server.db_import import parser
 
@@ -16,7 +15,7 @@ request_poi_bbox = dict(
 
 
 class TestUpdate(BaseTestCase):
-    def test_request_poi_bbox(self):
+    def test_import_update_mode(self):
 
         print("Perform database update")
         updated_test_file = os.path.join(os.getcwd() + '/osm_test', 'bremen-tests-mod.osm.pbf')
@@ -39,7 +38,6 @@ class TestUpdate(BaseTestCase):
 
         # 1 POI has a tag value changed
         self.assertEqual(data[0]['features'][20]['properties']['osm_tags']['name'], "Kiosk am Markt wurde umbenannt")
-
 
 
 if __name__ == '__main__':
