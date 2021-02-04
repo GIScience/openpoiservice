@@ -123,5 +123,7 @@ osm/*
 !osm/GeoFabrikSpider.py
 !osm/bremen-tests.osm.pbf
 IMPORTANT_NOTES.md
-ops_settings_docker-*.yml
-docker-compose-instance-*.yml
+ops_settings_docker*.yml
+!ops_settings_docker_standalone.yml
+docker-compose-*.yml
+!docker-compose-standalone.yml

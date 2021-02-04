@@ -13,7 +13,8 @@ class POIs(db.Model):
     osm_type = db.Column(db.Integer, primary_key=True)
     osm_id = db.Column(db.BigInteger, primary_key=True)
     geom = db.Column(Geography(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False)
-    delete = db.Column(db.Boolean, nullable=False, index=True)
+    src_index = db.Column(db.Integer, index=True)
+    delflag = db.Column(db.Boolean, nullable=False, index=True)
 
     tags = db.relationship("Tags", backref=db.backref("POIs", cascade="delete"), lazy='dynamic')
     categories = db.relationship("Categories", backref=db.backref("POIs", cascade="delete"), lazy='dynamic')

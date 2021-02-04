@@ -24,13 +24,10 @@ class GeoFabrikSpider(scrapy.Spider):
         sub_regions = sel.xpath("//a[contains(text(),'[.osm.pbf]')]/@href").extract()
         for sub_region in sub_regions:
             if sub_region not in regions_files:
-                if os.path.exists(sub_region):
-                    print('{} already downloaded'.format(sub_region))
-                else:
-                    print('Starting download of {}'.format(sub_region))
-                    download_link = parse.urljoin(response.url, sub_region)
-                    subprocess.call(["wget", "-q", download_link])
-                    sleep(self.wait_time)
+                print('Starting download of {}'.format(sub_region))
+                download_link = parse.urljoin(response.url, sub_region)
+                subprocess.call(["wget", "-q", "-N", download_link])
+                sleep(self.wait_time)
 
         # get sub regions where there is lots of data
         set_selector = '.subregion'
@@ -55,14 +52,11 @@ class GeoFabrikSpider(scrapy.Spider):
             if tail in exclude_subregions:
                 continue
 
-            if os.path.exists(f"{head}/{tail}"):
-                print('{} already downloaded'.format(tail))
-            else:
-                print('Starting download of {}'.format(tail))
-                download_link = parse.urljoin(response.url, sub_region)
-                subprocess.call(["wget", "-q", f"-P{head}", download_link])
-                sleep(self.wait_time)
+            print('Starting download of {}'.format(tail))
+            download_link = parse.urljoin(response.url, sub_region)
+            subprocess.call(["wget", "-q", "-N", f"-P{head}", download_link])
+            sleep(self.wait_time)
 
-                yield {
-                   "subregion_link": download_link,
-                }
+            yield {
+               "subregion_link": download_link,
+            }

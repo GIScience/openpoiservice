@@ -5,7 +5,6 @@ import json
 from base import BaseTestCase
 from openpoiservice.server.db_import import parser
 
-
 request_poi_bbox = dict(
     request='pois',
     geometry=dict(
@@ -17,9 +16,9 @@ request_poi_bbox = dict(
 class TestUpdate(BaseTestCase):
     def test_import_update_mode(self):
 
-        print("Perform database update")
+        print("======== Perform database update =========")
         updated_test_file = os.path.join(os.getcwd() + '/osm_test', 'bremen-tests-mod.osm.pbf')
-        parser.run_import([updated_test_file])
+        parser.run_import([updated_test_file], {})
 
         response = self.client.post('/pois', data=json.dumps(request_poi_bbox), content_type='application/json')
         self.assertEqual(response.status_code, 200)

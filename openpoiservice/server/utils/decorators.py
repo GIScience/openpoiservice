@@ -100,14 +100,14 @@ def profile(func):
 
 def timeit(method):
     def timed(*args, **kw):
+        if len(args) == 0:
+            operation = "Delete operations"
+        else:
+            operation = "File import" if isinstance(args[0], str) else f"Batch of {len(args[0])} files"
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()
-        if 'log_time' in kw:
-            name = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
-        else:
-            logger.info('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
+        logger.info(f"{operation} completed in {round((te - ts) * 1000, 2)} ms")
         return result
 
     return timed
