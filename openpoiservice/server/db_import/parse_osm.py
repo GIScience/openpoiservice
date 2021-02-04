@@ -54,7 +54,7 @@ class WayObject(object):
 class OsmImporter(object):
     """ Class that handles the parsed OSM data. """
 
-    def __init__(self, update_mode=False):
+    def __init__(self, osm_file_index, update_mode=False):
         """ Initializes pbf importer class with necessary counters."""
         self.relations_cnt = 0
         self.ways_cnt = 0
@@ -74,6 +74,7 @@ class OsmImporter(object):
         self.poi_object = None
         self.process_ways_length = None
         self.update_mode = update_mode
+        self.osm_file_index = osm_file_index
 
     def parse_nodes(self, osm_nodes):
         """
@@ -93,17 +94,15 @@ class OsmImporter(object):
 
         :param relations: osm relations objects
         :type relations: list of osm relations
-
         """
         for osmid, tags, refs in relations:
-            skip_relation = True
-
+            is_multipolygon = False
             for tag, value in tags.items():
                 if tag == "type" and value == "multipolygon":
-                    skip_relation = False
+                    is_multipolygon = True
                     break
 
-            if not skip_relation:
+            if is_multipolygon:
                 categories = categories_tools.get_category(tags)
                 if len(categories) > 0 and len(refs) > 0:
                     rel_member = refs[0]
@@ -123,7 +122,6 @@ class OsmImporter(object):
 
         :param ways: osm way objects
         :type ways: list of osm ways
-
         """
         for osmid, tags, refs in ways:
             categories = categories_tools.get_category(tags)
@@ -260,7 +258,8 @@ class OsmImporter(object):
                 osm_type=poi_object.osmtype,
                 osm_id=poi_object.osmid,
                 geom=poi_object.geom,
-                delete=False
+                src_index=self.osm_file_index,
+                delflag=False
             ))
             if self.pois_count % 1000 == 0:
                 logger.debug(f"Pois: {self.pois_count}, tags: {self.tags_cnt}, categories: {self.categories_cnt}")

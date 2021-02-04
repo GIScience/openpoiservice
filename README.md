@@ -3,7 +3,7 @@
 [![Tests](https://github.com/GIScience/openpoiservice/workflows/run%20tests/badge.svg)](https://github.com/GIScience/openpoiservice/actions?query=workflow%3A%22run+tests%22)
 
 Openpoiservice (ops) is a flask application which hosts a highly customizable points of interest database derived from 
-OpenStreetMap.org data and thereby **exploits** it's notion of tags...
+OpenStreetMap.org data and thereby **exploits** its notion of tags...
 
 > OpenStreetMap [tags](https://wiki.openstreetmap.org/wiki/Tags) consisting of a key and value describe specific features of 
 > map elements (nodes, ways, or relations) or changesets.  Both items are free format text fields, but often represent numeric 
@@ -17,7 +17,7 @@ for instance `wheelchair` or `smoking` may then be used to query the service via
 For instance, if you want to request all pois accessible by wheelchair within a geometry, you could add then add 
 `wheelchair: ['yes', 'dedicated]` in `filters` within the body of your HTTP POST request. 
 
-You may pass 3 different types of geometry within the request to the database. Currently "Point" and "LineString" with
+You may pass 3 different types of geometry within the request to the database. Currently, "Point" and "LineString" with
 a corresponding and buffer are supported as well as a polygon. Points of interest will be returned within the given geometry.
 
 You can control the maximum size of geometries and further restrictions in the settings file of this service.
@@ -26,11 +26,11 @@ You can control the maximum size of geometries and further restrictions in the s
 
 The osm file(s) to be imported are parsed several times to extract points of interest from relations (osm_type 3), 
 ways (osm_type 2) and nodes (osm_type 1) in order. Which type the specific point of interest originated from will be 
-returned in the response - this will help you find the object directly on [OpenStreetMap.org](OpenStreetMap.org). 
+returned within the response - this will help you find the object directly on [OpenStreetMap.org](https://www.openstreetmap.org). 
 
 ## Installation
 
-You can either run **openpoiservice** on your host machine in a virtual environment or simply with docker. The Dockerfile 
+You can either run **openpoiservice** on your host machine in a virtual environment or simply with Docker. The Dockerfile 
 provided installs a WSGI server (gunicorn) which starts the flask service on port 5000.
 
 
@@ -69,9 +69,9 @@ for osm files) as this will be a shared volume.
 
 #### All-in-one docker image
 
-This docker compose will allow you to run openpoiservice with `psql/postgis` image. This will allow you to deploy this project fast.
+This docker-compose will allow you to run openpoiservice with `psql/postgis` image. This will allow you to deploy this project fast.
 
-**Important :** The database is not exposed, you won't be able to access it from outside the container. If you want to acces it simply add those lines to the database definition inside the `docker-compose-with-postgis.yml`:
+**Important :** The database is not exposed, you won't be able to access it from outside the container. If you want to acces it simply adds those lines to the database definition inside the `docker-compose-with-postgis.yml`:
 
 ```sh
 ports:
@@ -211,7 +211,7 @@ If you keep the structure as follows, you can manipulate this list as you wish.
 `column_mappings` in `openpoiservice/server/ops_settings.yml` controls which OSM information will be considered in the database and also if 
 these may be queried by the user via the API , e.g.
 
-```py
+```yaml
 wheelchair:
 
 smoking:

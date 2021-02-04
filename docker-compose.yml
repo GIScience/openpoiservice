@@ -3,8 +3,11 @@ version: "2.2"
 volumes:
  postgis-data:
 
+networks:
+ poi_network:
+
 services:
- ops-api:
+ api:
   container_name: ops-api
   build: .
   volumes:
@@ -14,50 +17,14 @@ services:
   ports:
    - "5000:5000"
   depends_on:
-    - ops-db
+    - db
   mem_limit: 28g
   networks:
    - poi_network
-  profiles:
-   - api
-
- ops-rebuild:
-  container_name: ops-rebuild
-  build: .
-  environment:
-   - REBUILD_DB=1
-  volumes:
-  - ./osm:/deploy/app/osm
-  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
-  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
-  depends_on:
-    - ops-db
-  mem_limit: 28g
-  networks:
-   - poi_network
-  profiles:
-   - rebuild
-
- ops-update:
-  container_name: ops-update
-  build: .
-  environment:
-   - UPDATE_DB=1
-  volumes:
-  - ./osm:/deploy/app/osm
-  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
-  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
-  depends_on:
-    - ops-db
-  mem_limit: 28g
-  networks:
-   - poi_network
-  profiles:
-   - update
 
  # Don't forget to change the host name inside ops_settings_docker.yml by the one given to docker container.
  # Also port should be set to 5432 (default value) inside the same file since they are on the same network
- ops-db:
+ db:
   container_name: ops-db
   image: kartoza/postgis:11.0-2.5
   volumes:
@@ -75,5 +42,42 @@ services:
   networks:
    - poi_network
 
-networks:
- poi_network:
+ # These two services will not start by default and can be run as necessary:
+ # docker-compose up init
+ # docker-compose up update
+ init:
+  container_name: ops-init
+  build: .
+  environment:
+   - INIT_DB=1
+  volumes:
+  - ./osm:/deploy/app/osm
+  - ./import-log.json:/deploy/app/import-log.json
+  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+    - db
+  mem_limit: 28g
+  networks:
+   - poi_network
+  profiles:
+   - initialize
+
+ update:
+  container_name: ops-update
+  build: .
+  environment:
+   - UPDATE_DB=1
+  volumes:
+  - ./osm:/deploy/app/osm
+  - ./import-log.json:/deploy/app/import-log.json
+  - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+    - db
+  mem_limit: 28g
+  networks:
+   - poi_network
+  profiles:
+   - update
+

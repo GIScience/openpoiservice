@@ -2,8 +2,8 @@
 if [[ ! -z "$UPDATE_DB" ]]; then
   echo "Updating POI database"
   /ops_venv/bin/python manage.py import-data
-elif [[ ! -z "$REBUILD_DB" ]]; then
-    echo "Rebuilding POI database"
+elif [[ ! -z "$INIT_DB" ]]; then
+    echo "Initializing POI database"
     /ops_venv/bin/python manage.py drop-db
     /ops_venv/bin/python manage.py create-db
     /ops_venv/bin/python manage.py import-data

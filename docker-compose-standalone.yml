@@ -1,6 +1,6 @@
 version: '2.2'
 services:
- ops-api:
+ api:
   container_name: ops-api
   build: .
   volumes:
@@ -11,29 +11,30 @@ services:
    - "5000:5000"
   mem_limit: 28g
 
- ops-rebuild:
-  container_name: ops-rebuild
+ init:
+  container_name: ops-init
   build: .
   environment:
-   - REBUILD_DB=1
+   - INIT_DB=1
   volumes:
   - ./osm:/deploy/app/osm
+  - ./import-log.json:/deploy/app/import-log.json
   - ./ops_settings_docker_standalone.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   mem_limit: 28g
   profiles:
-   - rebuild
+   - initialize
 
- ops-update:
+ update:
   container_name: ops-update
   build: .
   environment:
    - UPDATE_DB=1
   volumes:
   - ./osm:/deploy/app/osm
+  - ./import-log.json:/deploy/app/import-log.json
   - ./ops_settings_docker_standalone.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   mem_limit: 28g
   profiles:
    - update
-
