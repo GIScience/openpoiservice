@@ -19,7 +19,6 @@ provider_parameters:
   db_name: gis
   user_name: gis_admin
   table_schema: public
-  #user_name: admin
   password: admin
   host: localhost
   port: 5432
