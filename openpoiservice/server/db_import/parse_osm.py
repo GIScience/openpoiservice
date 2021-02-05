@@ -1,7 +1,4 @@
 # openpoiservice/server/parse_osm.py
-import sys
-import traceback
-
 from openpoiservice.server import db
 from openpoiservice.server import categories_tools, ops_settings
 from openpoiservice.server.db_import.models import POIs, Tags, Categories
@@ -75,6 +72,7 @@ class OsmImporter(object):
         self.process_ways_length = None
         self.update_mode = update_mode
         self.osm_file_index = osm_file_index
+        self.failed = False
 
     def parse_nodes(self, osm_nodes):
         """
@@ -84,7 +82,12 @@ class OsmImporter(object):
         # from node
         osm_type = 1
         for osmid, tags, refs in osm_nodes:
-            self.create_poi(osm_type, osmid, [refs[0], refs[1]], tags)
+            try:
+                self.create_poi(osm_type, osmid, [refs[0], refs[1]], tags)
+            except Exception as e:
+                logger.debug(e)
+                self.failed = True
+                return
 
     def parse_relations(self, relations):
         """
@@ -187,7 +190,13 @@ class OsmImporter(object):
 
                         centroid_lat = way.sum_lat / way.n_refs
                         centroid_lng = way.sum_lng / way.n_refs
-                        self.create_poi(way.osm_type, way.osm_id, [centroid_lat, centroid_lng], way.tags, way.categories)
+                        try:
+                            self.create_poi(way.osm_type, way.osm_id, [centroid_lat, centroid_lng], way.tags,
+                                            way.categories)
+                        except Exception as e:
+                            logger.debug(e)
+                            self.failed = True
+                            return
 
                     # way not completely seen yet, append to ways temp
                     else:
@@ -252,21 +261,17 @@ class OsmImporter(object):
         """
         Appends poi storage objects to buffer for bulk storage to database.
         """
-        try:
-            self.pois_count += 1
-            self.poi_objects.append(POIs(
-                osm_type=poi_object.osmtype,
-                osm_id=poi_object.osmid,
-                geom=poi_object.geom,
-                src_index=self.osm_file_index,
-                delflag=False
-            ))
-            if self.pois_count % 1000 == 0:
-                logger.debug(f"Pois: {self.pois_count}, tags: {self.tags_cnt}, categories: {self.categories_cnt}")
-                self.save_buffer()
-        except:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        self.pois_count += 1
+        self.poi_objects.append(POIs(
+            osm_type=poi_object.osmtype,
+            osm_id=poi_object.osmid,
+            geom=poi_object.geom,
+            src_index=self.osm_file_index,
+            delflag=False
+        ))
+        if self.pois_count % 1000 == 0:
+            logger.debug(f"Pois: {self.pois_count}, tags: {self.tags_cnt}, categories: {self.categories_cnt}")
+            self.save_buffer()
 
     def store_tags(self, tags_object):
         """
@@ -305,7 +310,7 @@ class OsmImporter(object):
         db.session.bulk_save_objects(self.poi_objects)
         db.session.bulk_save_objects(self.tags_objects)
         db.session.bulk_save_objects(self.categories_objects)
+        db.session.commit()
         self.poi_objects = []
         self.tags_objects = []
         self.categories_objects = []
-        db.session.commit()

@@ -10,7 +10,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Install postgit
+    - name: Install postgis
       uses: huaxk/postgis-action@v1
       with:
         postgresql db: 'gis'

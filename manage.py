@@ -79,6 +79,8 @@ def import_data():
                 import_log = json.load(f)
             except JSONDecodeError:
                 pass
+            finally:
+                f.close()
 
     # we have found previous data in the database, check if file list has changed which would require a full rebuild
     if len(import_log) and set(import_log.keys()) != set(osm_files):
@@ -91,6 +93,7 @@ def import_data():
 
     with open(logfile, "w") as f:
         json.dump(import_log, f, indent=4, sort_keys=True)
+        f.close()
 
 
 if __name__ == '__main__':
