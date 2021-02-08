@@ -1,5 +1,8 @@
 # openpoiservice/server/main/views.py
-
+import geojson
+import json
+import copy
+from datetime import datetime
 from flask import Blueprint, request, Response
 from openpoiservice.server import categories_tools
 from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, Optional, Boolean
@@ -8,9 +11,6 @@ from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
 from openpoiservice.server.utils.geometries import parse_geometry, validate_limit, GeomTransformer
 from openpoiservice.server.api.query_info import QueryInfo
-import geojson
-import json
-import copy
 
 
 GeomTransformer.init_transformer()
@@ -140,6 +140,11 @@ def places():
             return r
 
         else:
+            with open("osm/invalid-requests.log", "a") as f:
+                time = datetime.now()
+                req = request.data.decode().strip().replace("\n", "").replace(" ", "")
+                f.write(f"{time} {request.remote_addr}:{request.headers['Authorization']} - {req}\n")
+                f.close()
 
             raise api_exceptions.InvalidUsage(status_code=400, error_code=4009)
 

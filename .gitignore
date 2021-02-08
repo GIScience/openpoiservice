@@ -127,5 +127,4 @@ ops_settings_docker*.yml
 !ops_settings_docker_standalone.yml
 docker-compose-*.yml
 !docker-compose-standalone.yml
-
 backup/*
