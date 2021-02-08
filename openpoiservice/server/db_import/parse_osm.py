@@ -302,6 +302,12 @@ class OsmImporter(object):
         If running in update mode, delete all POIs with IDs in buffer first. Foreign key constraints in the database
         handle deletion of related tags/categories.
         """
+
+        if not self.update_mode:
+            for poi in self.poi_objects:
+                if len(db.session.query(POIs).filter_by(osm_type=poi.osm_type, osm_id=poi.osm_id).all()) > 0:
+                    self.update_mode = True
+
         if self.update_mode:
             for poi in self.poi_objects:
                 db.session.query(POIs).filter_by(osm_type=poi.osm_type, osm_id=poi.osm_id).delete()

@@ -203,7 +203,7 @@ class QueryBuilder(object):
 
             places_dict["places"]["total_count"] += poi_group.count
 
-        logger.info('Number of poi stats groups: {}'.format(len(places_dict)))
+        logger.debug('Number of poi stats groups: {}'.format(len(places_dict)))
 
         return places_dict
 
@@ -262,6 +262,6 @@ class QueryBuilder(object):
 
         feature_collection = geojson.FeatureCollection(geojson_features, bbox=MultiPoint(lat_lngs).bounds)
 
-        logger.info("Amount of features {}".format(len(geojson_features)))
+        logger.debug("Amount of features {}".format(len(geojson_features)))
 
         return feature_collection
