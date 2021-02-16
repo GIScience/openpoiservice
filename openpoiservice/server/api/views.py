@@ -143,7 +143,7 @@ def places():
             with open("osm/invalid-requests.log", "a") as f:
                 time = datetime.now()
                 req = request.data.decode().strip().replace("\n", "").replace(" ", "")
-                f.write(f"{time} {request.remote_addr}:{request.headers['Authorization']} - {req}\n")
+                f.write(f"{time} {request.remote_addr}: - {req}\n")
                 f.close()
 
             raise api_exceptions.InvalidUsage(status_code=400, error_code=4009)

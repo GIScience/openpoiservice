@@ -76,7 +76,7 @@ def run_import(osm_files_to_import, import_log):
         update_mode = False
         # run query on separate database connection, will conflict otherwise since parse_import runs in separate process
         separate_db_con = SQLAlchemy()
-        prev_poi_count = len(separate_db_con.session.query(POIs).all())
+        prev_poi_count = separate_db_con.session.query(POIs).count()
         if prev_poi_count > 0:
             update_mode = True
             logger.info("Data import running in UPDATE MODE")
@@ -93,7 +93,7 @@ def run_import(osm_files_to_import, import_log):
 
         if update_mode:
             separate_db_con = SQLAlchemy()
-            prev_poi_count_file = len(separate_db_con.session.query(POIs).filter_by(src_index=osm_file_index).all())
+            prev_poi_count_file = separate_db_con.session.query(POIs).filter_by(src_index=osm_file_index).count()
             logger.info(f"Setting flags on {prev_poi_count_file} POIs.")
             separate_db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
             separate_db_con.session.commit()
@@ -115,7 +115,7 @@ def run_import(osm_files_to_import, import_log):
 def delete_marked_entries():
     logger.info(f"Updates complete, now performing delete operations...")
     separate_db_con = SQLAlchemy()
-    to_delete = len(separate_db_con.session.query(POIs).filter_by(delflag=True).all())
+    to_delete = separate_db_con.session.query(POIs).filter_by(delflag=True).count()
     if to_delete > 0:
         logger.info(f"{to_delete} POIs in the database have been removed from the OSM data, deleting...")
         separate_db_con.session.query(POIs).filter_by(delflag=True).delete()
