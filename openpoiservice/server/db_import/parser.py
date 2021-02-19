@@ -76,7 +76,7 @@ def run_import(osm_files_to_import, import_log):
         update_mode = False
         # run query on separate database connection, will conflict otherwise since parse_import runs in separate process
         separate_db_con = SQLAlchemy()
-        prev_poi_count = separate_db_con.session.query(POIs).count()
+        prev_poi_count = separate_db_con.session.query(POIs.osm_type, POIs.osm_id).count()
         if prev_poi_count > 0:
             update_mode = True
             logger.info("Data import running in UPDATE MODE")

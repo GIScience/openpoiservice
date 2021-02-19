@@ -54,7 +54,10 @@ class GeoFabrikSpider(scrapy.Spider):
 
             print('Starting download of {}'.format(tail))
             download_link = parse.urljoin(response.url, sub_region)
-            subprocess.call(["wget", "-q", "-N", f"-P{head}", download_link])
+            if head:
+                subprocess.call(["wget", "-q", "-N", f"-P{head}", download_link])
+            else:
+                subprocess.call(["wget", "-q", "-N", download_link])
             sleep(self.wait_time)
 
             yield {
