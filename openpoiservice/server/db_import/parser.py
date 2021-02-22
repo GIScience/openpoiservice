@@ -93,7 +93,7 @@ def run_import(osm_files_to_import, import_log):
 
         if update_mode:
             separate_db_con = SQLAlchemy()
-            prev_poi_count_file = separate_db_con.session.query(POIs).filter_by(src_index=osm_file_index).count()
+            prev_poi_count_file = separate_db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(src_index=osm_file_index).count()
             logger.info(f"Setting flags on {prev_poi_count_file} POIs.")
             separate_db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
             separate_db_con.session.commit()
@@ -115,7 +115,7 @@ def run_import(osm_files_to_import, import_log):
 def delete_marked_entries():
     logger.info(f"Updates complete, now performing delete operations...")
     separate_db_con = SQLAlchemy()
-    to_delete = separate_db_con.session.query(POIs).filter_by(delflag=True).count()
+    to_delete = separate_db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(delflag=True).count()
     if to_delete > 0:
         logger.info(f"{to_delete} POIs in the database have been removed from the OSM data, deleting...")
         separate_db_con.session.query(POIs).filter_by(delflag=True).delete()
