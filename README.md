@@ -65,7 +65,7 @@ Make your necessary changes to the settings in the file `ops_settings_docker.yml
 If you are planning to import a different osm file, please download it to the `osm folder` (any folder within will be scanned
 for osm files) as this will be a shared volume. 
 
-### Docker-compose
+### Docker Compose
 
 #### All-in-one docker image
 
@@ -89,7 +89,7 @@ Don't forget to change the host name and port inside `ops_settings_docker.yml` b
 Command to use to run all-in-one docker container
 
 ```sh
-docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
+docker compose -f /path/to/docker-compose-with-postgis.yml up api -d
 ```
 
 #### Only deploy openpoiservice
@@ -97,7 +97,7 @@ docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
 This will only run openpoiservice inside a container, meaning that you will need to handle the database yourself and connect it to this container.
 
 ```sh
-docker-compose -f /path/to/docker-compose.yml up -d
+docker compose -f /path/to/docker-compose.yml up api -d
 ```
 
 #### After deploy
