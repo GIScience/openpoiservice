@@ -81,3 +81,18 @@ services:
   profiles:
    - update
 
+ test:
+  container_name: ops-test
+  build: .
+  environment:
+   - TESTING=True
+  volumes:
+   - ./osm:/deploy/app/osm
+   - ./osm_test:/deploy/app/osm_test
+   - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+   - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+   - db
+  mem_limit: 8g
+  networks:
+   - poi_network
