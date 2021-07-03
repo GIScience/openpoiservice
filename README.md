@@ -89,7 +89,7 @@ Don't forget to change the host name and port inside `ops_settings_docker.yml` b
 Command to use to run all-in-one docker container
 
 ```sh
-docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
+docker-compose -f /path/to/docker-compose.yml up -d
 ```
 
 #### Only deploy openpoiservice
@@ -97,7 +97,7 @@ docker-compose -f /path/to/docker-compose-with-postgis.yml up -d
 This will only run openpoiservice inside a container, meaning that you will need to handle the database yourself and connect it to this container.
 
 ```sh
-docker-compose -f /path/to/docker-compose.yml up -d
+docker-compose -f /path/to/docker-compose-standalone.yml up -d
 ```
 
 #### After deploy
@@ -119,6 +119,19 @@ Or import the OSM data:
 ```sh
 $ docker exec -it container_name /ops_venv/bin/python manage.py import-data
 ```
+
+### Init and Update DB with docker
+You can initialize POI database with docker service init
+
+```sh
+docker-compose -f /path/to/docker-compose.yml up init
+```
+
+Or updating POI database
+```sh
+docker-compose -f /path/to/docker-compose.yml up update
+```
+
 
 ### Protocol Buffers (protobuf) for imposm.parser 
 
