@@ -128,3 +128,4 @@ ops_settings_docker*.yml
 docker-compose-*.yml
 !docker-compose-standalone.yml
 backup/*
+import-log.json
