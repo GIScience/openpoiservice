@@ -142,7 +142,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 13)
+        self.assertEqual(len(data['features']), 13)
 
     def test_request_poi_point_geom_with_bbox(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_point_geom_with_bbox),
@@ -150,7 +150,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 7)
+        self.assertEqual(len(data['features']), 7)
 
     def test_request_poi_polygon_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_polygon_geom),
@@ -158,7 +158,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 7)
+        self.assertEqual(len(data['features']), 7)
 
     def test_request_poi_polygon_geom_with_bbox(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_polygon_geom_with_bbox),
@@ -166,7 +166,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 1)
+        self.assertEqual(len(data['features']), 1)
 
     def test_request_poi_linestring_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_linestring_geom),
@@ -174,7 +174,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 3)
+        self.assertEqual(len(data['features']), 3)
 
     def test_request_poi_linestring_geom_with_bbox(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_linestring_geom_with_bbox),
@@ -182,7 +182,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 6)
+        self.assertEqual(len(data['features']), 6)
 
     def test_request_poi_bbox(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_bbox),
@@ -190,7 +190,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(len(data[0]['features']), 7)
+        self.assertEqual(len(data['features']), 7)
 
 
 if __name__ == '__main__':
