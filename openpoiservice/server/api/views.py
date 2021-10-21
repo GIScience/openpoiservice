@@ -1,4 +1,5 @@
 # openpoiservice/server/main/views.py
+import logging
 import geojson
 import json
 import copy
@@ -130,10 +131,9 @@ def places():
                     features.append(tmp)
 
             else:
-                tmp = request_pois(all_args)
+                features = request_pois(all_args)
                 query_info = QueryInfo(raw_request).__dict__
-                tmp["information"] = query_info
-                features.append(tmp)
+                features["information"] = query_info
 
             # query pois
             r = Response(json.dumps(features), mimetype='application/json; charset=utf-8')
