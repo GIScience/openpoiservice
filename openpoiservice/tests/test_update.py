@@ -29,14 +29,14 @@ class TestUpdate(BaseTestCase):
         # print(json.dumps(data, indent=4, sort_keys=False))
 
         # 1 POI has been deleted in the update and 1 added, so number hasn't changed
-        self.assertEqual(len(data[0]['features']), 38)
+        self.assertEqual(len(data['features']), 38)
 
         # 1 POI has been added
-        self.assertEqual(data[0]['features'][5]['properties']['osm_id'], 2134315509)
-        self.assertEqual(data[0]['features'][5]['properties']['osm_tags']['name'], "Ein Impfzentrum")
+        self.assertEqual(data['features'][5]['properties']['osm_id'], 2134315509)
+        self.assertEqual(data['features'][5]['properties']['osm_tags']['name'], "Ein Impfzentrum")
 
         # 1 POI has a tag value changed
-        self.assertEqual(data[0]['features'][20]['properties']['osm_tags']['name'], "Kiosk am Markt wurde umbenannt")
+        self.assertEqual(data['features'][20]['properties']['osm_tags']['name'], "Kiosk am Markt wurde umbenannt")
 
 
 if __name__ == '__main__':

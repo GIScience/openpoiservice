@@ -43,7 +43,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'places', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(data[0]['places']['total_count'], 6)
+        self.assertEqual(data['places']['total_count'], 6)
 
     def test_request_stats_category_group_ids_point_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_stats_category_group_ids_point_geom),
@@ -51,7 +51,7 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'places', response.data)
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(data[0]['places']['total_count'], 9)
+        self.assertEqual(data['places']['total_count'], 9)
 
 
 if __name__ == '__main__':
