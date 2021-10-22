@@ -1,25 +1,20 @@
-# gunicorn-flask
-
-# requires this ubuntu version due to protobuf library update
-FROM ubuntu:18.04
+FROM python:3.9-slim
 MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
 
-RUN apt-get update && apt-get install -y python3-pip python-virtualenv nano wget git locales build-essential \
-protobuf-compiler=3.0.0-9.1ubuntu1 libprotobuf-dev=3.0.0-9.1ubuntu1
+# protobuf is required to parse osm files.
+# git to install imposm-parser via pip from github
+# build-essential to build imposm-parser
+RUN apt-get update && apt-get install -y libprotobuf-dev protobuf-compiler locales git build-essential
 
 # Set the locale
-RUN locale-gen en_US.UTF-8
-ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
+ENV LANG=C.UTF-8 LANGUAGE=C:en LC_ALL=C.UTF-8
 
 # Setup flask application
-COPY requirements.txt /deploy/app/requirements.txt
-RUN virtualenv --python=python3.6 /ops_venv && /bin/bash -c "source /ops_venv/bin/activate" && \
-/ops_venv/bin/pip3 install Cython && /ops_venv/bin/pip3 install -r /deploy/app/requirements.txt
-
-COPY gunicorn_config.py /deploy/gunicorn_config.py
-COPY run.sh manage.py /deploy/app/
-COPY openpoiservice /deploy/app/openpoiservice
-
 WORKDIR /deploy/app
+COPY requirements.txt ./
+RUN pip3 install -r /deploy/app/requirements.txt
+COPY gunicorn_config.py run.sh manage.py ./
+COPY openpoiservice ./openpoiservice
+
 EXPOSE 5000
-ENTRYPOINT ["/bin/bash", "/deploy/app/run.sh"]
+ENTRYPOINT ["/bin/bash", "run.sh"]
