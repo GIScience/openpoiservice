@@ -16,12 +16,8 @@ jobs:
         postgresql db: 'gis'
         postgresql user: 'gis_admin'
         postgresql password: 'admin'
-    - name: Install python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: Install protobuf & proj
-      run: sudo apt-get update && sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev proj-bin libproj-dev
+    - name: Install packages
+      run: sudo apt-get update && sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev python3 #proj-bin libproj-dev
     - name: Activate cache for python packages
       uses: actions/cache@v2
       with:
@@ -32,6 +28,6 @@ jobs:
     - name: Upgrade pip
       run: pip install --upgrade pip
     - name: Install pip requirements
-      run: pip install wheel -r requirements.txt
+      run: pip install -r requirements.txt
     - name: Run tests
       run: python manage.py test
