@@ -1,5 +1,5 @@
 FROM python:3.9-slim
-MAINTAINER Timothy Ellersiek <timothy@openrouteservice.org>
+LABEL org.opencontainers.image.authors="Timothy Ellersiek <timothy@openrouteservice.org>"
 
 # protobuf is required to parse osm files.
 # git to install imposm-parser via pip from github
