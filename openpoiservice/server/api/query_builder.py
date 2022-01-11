@@ -86,7 +86,7 @@ class QueryBuilder(object):
                     sortby_group.append(geo_func.ST_Distance(type_coerce(geom, Geography), bbox_query.c.geom))
 
                 elif params['sortby'] == 'category':
-                    sortby_group.append(bbox_query.c.category)
+                    sortby_group.append("categories")
 
             keys_agg = func.array_agg(Tags.key).label('keys')
             values_agg = func.array_agg(Tags.value).label('values')
