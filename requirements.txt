@@ -28,7 +28,7 @@ itsdangerous==1.1.0
 Jinja2==2.11.3
 jmespath==0.10.0
 jsonschema==3.2.0
-lxml==4.6.3
+lxml==4.6.5
 MarkupSafe==1.1.1
 mistune==0.8.4
 parsel==1.6.0
