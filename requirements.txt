@@ -30,7 +30,7 @@ jmespath==0.10.0
 jsonschema==3.2.0
 lxml==4.6.5
 MarkupSafe==1.1.1
-mistune==0.8.4
+mistune==2.0.3
 parsel==1.6.0
 Protego==0.1.16
 psycopg2-binary==2.8.6
