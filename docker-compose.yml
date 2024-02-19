@@ -17,7 +17,8 @@ services:
   ports:
    - "5000:5000"
   depends_on:
-    - db
+    db:
+      condition: service_healthy
   mem_limit: 28g
   networks:
    - poi_network
@@ -38,6 +39,11 @@ services:
    - ALLOW_IP_RANGE=0.0.0.0/0
   ports:
    - 5432:5432
+  healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
   restart: on-failure
   networks:
    - poi_network
@@ -56,7 +62,8 @@ services:
   - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   depends_on:
-    - db
+    db:
+      condition: service_healthy
   mem_limit: 28g
   networks:
    - poi_network
@@ -74,7 +81,8 @@ services:
   - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   depends_on:
-    - db
+    db:
+      condition: service_healthy
   mem_limit: 28g
   networks:
    - poi_network
@@ -92,7 +100,8 @@ services:
    - ./ops_settings_docker.yml:/deploy/app/openpoiservice/server/ops_settings.yml
    - ./categories_docker.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   depends_on:
-   - db
+    db:
+      condition: service_healthy
   mem_limit: 8g
   networks:
    - poi_network
