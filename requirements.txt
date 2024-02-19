@@ -1,7 +1,7 @@
 attrs==20.3.0
 Automat==20.2.0
 blinker==1.4
-certifi==2020.12.5
+certifi==2022.12.7
 cffi==1.14.4
 click==7.1.2
 constantly==15.1.0
