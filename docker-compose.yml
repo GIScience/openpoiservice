@@ -26,14 +26,14 @@ services:
  # Also port should be set to 5432 (default value) inside the same file since they are on the same network
  db:
   container_name: ops-db
-  image: kartoza/postgis:11.0-2.5
+  image: postgis/postgis:16-3.4
   volumes:
    - postgis-data:/var/lib/postgresql
   environment:
    # If you need to create multiple database you can add coma separated databases eg gis,data
    - POSTGRES_DB=gis
    - POSTGRES_USER=gis_admin    # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
-   - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
+   - POSTGRES_PASSWORD=admin        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
    - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_docker.yml
    - ALLOW_IP_RANGE=0.0.0.0/0
   ports:
@@ -61,7 +61,7 @@ services:
   networks:
    - poi_network
   profiles:
-   - initialize
+   - init
 
  update:
   container_name: ops-update
