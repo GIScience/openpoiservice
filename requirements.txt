@@ -9,7 +9,7 @@ coverage==5.3.1
 cryptography>=3.0.0
 cssselect==1.1.0
 flasgger==0.9.5
-Flask==1.1.2
+Flask==2.2.5
 Flask-Cors==3.0.10
 Flask-DebugToolbar==0.11.0
 Flask-SQLAlchemy==2.4.4
