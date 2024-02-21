@@ -100,7 +100,7 @@ def profile(func):
 
 def timeit(method):
     def timed(*args, **kw):
-        if len(args) == 0:
+        if len(args) == 1:
             operation = "Delete operations"
         else:
             operation = "File import" if isinstance(args[0], str) else f"Batch of {len(args[0])} files"

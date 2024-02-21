@@ -4,6 +4,7 @@ import unittest
 import json
 from base import BaseTestCase
 from openpoiservice.server.db_import import parser
+from openpoiservice.server import db
 
 request_poi_bbox = dict(
     request='pois',
@@ -18,7 +19,7 @@ class TestUpdate(BaseTestCase):
 
         print("======== Perform database update =========")
         updated_test_file = os.path.join(os.getcwd() + '/osm_test', 'bremen-tests-mod.osm.pbf')
-        parser.run_import([updated_test_file], {})
+        parser.run_import([updated_test_file], {}, db)
 
         response = self.client.post('/pois', data=json.dumps(request_poi_bbox), content_type='application/json')
         self.assertEqual(response.status_code, 200)

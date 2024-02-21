@@ -237,6 +237,9 @@ def parse_geometries(geometry):
         # parse geom if valid
         geojson_obj = check_validity(g2)
 
+        if geojson_obj.is_empty:
+            raise api_exceptions.InvalidUsage(status_code=400, error_code=4007, message=str("geojson is empty"))
+
         if geojson_obj.geom_type == 'Point':
             check_for_buffer(geometry, ops_settings['maximum_search_radius_for_points'])
 
