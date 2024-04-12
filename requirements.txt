@@ -20,7 +20,7 @@ gevent==24.2.1
 greenlet==3.0.3
 gunicorn==21.2.0
 hyperlink==21.0.0
-idna==3.6
+idna==3.7
 incremental==22.10.0
 itemadapter==0.8.0
 itemloaders==1.1.0
