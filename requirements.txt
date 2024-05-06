@@ -52,7 +52,7 @@ SQLAlchemy==2.0.27
 Twisted==23.10.0
 voluptuous==0.14.2
 w3lib==2.1.2
-Werkzeug==3.0.1
+Werkzeug==3.0.3
 zope.event==5.0
 zope.interface==6.2
 git+https://github.com/timmccauley/imposm-parser.git@python3
