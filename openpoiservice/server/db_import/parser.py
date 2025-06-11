@@ -95,8 +95,6 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
     OSMParser(concurrency=workers, ways_callback=osm_importer.parse_ways_first).parse(osm_file)
     logger.info(f"Found {osm_importer.ways_cnt} ways (including the ones found in relations)")
 
-    osm_importer.node_refs = set(osm_importer.node_refs)
-
     logger.info("Parsing coords ...")
     OSMParser(concurrency=workers, coords_callback=osm_importer.parse_coords_and_store).parse(osm_file)
 
