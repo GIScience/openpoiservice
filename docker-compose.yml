@@ -67,8 +67,6 @@ services:
   mem_limit: 28g
   networks:
    - poi_network
-  profiles:
-   - init
 
  update:
   container_name: ops-update
@@ -86,8 +84,6 @@ services:
   mem_limit: 28g
   networks:
    - poi_network
-  profiles:
-   - update
 
  test:
   container_name: ops-test

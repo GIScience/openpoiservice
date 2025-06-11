@@ -12,7 +12,7 @@ from openpoiservice.server.db_import import parser
 
 logging.basicConfig(
     level=logging.DEBUG if os.environ.get('OPS_DEBUG', False) else logging.INFO,
-    format='%(levelname)-8s %(message)s',
+    format='%(asctime)s %(levelname)-8s %(message)s',
 )
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,8 @@ def import_data():
 
     logger.info(f"Starting to import OSM data ({len(osm_files)} files in batch)")
     logger.debug(f"Files in import batch: {osm_files}")
-    parser.run_import(osm_files, import_log, db)
+    # parser.run_import(osm_files, import_log, db)
+    parser.run_import_new(osm_files, import_log, db)
 
     with open(logfile, "w") as f:
         json.dump(import_log, f, indent=4, sort_keys=True)
