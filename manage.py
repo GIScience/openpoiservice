@@ -68,7 +68,7 @@ def import_data():
             continue
         logger.info(f"Found directory: {dir_name}")
         for filename in file_list:
-            if filename.endswith(".osm.pbf") or filename.endswith(".osm"):
+            if filename.endswith(".pbf") or filename.endswith(".osm"):
                 osm_files.append(os.path.join(dir_name, filename))
     osm_files.sort()
 

@@ -1,14 +1,16 @@
 # openpoiservice/server/parser.py
-import os
 import logging
+import os
+from collections import deque
+
 import sqlalchemy
 from flask_sqlalchemy import SQLAlchemy
+from imposm.parser import OSMParser
+
+from openpoiservice.server import ops_settings
 from openpoiservice.server.db_import.models import POIs
 from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.utils.decorators import timeit, processify
-from openpoiservice.server import ops_settings
-from imposm.parser import OSMParser
-from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,7 @@ def parse_file(osm_file, osm_file_index=0, update_mode=False):
     del osm_importer
     return 0
 
-# process this function to free memory after import of each osm file
+
 @timeit
 @processify
 def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
@@ -98,6 +100,8 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
     logger.info("Parsing coords ...")
     OSMParser(concurrency=workers, coords_callback=osm_importer.parse_coords_and_store).parse(osm_file)
 
+    osm_importer.nodes_store.compact()
+
     logger.info("Parsing and importing ways (2nd pass)...")
     OSMParser(concurrency=workers, ways_callback=osm_importer.parse_ways_second).parse(osm_file)
 
@@ -107,8 +111,8 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
         del osm_importer
         return 1
 
-    if len(osm_importer.process_ways) > 0:
-        logger.warning(f"{len(osm_importer.process_ways)} ways not processed due to missing coordinate information, "
+    if len(osm_importer.process_ways_set) > 0:
+        logger.warning(f"{len(osm_importer.process_ways_set)} ways not processed due to missing coordinate information, "
                        f"possible pbf file corruption")
 
     # store remaining data in buffer
@@ -118,6 +122,7 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
     logger.info(f"Finished import of {osm_file}")
     del osm_importer
     return 0
+
 
 @timeit
 def run_import(osm_files_to_import, import_log, db_con):
@@ -137,7 +142,8 @@ def run_import(osm_files_to_import, import_log, db_con):
             continue
 
         if update_mode:
-            prev_poi_count_file = db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(src_index=osm_file_index).count()
+            prev_poi_count_file = db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(
+                src_index=osm_file_index).count()
             logger.info(f"Setting flags on {prev_poi_count_file} POIs.")
             db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
             db_con.session.commit()
@@ -151,6 +157,7 @@ def run_import(osm_files_to_import, import_log, db_con):
         delete_marked_entries(db_con)
 
     logger.info(f"Import complete.")
+
 
 @timeit
 def run_import_new(osm_files_to_import, import_log, db_con):
@@ -170,7 +177,8 @@ def run_import_new(osm_files_to_import, import_log, db_con):
             continue
 
         if update_mode:
-            prev_poi_count_file = db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(src_index=osm_file_index).count()
+            prev_poi_count_file = db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(
+                src_index=osm_file_index).count()
             logger.info(f"Setting flags on {prev_poi_count_file} POIs.")
             db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
             db_con.session.commit()
@@ -184,6 +192,7 @@ def run_import_new(osm_files_to_import, import_log, db_con):
         delete_marked_entries(db_con)
 
     logger.info(f"Import complete.")
+
 
 @timeit
 def delete_marked_entries(db_con):

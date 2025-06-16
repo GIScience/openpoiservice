@@ -1,11 +1,17 @@
 # openpoiservice/server/parse_osm.py
-from openpoiservice.server import db
-from openpoiservice.server import categories_tools, ops_settings
-from openpoiservice.server.db_import.models import POIs, Tags, Categories
-from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+
 import logging
 from bisect import bisect_left
 from collections import deque
+
+import numpy as np
+from cykhash.khashsets import Int64Set
+
+from openpoiservice.server import categories_tools, ops_settings
+from openpoiservice.server import db
+from openpoiservice.server.db_import.models import POIs, Tags, Categories
+from openpoiservice.server.db_import.node_store import NodeStore
+from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +68,8 @@ class OsmImporter(object):
         self.relation_ways = {}
         self.nodes = {}
         self.process_ways = []
+        self.nodes_store = NodeStore()
+        self.process_ways_set = Int64Set()
         self.poi_objects = []
         self.tags_objects = []
         self.categories_objects = []
@@ -172,12 +180,13 @@ class OsmImporter(object):
             if len(categories) > 0:
                 self.ways_cnt += 1
                 for ref in refs:
-                    self.nodes[ref] = (0.0, 0.0)
+                    self.nodes_store.append(ref, (None, None))
+                    self.process_ways_set.add(osmid)
 
     def parse_coords_and_store(self, coords):
         for osmid, lat, lng in coords:
-            if osmid in self.nodes:
-                self.nodes[osmid] = (lat, lng)
+            if osmid in self.nodes_store:
+                self.nodes_store.set(osmid, (lat, lng))
 
     def parse_ways_second(self, ways):
         """
@@ -190,7 +199,7 @@ class OsmImporter(object):
         :type ways: list of osm ways
         """
         for osmid, tags, refs in ways:
-            if len(refs) >= 1000:
+            if osmid not in self.process_ways_set:
                 continue
             categories = categories_tools.get_category(tags)
             # from way
@@ -203,25 +212,33 @@ class OsmImporter(object):
                 # from relation
                 osm_type = 3
 
-            if len(categories) > 0:
-                # Calculate centroid of way
-                refs = list(set(refs))
-                sum_lat = 0
-                sum_lng = 0
-                for ref in refs:
-                    if ref in self.nodes:
-                        lat, lng = self.nodes[ref]
-                        sum_lat += lat
-                        sum_lng += lng
+            # Calculate centroid of way
+            refs = set(refs)
+            sum_lat = 0
+            sum_lng = 0
+            way_valid = True
+            for ref in refs:
+                if ref not in self.nodes_store: # should never ha
+                    way_valid = False
+                    break
+                lat, lng = self.nodes_store.get(ref)
+                if lat is None or lng is None or np.isnan(lat) or np.isnan(lng):
+                    way_valid = False
+                    break
+                sum_lat += lat
+                sum_lng += lng
+            if not way_valid:
+                continue
 
-                centroid_lat = sum_lat / len(refs)
-                centroid_lng = sum_lng / len(refs)
-                try:
-                    self.create_poi(osm_type, osmid, [centroid_lat, centroid_lng], tags, categories)
-                except Exception as e:
-                    logger.debug(e)
-                    self.failed = True
-                    return
+            self.process_ways_set.remove(osmid)
+            centroid_lat = sum_lat / len(refs)
+            centroid_lng = sum_lng / len(refs)
+            try:
+                self.create_poi(osm_type, osmid, [centroid_lat, centroid_lng], tags, categories)
+            except Exception as e:
+                logger.debug(e)
+                self.failed = True
+                return
 
     def parse_coords_for_ways(self, coords):
         """
