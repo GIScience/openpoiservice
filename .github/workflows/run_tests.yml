@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Check out source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Install postgis
@@ -23,7 +23,7 @@ jobs:
     - name: Install packages
       run: sudo apt-get update && sudo apt-get install -y build-essential protobuf-compiler libprotobuf-dev python3 #proj-bin libproj-dev
     - name: Activate cache for python packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
