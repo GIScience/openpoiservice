@@ -12,7 +12,7 @@ from openpoiservice.server.db_import import parser
 
 logging.basicConfig(
     level=logging.DEBUG if os.environ.get('OPS_DEBUG', False) else logging.INFO,
-    format='%(levelname)-8s %(message)s',
+    format='%(asctime)s %(levelname)-8s %(message)s',
 )
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def import_data():
             continue
         logger.info(f"Found directory: {dir_name}")
         for filename in file_list:
-            if filename.endswith(".osm.pbf") or filename.endswith(".osm"):
+            if filename.endswith(".pbf") or filename.endswith(".osm"):
                 osm_files.append(os.path.join(dir_name, filename))
     osm_files.sort()
 
@@ -82,18 +82,22 @@ def import_data():
             finally:
                 f.close()
 
-    # we have found previous data in the database, check if file list has changed which would require a full rebuild
-    if len(import_log) and set(import_log.keys()) != set(osm_files):
-        logger.error(f"File set has changed since last import, full rebuild required. Exiting.")
-        return
+    # check if file list has changed which would require a full rebuild by deleting the import log
+    if len(import_log):
+        if set(import_log.keys()) != set(osm_files):
+            logger.error(f"File set has changed since last import, full rebuild required. Exiting.")
+            return
+    else:
+        import_log = {key: 0 for key in osm_files}
+        with open(logfile, "w") as f:
+            json.dump(import_log, f, indent=4, sort_keys=True)
+            f.close()
 
     logger.info(f"Starting to import OSM data ({len(osm_files)} files in batch)")
     logger.debug(f"Files in import batch: {osm_files}")
-    parser.run_import(osm_files, import_log, db)
+    # parser.run_import(osm_files, import_log, db)
+    parser.run_import_new(osm_files, import_log, logfile, db)
 
-    with open(logfile, "w") as f:
-        json.dump(import_log, f, indent=4, sort_keys=True)
-        f.close()
 
 
 if __name__ == '__main__':

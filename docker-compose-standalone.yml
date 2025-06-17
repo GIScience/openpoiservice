@@ -1,4 +1,3 @@
-version: '2.2'
 services:
  api:
   container_name: ops-api
