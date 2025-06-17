@@ -1,4 +1,5 @@
 # openpoiservice/server/parser.py
+import json
 import logging
 import os
 from collections import deque
@@ -15,7 +16,7 @@ from openpoiservice.server.utils.decorators import timeit, processify
 logger = logging.getLogger(__name__)
 
 
-# process this function to free memory after import of each osm file
+# deprecated, remove later
 @timeit
 @processify
 def parse_file(osm_file, osm_file_index=0, update_mode=False):
@@ -112,8 +113,9 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
         return 1
 
     if len(osm_importer.process_ways_set) > 0:
-        logger.warning(f"{len(osm_importer.process_ways_set)} ways not processed due to missing coordinate information, "
-                       f"possible pbf file corruption")
+        logger.warning(
+            f"{len(osm_importer.process_ways_set)} ways not processed due to missing coordinate information, "
+            f"possible pbf file corruption")
 
     # store remaining data in buffer
     osm_importer.save_buffer()
@@ -124,6 +126,7 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False):
     return 0
 
 
+# deprecated, remove later
 @timeit
 def run_import(osm_files_to_import, import_log, db_con):
     try:
@@ -160,7 +163,7 @@ def run_import(osm_files_to_import, import_log, db_con):
 
 
 @timeit
-def run_import_new(osm_files_to_import, import_log, db_con):
+def run_import_new(osm_files_to_import, import_log, logfile, db_con):
     try:
         update_mode = False
         prev_poi_count = db_con.session.query(POIs.osm_type, POIs.osm_id).count()
@@ -188,8 +191,13 @@ def run_import_new(osm_files_to_import, import_log, db_con):
         else:
             import_log[osm_file] = 0  # import failed, this file has to be inserted in the next update
 
-    if update_mode:
-        delete_marked_entries(db_con)
+        if update_mode:
+            delete_marked_entries(db_con)
+
+        with open(logfile, "w") as f:
+            json.dump(import_log, f, indent=4, sort_keys=True)
+            f.close()
+
 
     logger.info(f"Import complete.")
 

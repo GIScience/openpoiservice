@@ -16,6 +16,7 @@ from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 logger = logging.getLogger(__name__)
 
 
+# deprecated, remove later
 class WayObject(object):
     """ Class that creates a way object. """
 
@@ -66,21 +67,21 @@ class OsmImporter(object):
         self.tags_cnt = 0
         self.categories_cnt = 0
         self.relation_ways = {}
-        self.nodes = {}
-        self.process_ways = []
         self.nodes_store = NodeStore()
         self.process_ways_set = Int64Set()
         self.poi_objects = []
         self.tags_objects = []
         self.categories_objects = []
-        self.ways_temp = []
-        self.ways_obj = None
-        self.tags_object = None
-        self.poi_object = None
-        self.process_ways_length = None
         self.update_mode = update_mode
         self.osm_file_index = osm_file_index
         self.failed = False
+
+        # deprecated, remove later
+        self.nodes = {}
+        self.process_ways = []
+        self.ways_obj = None
+        self.ways_temp = []
+
 
     def parse_nodes(self, osm_nodes):
         """
@@ -96,6 +97,7 @@ class OsmImporter(object):
                 logger.debug(e)
                 self.failed = True
                 return
+
 
     def parse_relations(self, relations):
         """
@@ -124,6 +126,8 @@ class OsmImporter(object):
                         self.relation_ways[osmid_rel_member].update({"relation_id": osmid})
                         self.relations_cnt += 1
 
+
+    # deprecated, remove later
     def parse_ways(self, ways):
         """
         Callback function called by imposm while ways are parsed. If a category can't be found it may likely
@@ -157,89 +161,8 @@ class OsmImporter(object):
                 self.ways_obj = WayObject(osmid, osm_type, tags, refs, categories, len(refs))
                 self.process_ways.append(self.ways_obj)
 
-    def parse_ways_first(self, ways):
-        """
-        Callback function called by imposm while ways are parsed. If a category can't be found it may likely
-        be that the osmid of this way can be found in self.relation_ways which will contain additional tags
-        and therefore eventually a category. A way object is added to a list process_ways which at this point
-        is lacking coordinates -> next step.
 
-        :param ways: osm way objects
-        :type ways: list of osm ways
-        """
-        for osmid, tags, refs in ways:
-            if len(refs) >= 1000:
-                continue
-
-            categories = categories_tools.get_category(tags)
-
-            if len(categories) == 0 and osmid in self.relation_ways:
-                tags = self.relation_ways[osmid]
-                categories = categories_tools.get_category(tags)
-
-            if len(categories) > 0:
-                self.ways_cnt += 1
-                for ref in refs:
-                    self.nodes_store.append(ref, (None, None))
-                    self.process_ways_set.add(osmid)
-
-    def parse_coords_and_store(self, coords):
-        for osmid, lat, lng in coords:
-            if osmid in self.nodes_store:
-                self.nodes_store.set(osmid, (lat, lng))
-
-    def parse_ways_second(self, ways):
-        """
-        Callback function called by imposm while ways are parsed. If a category can't be found it may likely
-        be that the osmid of this way can be found in self.relation_ways which will contain additional tags
-        and therefore eventually a category. A way object is added to a list process_ways which at this point
-        is lacking coordinates -> next step.
-
-        :param ways: osm way objects
-        :type ways: list of osm ways
-        """
-        for osmid, tags, refs in ways:
-            if osmid not in self.process_ways_set:
-                continue
-            categories = categories_tools.get_category(tags)
-            # from way
-            osm_type = 2
-
-            if len(categories) == 0 and osmid in self.relation_ways:
-                # current way is the outer ring of a relation which was marked as having a category
-                tags = self.relation_ways[osmid]
-                categories = categories_tools.get_category(tags)
-                # from relation
-                osm_type = 3
-
-            # Calculate centroid of way
-            refs = set(refs)
-            sum_lat = 0
-            sum_lng = 0
-            way_valid = True
-            for ref in refs:
-                if ref not in self.nodes_store: # should never ha
-                    way_valid = False
-                    break
-                lat, lng = self.nodes_store.get(ref)
-                if lat is None or lng is None or np.isnan(lat) or np.isnan(lng):
-                    way_valid = False
-                    break
-                sum_lat += lat
-                sum_lng += lng
-            if not way_valid:
-                continue
-
-            self.process_ways_set.remove(osmid)
-            centroid_lat = sum_lat / len(refs)
-            centroid_lng = sum_lng / len(refs)
-            try:
-                self.create_poi(osm_type, osmid, [centroid_lat, centroid_lng], tags, categories)
-            except Exception as e:
-                logger.debug(e)
-                self.failed = True
-                return
-
+    # deprecated, remove later
     def parse_coords_for_ways(self, coords):
         """
         Callback function called by imposm while coordinates are parsed. Due due ordering we can use coords
@@ -316,6 +239,93 @@ class OsmImporter(object):
 
             self.ways_temp = []
 
+
+    def parse_ways_first(self, ways):
+        """
+        Callback function called by imposm while ways are parsed. If a category can't be found it may likely
+        be that the osmid of this way can be found in self.relation_ways which will contain additional tags
+        and therefore eventually a category. A way object is added to a list process_ways which at this point
+        is lacking coordinates -> next step.
+
+        :param ways: osm way objects
+        :type ways: list of osm ways
+        """
+        for osmid, tags, refs in ways:
+            if len(refs) >= 1000:
+                continue
+
+            categories = categories_tools.get_category(tags)
+
+            if len(categories) == 0 and osmid in self.relation_ways:
+                tags = self.relation_ways[osmid]
+                categories = categories_tools.get_category(tags)
+
+            if len(categories) > 0:
+                self.ways_cnt += 1
+                for ref in refs:
+                    self.nodes_store.append(ref, (None, None))
+                    self.process_ways_set.add(osmid)
+
+
+    def parse_coords_and_store(self, coords):
+        for osmid, lat, lng in coords:
+            if osmid in self.nodes_store:
+                self.nodes_store.set(osmid, (lat, lng))
+
+
+    def parse_ways_second(self, ways):
+        """
+        Callback function called by imposm while ways are parsed. If a category can't be found it may likely
+        be that the osmid of this way can be found in self.relation_ways which will contain additional tags
+        and therefore eventually a category. A way object is added to a list process_ways which at this point
+        is lacking coordinates -> next step.
+
+        :param ways: osm way objects
+        :type ways: list of osm ways
+        """
+        for osmid, tags, refs in ways:
+            if osmid not in self.process_ways_set:
+                continue
+            categories = categories_tools.get_category(tags)
+            # from way
+            osm_type = 2
+
+            if len(categories) == 0 and osmid in self.relation_ways:
+                # current way is the outer ring of a relation which was marked as having a category
+                tags = self.relation_ways[osmid]
+                categories = categories_tools.get_category(tags)
+                # from relation
+                osm_type = 3
+
+            # Calculate centroid of way
+            refs = set(refs)
+            sum_lat = 0
+            sum_lng = 0
+            way_valid = True
+            for ref in refs:
+                if ref not in self.nodes_store: # should never ha
+                    way_valid = False
+                    break
+                lat, lng = self.nodes_store.get(ref)
+                if lat is None or lng is None or np.isnan(lat) or np.isnan(lng):
+                    way_valid = False
+                    break
+                sum_lat += lat
+                sum_lng += lng
+            if not way_valid:
+                continue
+
+            self.process_ways_set.remove(osmid)
+            centroid_lat = sum_lat / len(refs)
+            centroid_lng = sum_lng / len(refs)
+            try:
+                self.create_poi(osm_type, osmid, [centroid_lat, centroid_lng], tags, categories)
+            except Exception as e:
+                logger.debug(e)
+                self.failed = True
+                return
+
+
     def create_poi(self, osm_type, osm_id, lat_lng, tags, categories=None):
         """
         Creates a poi entity if a category is found. Stored afterwards.
@@ -348,6 +358,7 @@ class OsmImporter(object):
 
             self.store_poi(PoiObject(osm_type, osm_id, lat_lng, categories))
 
+
     def store_poi(self, poi_object):
         """
         Appends poi storage objects to buffer for bulk storage to database.
@@ -364,6 +375,7 @@ class OsmImporter(object):
             logger.debug(f"Pois: {self.pois_count}, tags: {self.tags_cnt}, categories: {self.categories_cnt}")
             self.save_buffer()
 
+
     def store_tags(self, tags_object):
         """
         Appends tags storage objects to buffer for bulk storage to database.
@@ -376,6 +388,7 @@ class OsmImporter(object):
             value=tags_object.value
         ))
 
+
     def store_categories(self, osmtype, osmid, category):
         """
         Appends category storage objects to buffer for bulk storage to database.
@@ -386,6 +399,7 @@ class OsmImporter(object):
             osm_id=osmid,
             category=category
         ))
+
 
     def save_buffer(self):
         """
