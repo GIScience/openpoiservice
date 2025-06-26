@@ -112,4 +112,3 @@ north-america/us-south-latest.osm.pbf
 north-america/us-west-latest.osm.pbf
 russia-latest.osm.pbf
 south-america-latest.osm.pbf
-# keep last line empty

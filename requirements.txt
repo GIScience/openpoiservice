@@ -46,8 +46,10 @@ pyproj==3.6.1
 pyrsistent==0.20.0
 PyYAML
 queuelib==1.6.2
+requests~=2.32.4
 Scrapy==2.11.2
 service-identity==24.1.0
+setuptools~=80.9.0
 Shapely==2.1.1
 six==1.16.0
 SQLAlchemy==2.0.27

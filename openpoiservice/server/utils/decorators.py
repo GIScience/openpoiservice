@@ -107,7 +107,7 @@ def timeit(method):
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()
-        logger.info(f"{operation} completed in {round((te - ts) * 1000, 2)} ms")
+        logger.info(f"{operation} completed in {int((te - ts) // 3600):02}:{int(((te - ts) % 3600) // 60):02}:{int((te - ts) % 60):02} ({round((te - ts) * 1000, 2)} ms)")
         return result
 
     return timed
