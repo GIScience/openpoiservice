@@ -1,3 +1,5 @@
+name: ops
+
 volumes:
  postgis-data:
 
@@ -6,7 +8,6 @@ networks:
 
 services:
  api:
-  container_name: ops-api
   build: .
   volumes:
   - ./osm:/deploy/app/osm
@@ -24,7 +25,6 @@ services:
  # Don't forget to change the host name inside ops_settings_docker.yml by the one given to docker container.
  # Also port should be set to 5432 (default value) inside the same file since they are on the same network
  db:
-  container_name: ops-db
   image: postgis/postgis:16-3.4
   volumes:
    - postgis-data:/var/lib/postgresql
@@ -50,7 +50,6 @@ services:
  # docker-compose up init
  # docker-compose up update
  init:
-  container_name: ops-init
   build: .
   environment:
    - INIT_DB=1
@@ -67,7 +66,6 @@ services:
    - poi_network
 
  update:
-  container_name: ops-update
   build: .
   environment:
    - UPDATE_DB=1
@@ -84,7 +82,6 @@ services:
    - poi_network
 
  test:
-  container_name: ops-test
   build: .
   environment:
    - TESTING=True
