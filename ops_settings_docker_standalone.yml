@@ -1,5 +1,5 @@
 --- 
-attribution: "openrouteservice.org | OpenStreetMap contributors"
+attribution: "© openpoiservice by HeiGIT | Data from OpenStreetMap"
 maximum_categories: 5
 # meters
 maximum_search_radius_for_linestrings: 2000
