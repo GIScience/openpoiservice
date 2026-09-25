@@ -1,5 +1,7 @@
 # openpoiservice/server/main/views.py
 import logging
+import math
+from numbers import Number
 import geojson
 import json
 import copy
@@ -15,6 +17,27 @@ from openpoiservice.server.api.query_info import QueryInfo
 
 
 GeomTransformer.init_transformer()
+
+
+# Based on: https://stackoverflow.com/a/71389334
+# Posted by Hans Bouwmeester.
+# Retrieved 2026-09-25, License - CC BY-SA 4.0
+# MODIFICATIONS: (1) do also handle tuple as list, (2) generalize handling of float as numbers.Number, (3) use "not math.isfinite" instead of "math.isnan", (4) rename nan2None -> nan_to_none
+def nan_to_none(obj):
+    if isinstance(obj, dict):
+        return {k: nan_to_none(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [nan_to_none(v) for v in obj]
+    elif isinstance(obj, Number) and not math.isfinite(obj):
+        return None
+    return obj
+
+
+# JSON encoding with replacement: {NaN, Infinity} -> None
+# (see comment for nan_to_none)
+class NanConverter(json.JSONEncoder):
+    def encode(self, obj, *args, **kwargs):
+        return super().encode(nan_to_none(obj), *args, **kwargs)
 
 
 def custom_schema():
@@ -102,7 +125,7 @@ def places():
                 raise api_exceptions.InvalidUsage(status_code=400, error_code=4000, message=str(error))
             # query stats
             if all_args['request'] == 'list':
-                r = Response(json.dumps(categories_tools.categories_object), mimetype='application/json; charset=utf-8')
+                r = Response(json.dumps(categories_tools.categories_object, cls=NanConverter), mimetype='application/json; charset=utf-8')
                 return r
 
             if 'filters' in all_args and 'category_group_ids' in all_args['filters']:
@@ -136,7 +159,7 @@ def places():
                 features["information"] = query_info
 
             # query pois
-            r = Response(json.dumps(features), mimetype='application/json; charset=utf-8')
+            r = Response(json.dumps(features, cls=NanConverter), mimetype='application/json; charset=utf-8')
             return r
 
         else:
@@ -218,7 +241,7 @@ def parse_geometries(geometry):
     # parse geojson
     if 'geojson' in geometry:
 
-        s = json.dumps(geometry['geojson'])
+        s = json.dumps(geometry['geojson'], cls=NanConverter)
         # Convert to geojson.geometry
         try:
             g1 = geojson.loads(s)
