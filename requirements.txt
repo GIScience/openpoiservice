@@ -33,6 +33,7 @@ lxml==5.1.0
 MarkupSafe==2.1.5
 mistune==3.0.2
 numpy==2.3.0
+osmium==4.3.2
 parsel==1.8.1
 Protego==0.3.0
 psycopg2-binary==2.9.9
