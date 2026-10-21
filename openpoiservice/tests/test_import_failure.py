@@ -55,7 +55,6 @@ class TestImportFailure(BaseTestCase):
             import_log = self.run_update()
 
         self.assertEqual(self.count_pois(), pois_before)
-        self.assertEqual(self.count_pois(delflag=True), 0)
         self.assertEqual(import_log[test_file], 0)
 
     def test_crashed_update_keeps_pois(self):
@@ -65,14 +64,12 @@ class TestImportFailure(BaseTestCase):
             import_log = self.run_update()
 
         self.assertEqual(self.count_pois(), pois_before)
-        self.assertEqual(self.count_pois(delflag=True), 0)
         self.assertEqual(import_log[test_file], 0)
 
     def test_successful_update_deletes_only_pois_of_its_file(self):
-        # pretend some POIs come from another file and were left flagged by an earlier, crashed run
+        # pretend some POIs come from another file
         other_file_ids = [osm_id for (osm_id,) in db.session.query(POIs.osm_id).limit(5)]
-        db.session.query(POIs).filter(POIs.osm_id.in_(other_file_ids)) \
-            .update({POIs.src_index: 1, POIs.delflag: True})
+        db.session.query(POIs).filter(POIs.osm_id.in_(other_file_ids)).update({POIs.src_index: 1})
         db.session.commit()
 
         # a parse that re-imports nothing: every POI of the file is gone from the OSM data
@@ -91,7 +88,6 @@ class TestImportFailure(BaseTestCase):
 
         pois_after = set(db.session.query(POIs.osm_type, POIs.osm_id))
         self.assertTrue(pois_before.issubset(pois_after))
-        self.assertEqual(self.count_pois(delflag=True), 0)
         self.assertEqual(import_log[test_file], os.path.getmtime(test_file))
         with open(self.logfile) as f:
             self.assertEqual(json.load(f), import_log)
@@ -104,12 +100,11 @@ class TestImportFailure(BaseTestCase):
         import_log = self.run_update()
 
         self.assertGreater(self.count_pois(src_index=0), 0)
-        self.assertEqual(self.count_pois(delflag=True), 0)
         self.assertEqual(import_log[test_file], os.path.getmtime(test_file))
 
     def test_parse_reports_failure_when_nodes_fail(self):
         with mock.patch.object(OsmImporter, 'create_poi', side_effect=Exception('database error')):
-            self.assertEqual(parser.parse_file_new(test_file, 0, update_mode=True), 1)
+            self.assertEqual(parser.parse_file_new(test_file), 1)
 
     def test_parse_reports_failure_when_ways_fail(self):
         create_poi = OsmImporter.create_poi
@@ -120,13 +115,13 @@ class TestImportFailure(BaseTestCase):
             return create_poi(importer, osm_type, *args, **kwargs)
 
         with mock.patch.object(OsmImporter, 'create_poi', fail_on_ways):
-            self.assertEqual(parser.parse_file_new(test_file, 0, update_mode=True), 1)
+            self.assertEqual(parser.parse_file_new(test_file), 1)
 
 
 class TestImporterCallbacks(unittest.TestCase):
 
     def test_node_import_stops_after_first_failure(self):
-        importer = OsmImporter(0)
+        importer = OsmImporter()
         node = (1, {'amenity': 'cafe'}, (8.8, 53.07))
 
         with mock.patch.object(importer, 'create_poi', side_effect=Exception('database error')) as create_poi:
@@ -137,7 +132,7 @@ class TestImporterCallbacks(unittest.TestCase):
         self.assertEqual(create_poi.call_count, 1)
 
     def test_way_import_stops_after_first_failure(self):
-        importer = OsmImporter(0)
+        importer = OsmImporter()
         importer.nodes_store.append(1, (8.0, 53.0))
         importer.nodes_store.append(2, (9.0, 54.0))
         importer.process_ways_set.add(10)
@@ -153,14 +148,14 @@ class TestImporterCallbacks(unittest.TestCase):
         self.assertEqual(create_poi.call_count, 1)
 
     def test_way_centroid_averages_unique_nodes(self):
-        importer = OsmImporter(0)
+        importer = OsmImporter()
         importer.nodes_store.append(1, (8.0, 53.0))
         importer.nodes_store.append(2, (9.0, 54.0))
 
         self.assertEqual(importer.way_centroid([1, 2, 1]), [8.5, 53.5])
 
     def test_way_centroid_is_none_without_coordinates(self):
-        importer = OsmImporter(0)
+        importer = OsmImporter()
         importer.nodes_store.append(1, (8.0, 53.0))
         importer.nodes_store.append(2, (None, None))
 

@@ -1,13 +1,14 @@
 # openpoiservice/server/tests/test_import_progress.py
 import logging
 import os
+import re
 import tempfile
 import unittest
 from unittest import mock
 
 from base import BaseTestCase
 from openpoiservice.server import db
-from openpoiservice.server.db_import import parser
+from openpoiservice.server.db_import import parser, staging
 from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.db_import.progress import Progress, format_duration, format_size
 
@@ -35,10 +36,13 @@ class TestImportProgress(BaseTestCase):
 
         self.assertEqual(messages[0], 'Importing 1 of 1 files (0 unchanged since the last import), in update mode')
         self.assertEqual(messages[1], '[1/1] osm/bremen-tests.osm.pbf (75.2 kB)')
-        self.assertIn('[1/1] 38 POIs of the previous import flagged', messages)
-        self.assertIn('[1/1] 0 POIs removed from OSM deleted', messages)
-        self.assertIn('[1/1] succeeded after 0:00:00 (0:00:00 since start)', messages)
-        self.assertEqual(messages[-1], 'Import finished after 0:00:00: 1 succeeded, 0 failed, 0 unchanged')
+        # setUp imports with the deprecated parser, which drops some ways; the current parser finds them
+        self.assertIn('[1/1] 6 POIs added, 0 changed and 0 removed; 9 category and 10 tag rows changed', messages)
+        self.assertTrue(any(message.startswith('Tables vacuumed and analysed after ') for message in messages))
+        # the merge and the vacuum may take a second
+        self.assertTrue(any(re.fullmatch(r'\[1/1\] succeeded after 0:00:0\d \(0:00:0\d since start\)', message)
+                            for message in messages))
+        self.assertRegex(messages[-1], r'^Import finished after 0:00:0\d: 1 succeeded, 0 failed, 0 unchanged$')
 
     def test_counts_unchanged_files_without_a_line_for_each(self):
         messages, _ = self.run_update({test_file: os.path.getmtime(test_file)})
@@ -52,13 +56,15 @@ class TestImportProgress(BaseTestCase):
 
         failed = [record for record in records if record.getMessage().startswith('[1/1] failed after')]
         self.assertEqual(failed[0].levelname, 'WARNING')
-        self.assertIn('[1/1] import failed, keeping 38 POIs from the previous import of this file', messages)
+        self.assertIn('[1/1] import failed, keeping the POIs from the previous import of this file', messages)
         self.assertEqual(messages[-1], 'Import finished after 0:00:00: 0 succeeded, 1 failed, 0 unchanged')
 
     def test_logs_numbered_passes_of_a_file(self):
         # parse_file_new normally runs in a forked process, whose log records assertLogs doesn't see
+        staging.create()
         with self.assertLogs(parser.logger, 'INFO') as logs:
-            parser.parse_file_new.__wrapped__(test_file, 0, update_mode=True, label='[2/5]')
+            parser.parse_file_new.__wrapped__(test_file, label='[2/5]')
+        staging.drop()
         messages = [record.getMessage() for record in logs.records]
 
         for number in range(1, 6):
@@ -72,7 +78,7 @@ class TestImportProgress(BaseTestCase):
 class TestImporterProgress(unittest.TestCase):
 
     def test_reports_scanned_nodes(self):
-        importer = OsmImporter(0, label='[1/2]')
+        importer = OsmImporter(label='[1/2]')
         importer.coords_progress.step = 2
 
         with self.assertLogs('openpoiservice.server.db_import.parse_osm', 'INFO') as logs:
@@ -81,7 +87,7 @@ class TestImporterProgress(unittest.TestCase):
         self.assertEqual([record.getMessage() for record in logs.records], ['[1/2]   3 nodes scanned'])
 
     def test_reports_scanned_ways(self):
-        importer = OsmImporter(0, label='[1/2]')
+        importer = OsmImporter(label='[1/2]')
         importer.ways_progress.step = 1
 
         with self.assertLogs('openpoiservice.server.db_import.parse_osm', 'INFO') as logs:

@@ -8,13 +8,15 @@ import numpy as np
 from cykhash.khashsets import Int64Set
 
 from openpoiservice.server import categories_tools, ops_settings
-from openpoiservice.server import db
-from openpoiservice.server.db_import.models import POIs, Tags, Categories
+from openpoiservice.server.db_import import staging
 from openpoiservice.server.db_import.node_store import NodeStore
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
 from openpoiservice.server.db_import.progress import Progress
 
 logger = logging.getLogger(__name__)
+
+# POIs buffered before they're copied to the staging tables
+BUFFER_SIZE = 10_000
 
 
 # deprecated, remove later
@@ -59,9 +61,9 @@ class WayObject(object):
 class OsmImporter(object):
     """ Class that handles the parsed OSM data. """
 
-    def __init__(self, osm_file_index, update_mode=False, label=""):
+    def __init__(self, label=""):
         """
-        Initializes pbf importer class with necessary counters.
+        Initializes pbf importer class with necessary counters. The POIs go to the staging tables, see staging.py.
 
         :param label: prefix of progress log lines, e.g. "[3/12]"
         """
@@ -81,8 +83,6 @@ class OsmImporter(object):
         self.poi_objects = []
         self.tags_objects = []
         self.categories_objects = []
-        self.update_mode = update_mode
-        self.osm_file_index = osm_file_index
         self.failed = False
 
         # deprecated, remove later
@@ -385,14 +385,8 @@ class OsmImporter(object):
         """
         self.pois_count += 1
         self.poi_progress.add()
-        self.poi_objects.append(POIs(
-            osm_type=poi_object.osmtype,
-            osm_id=poi_object.osmid,
-            geom=poi_object.geom,
-            src_index=self.osm_file_index,
-            delflag=False
-        ))
-        if self.pois_count % 1000 == 0:
+        self.poi_objects.append((poi_object.osmtype, poi_object.osmid, poi_object.geom))
+        if self.pois_count % BUFFER_SIZE == 0:
             logger.debug(f"Pois: {self.pois_count}, tags: {self.tags_cnt}, categories: {self.categories_cnt}")
             self.save_buffer()
 
@@ -402,12 +396,7 @@ class OsmImporter(object):
         Appends tags storage objects to buffer for bulk storage to database.
         """
         self.tags_cnt += 1
-        self.tags_objects.append(Tags(
-            osm_type=tags_object.osmtype,
-            osm_id=tags_object.osmid,
-            key=tags_object.key,
-            value=tags_object.value
-        ))
+        self.tags_objects.append((tags_object.osmtype, tags_object.osmid, tags_object.key, tags_object.value))
 
 
     def store_categories(self, osmtype, osmid, category):
@@ -415,34 +404,14 @@ class OsmImporter(object):
         Appends category storage objects to buffer for bulk storage to database.
         """
         self.categories_cnt += 1
-        self.categories_objects.append(Categories(
-            osm_type=osmtype,
-            osm_id=osmid,
-            category=category
-        ))
+        self.categories_objects.append((osmtype, osmid, category))
 
 
     def save_buffer(self):
         """
-        Save POIs, tags and categories to database and clear buffer.
-        If running in update mode, delete all POIs with IDs in buffer first. Foreign key constraints in the database
-        handle deletion of related tags/categories.
+        Copies the buffered POIs, tags and categories to the staging tables and clears the buffer.
         """
-
-        if not self.update_mode:
-            for poi in self.poi_objects:
-                if len(db.session.query(POIs).filter_by(osm_type=poi.osm_type, osm_id=poi.osm_id).all()) > 0:
-                    self.update_mode = True
-
-        if self.update_mode:
-            for poi in self.poi_objects:
-                db.session.query(POIs).filter_by(osm_type=poi.osm_type, osm_id=poi.osm_id).delete()
-            db.session.commit()
-
-        db.session.bulk_save_objects(self.poi_objects)
-        db.session.bulk_save_objects(self.tags_objects)
-        db.session.bulk_save_objects(self.categories_objects)
-        db.session.commit()
+        staging.copy(self.poi_objects, self.categories_objects, self.tags_objects)
         self.poi_objects = []
         self.tags_objects = []
         self.categories_objects = []

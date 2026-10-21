@@ -20,7 +20,7 @@ class BaseTestCase(TestCase):
         db.session.remove()
         db.engine.dispose()
         test_file = os.path.join(os.getcwd() + '/osm', 'bremen-tests.osm.pbf')
-        parser.parse_file(test_file, 0, False)
+        parser.parse_file(test_file, 0)
 
     def tearDown(self):
         db.session.remove()

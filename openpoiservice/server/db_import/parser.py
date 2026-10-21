@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from imposm.parser import OSMParser
 
 from openpoiservice.server import db, ops_settings
+from openpoiservice.server.db_import import staging
 from openpoiservice.server.db_import.models import POIs
 from openpoiservice.server.db_import.parse_osm import OsmImporter
 from openpoiservice.server.db_import.progress import format_duration, format_size
@@ -21,10 +22,26 @@ logger = logging.getLogger(__name__)
 # deprecated, remove later
 @timeit
 @processify
-def parse_file(osm_file, osm_file_index=0, update_mode=False):
+def parse_file(osm_file, osm_file_index=0):
+    """
+    Imports one osm file through the staging tables, merging it into the live tables in this process.
+
+    :return: 0 if the import succeeded, 1 if it failed
+    """
+    db.engine.dispose(close=False)
+    staging.create()
+    succeeded = parse_file_into_staging(osm_file) == 0
+    if succeeded:
+        staging.merge(osm_file_index)
+    staging.drop()
+    return 0 if succeeded else 1
+
+
+# deprecated, remove later
+def parse_file_into_staging(osm_file):
     logger.info(f"Starting to read {osm_file}")
     workers = ops_settings["concurrent_workers"]
-    osm_importer = OsmImporter(osm_file_index, update_mode=update_mode)
+    osm_importer = OsmImporter()
 
     logger.info("Parsing and importing nodes...")
     OSMParser(concurrency=workers, nodes_callback=osm_importer.parse_nodes).parse(osm_file)
@@ -76,9 +93,9 @@ def parse_file(osm_file, osm_file_index=0, update_mode=False):
 
 
 @processify
-def parse_file_new(osm_file, osm_file_index=0, update_mode=False, label=""):
+def parse_file_new(osm_file, label=""):
     """
-    Imports the POIs of one osm file in five passes over the file.
+    Copies the POIs of one osm file to the staging tables, in five passes over the file.
 
     :param label: prefix of the progress log lines, e.g. "[3/12]"
     :return: 0 if the import succeeded, 1 if it failed
@@ -87,7 +104,7 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False, label=""):
     # otherwise break the parent's cleanup after the import
     db.engine.dispose(close=False)
 
-    osm_importer = OsmImporter(osm_file_index, update_mode=update_mode, label=label)
+    osm_importer = OsmImporter(label=label)
 
     def run_pass(number, description, result, **callbacks):
         logger.info(f"{label} pass {number}/5: {description}")
@@ -135,10 +152,7 @@ def parse_file_new(osm_file, osm_file_index=0, update_mode=False, label=""):
 @timeit
 def run_import(osm_files_to_import, import_log, db_con):
     try:
-        update_mode = False
-        prev_poi_count = db_con.session.query(POIs.osm_type, POIs.osm_id).count()
-        if prev_poi_count > 0:
-            update_mode = True
+        if db_con.session.query(POIs.osm_type, POIs.osm_id).count() > 0:
             logger.info("Data import running in UPDATE MODE")
     except sqlalchemy.exc.ProgrammingError:
         logger.error("Database has not been initialized! Existing.")
@@ -149,21 +163,10 @@ def run_import(osm_files_to_import, import_log, db_con):
             logger.info(f"File {osm_file} has not changed since last update, skipping")
             continue
 
-        if update_mode:
-            prev_poi_count_file = db_con.session.query(POIs.osm_type, POIs.osm_id).filter_by(
-                src_index=osm_file_index).count()
-            logger.info(f"Setting flags on {prev_poi_count_file} POIs.")
-            db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
-            db_con.session.commit()
-
-        if parse_file(osm_file, osm_file_index, update_mode=update_mode) == 0:
+        if parse_file(osm_file, osm_file_index) == 0:
             import_log[osm_file] = os.path.getmtime(osm_file)
         else:
             import_log[osm_file] = 0  # import failed, this file has to be inserted in the next update
-
-    if update_mode:
-        deleted = delete_marked_entries(db_con)
-        logger.info(f"{deleted} POIs removed from the OSM data deleted")
 
     logger.info(f"Import complete.")
 
@@ -192,7 +195,7 @@ def run_import_new(osm_files_to_import, import_log, logfile, db_con):
         logger.info(f"{label} {os.path.relpath(osm_file)} ({format_size(os.path.getsize(osm_file))})")
         file_started = time.monotonic()
 
-        if import_file(osm_file, osm_file_index, update_mode, db_con, label):
+        if import_file(osm_file, osm_file_index, db_con, label):
             import_log[osm_file] = os.path.getmtime(osm_file)
             outcome = "succeeded"
         else:
@@ -208,62 +211,42 @@ def run_import_new(osm_files_to_import, import_log, logfile, db_con):
                    f"{label} {outcome} after {format_duration(time.monotonic() - file_started)} "
                    f"({format_duration(time.monotonic() - started)} since start)")
 
+    if failed_count < len(changed_files):
+        vacuum_started = time.monotonic()
+        staging.vacuum()
+        logger.info(f"Tables vacuumed and analysed after {format_duration(time.monotonic() - vacuum_started)}")
+
     logger.info(f"Import finished after {format_duration(time.monotonic() - started)}: "
                 f"{len(changed_files) - failed_count} succeeded, {failed_count} failed, {unchanged_count} unchanged")
 
 
-def import_file(osm_file, osm_file_index, update_mode, db_con, label=""):
+def import_file(osm_file, osm_file_index, db_con, label=""):
     """
-    Imports one osm file. In update mode, the POIs of the previous import of this file are only deleted if the
-    import succeeded; on failure they are kept, so a failed update never removes data.
+    Imports one osm file. The parser copies its POIs to the staging tables, and only if that succeeded are they
+    merged into the live tables, so a failed import never changes data.
 
     :param label: prefix of the progress log lines, e.g. "[3/12]"
     :return: True if the import succeeded
     """
-    if update_mode:
-        flagged = db_con.session.query(POIs).filter_by(src_index=osm_file_index).update({POIs.delflag: True})
-        db_con.session.commit()
-        logger.info(f"{label} {flagged:,} POIs of the previous import flagged")
-
+    staging.create()
     try:
-        succeeded = parse_file_new(osm_file, osm_file_index, update_mode=update_mode, label=label) == 0
+        succeeded = parse_file_new(osm_file, label=label) == 0
     except RuntimeError:
         logger.exception(f"{label} import of {osm_file} crashed")
         succeeded = False
 
-    if update_mode:
-        if succeeded:
-            deleted = delete_marked_entries(db_con, osm_file_index)
-            logger.info(f"{label} {deleted:,} POIs removed from OSM deleted")
-        else:
-            kept = unmark_entries(db_con, osm_file_index)
-            logger.warning(f"{label} import failed, keeping {kept:,} POIs from the previous import of this file")
+    if succeeded:
+        try:
+            counts = staging.merge(osm_file_index)
+            logger.info(f"{label} {counts.pois_added:,} POIs added, {counts.pois_changed:,} changed and "
+                        f"{counts.pois_removed:,} removed; {counts.category_rows:,} category and "
+                        f"{counts.tag_rows:,} tag rows changed")
+        except sqlalchemy.exc.SQLAlchemyError:
+            logger.exception(f"{label} merging {osm_file} into the POI tables failed")
+            db_con.session.rollback()
+            succeeded = False
 
+    if not succeeded:
+        logger.warning(f"{label} import failed, keeping the POIs from the previous import of this file")
+    staging.drop()
     return succeeded
-
-
-def marked_entries(db_con, src_index=None):
-    query = db_con.session.query(POIs).filter_by(delflag=True)
-    if src_index is not None:
-        query = query.filter_by(src_index=src_index)
-    return query
-
-
-def delete_marked_entries(db_con, src_index=None):
-    """
-    Deletes the POIs still flagged after an import: they are no longer in the OSM data.
-
-    :return: the number of deleted POIs
-    """
-    deleted = marked_entries(db_con, src_index).delete()
-    db_con.session.commit()
-    return deleted
-
-
-def unmark_entries(db_con, src_index):
-    """
-    :return: the number of POIs unflagged
-    """
-    kept = marked_entries(db_con, src_index).update({POIs.delflag: False})
-    db_con.session.commit()
-    return kept
