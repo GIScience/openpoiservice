@@ -260,7 +260,11 @@ class QueryBuilder(object):
             if q_idx == limit - 2:
                 break
 
-        feature_collection = geojson.FeatureCollection(geojson_features, bbox=MultiPoint(lat_lngs).bounds)
+        if geojson_features:
+            feature_collection = geojson.FeatureCollection(geojson_features, bbox=MultiPoint(lat_lngs).bounds)
+        else:
+            # the bounds of no points are NaN, which isn't valid JSON; bbox is optional in GeoJSON
+            feature_collection = geojson.FeatureCollection(geojson_features)
 
         logger.debug("Amount of features {}".format(len(geojson_features)))
 

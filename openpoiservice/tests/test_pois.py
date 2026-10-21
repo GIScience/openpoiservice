@@ -93,6 +93,14 @@ request_poi_bbox = dict(
     )
 )
 
+# BBOX OUTSIDE THE TEST DATA
+request_poi_bbox_without_pois = dict(
+    request='pois',
+    geometry=dict(
+        bbox=[[8.700000, 53.000000], [8.701000, 53.001000]]
+    )
+)
+
 # MISSING GEOMETRY
 request_poi_missing_geometry = dict(
     request='pois'
@@ -209,6 +217,20 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertIn(b'features', response.data)
         data = json.loads(response.get_data(as_text=True))
         self.assertEqual(len(data['features']), 7)
+        self.assertEqual(len(data['bbox']), 4)
+
+    def test_request_poi_bbox_without_pois_returns_valid_json(self):
+        response = self.client.post('/pois', data=json.dumps(request_poi_bbox_without_pois),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.get_data(as_text=True), parse_constant=reject_non_json_constant)
+        self.assertEqual(data['features'], [])
+        self.assertNotIn('bbox', data)
+
+
+def reject_non_json_constant(constant):
+    # Python's json accepts NaN and Infinity, which JSON doesn't allow and strict clients reject
+    raise ValueError(f'invalid JSON constant {constant}')
 
 
 if __name__ == '__main__':
