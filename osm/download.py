@@ -31,7 +31,7 @@ def download_file(url, file):
 
     :return: True if file was replaced
     """
-    temp_file = file + ".part"
+    temp_file = temp_file_for(file)
     try:
         with requests.get(url, allow_redirects=True, stream=True, timeout=request_timeout) as r:
             r.raise_for_status()
@@ -46,8 +46,10 @@ def download_file(url, file):
         return True
     except Exception as e:
         logger.error(f"Failed to download {url}: {e}")
-        remove_if_exists(temp_file)
         return False
+    finally:
+        # also on Ctrl-C or SystemExit, which the except above doesn't catch
+        remove_if_exists(temp_file)
 
 
 def is_updatable(file):
@@ -71,18 +73,30 @@ def update_file(file):
 
     :return: True if file is up to date
     """
-    temp_file = file + ".part"
-    for _ in range(max_update_rounds):
-        exit_code = pyosmium_up_to_date(["--format", "pbf", "--size", str(max_diff_size_mb),
-                                         "-o", temp_file, file])
-        if exit_code in (0, 1) and os.path.exists(temp_file):
-            os.replace(temp_file, file)
-        if exit_code != 1:
-            break
-    remove_if_exists(temp_file)
+    temp_file = temp_file_for(file)
+    try:
+        for _ in range(max_update_rounds):
+            exit_code = pyosmium_up_to_date(["--format", "pbf", "--size", str(max_diff_size_mb),
+                                             "-o", temp_file, file])
+            if exit_code in (0, 1) and os.path.exists(temp_file):
+                os.replace(temp_file, file)
+            if exit_code != 1:
+                break
+    finally:
+        # osmium refuses to write to an existing file, so never leave one behind, not even on Ctrl-C
+        remove_if_exists(temp_file)
     if exit_code != 0:
         logger.error(f"Failed to update {file}, pyosmium-up-to-date exited with {exit_code}")
     return exit_code == 0
+
+
+def temp_file_for(file):
+    """
+    Returns the name of file's temporary file, after removing a leftover from an interrupted earlier run.
+    """
+    temp_file = file + ".part"
+    remove_if_exists(temp_file)
+    return temp_file
 
 
 def remove_if_exists(file):

@@ -36,7 +36,7 @@ class FakeResponse:
 
     def iter_content(self, chunk_size):
         for chunk in self.chunks:
-            if isinstance(chunk, Exception):
+            if isinstance(chunk, BaseException):
                 raise chunk
             yield chunk
 
@@ -79,6 +79,12 @@ class TestDownloadFile(unittest.TestCase):
 
     def test_http_error_keeps_old_file(self):
         self.assertFalse(self.download(FakeResponse([], status_error=download.requests.HTTPError('404'))))
+        self.assert_file_contains(b'old data')
+
+    def test_interrupted_download_removes_temporary_file(self):
+        interrupted = FakeResponse([b'new ', KeyboardInterrupt()])
+        with self.assertRaises(KeyboardInterrupt):
+            self.download(interrupted)
         self.assert_file_contains(b'old data')
 
 
@@ -250,6 +256,28 @@ class TestUpdateFile(unittest.TestCase):
         self.assertFalse(updated)
         self.assertEqual(tool.call_count, download.max_update_rounds)
         self.assert_file_contains(b'newer data')
+
+    def test_removes_temporary_file_left_by_an_interrupted_run(self):
+        with open(self.file + '.part', 'wb') as f:
+            f.write(b'leftover')
+
+        def run(args):
+            self.assertFalse(os.path.exists(self.file + '.part'))
+            return self.up_to_date_run(0, b'new data')(args)
+
+        updated, _ = self.update(run)
+
+        self.assertTrue(updated)
+        self.assert_file_contains(b'new data')
+
+    def test_interrupted_update_removes_temporary_file(self):
+        def interrupted_run(args):
+            self.up_to_date_run(0, b'partial data')(args)
+            raise KeyboardInterrupt()
+
+        with self.assertRaises(KeyboardInterrupt):
+            self.update(interrupted_run)
+        self.assert_file_contains(b'old data')
 
 
 if __name__ == '__main__':
