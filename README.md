@@ -55,8 +55,8 @@ Please consider the following technical requirements for parsing & importing osm
 | Planet        | 128 GB        | 
 
 **Note:** Openpoiservice will import any osm pbf file located in the osm folder or subdirectory within. 
-This way you can split the planet file into smaller regions (e.g. download from Geofabrik, scraper script for the download
-links to be found in the osm folder) and use a *smaller* instance to import the global data set (as long as
+This way you can split the planet file into smaller regions (e.g. download from Geofabrik with `osm/download.py`, which
+fetches the extracts listed in `osm/pbf_list.txt` and keeps them current with pyosmium-up-to-date) and use a *smaller* instance to import the global data set (as long as
 the OSM files don't exceed 5 GB of disk space, 16 GB of memory will suffice to import the entire planet).
 
 ### Run as Docker Container (Flask + Gunicorn)

@@ -120,7 +120,8 @@ osm_1
 osm_2
 
 osm/*
-!osm/GeoFabrikSpider.py
+!osm/download.py
+!osm/pbf_list.txt
 !osm/bremen-tests.osm.pbf
 IMPORTANT_NOTES.md
 ops_settings_docker*.yml

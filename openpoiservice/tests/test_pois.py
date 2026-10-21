@@ -228,6 +228,23 @@ class TestPoisBlueprint(BaseTestCase):
         self.assertNotIn('bbox', data)
 
 
+class TestCors(BaseTestCase):
+
+    def test_allows_cross_origin_requests(self):
+        response = self.client.post('/pois', data=json.dumps(request_poi_bbox), content_type='application/json',
+                                    headers={'Origin': 'https://maps.example.org'})
+        self.assertEqual(response.status_code, 200)
+        # origins="*" without send_wildcard: Flask-Cors echoes the requesting origin
+        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), 'https://maps.example.org')
+
+    def test_answers_preflight_requests(self):
+        response = self.client.options('/pois', headers={'Origin': 'https://maps.example.org',
+                                                         'Access-Control-Request-Method': 'POST',
+                                                         'Access-Control-Request-Headers': 'Content-Type'})
+        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), 'https://maps.example.org')
+        self.assertIn('POST', response.headers.get('Access-Control-Allow-Methods', ''))
+
+
 def reject_non_json_constant(constant):
     # Python's json accepts NaN and Infinity, which JSON doesn't allow and strict clients reject
     raise ValueError(f'invalid JSON constant {constant}')
