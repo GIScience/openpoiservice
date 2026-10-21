@@ -27,10 +27,10 @@ class Categories(db.Model):
     __tablename__ = ops_settings['provider_parameters']['table_name'] + "_categories"
     logger.info(f"Table name for categories: {__tablename__}")
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    osm_type = db.Column(db.Integer, nullable=False, index=True)
-    osm_id = db.Column(db.BigInteger, nullable=False, index=True)
-    category = db.Column(db.Integer, index=True, nullable=False)
+    # the primary key index also serves lookups by (osm_type, osm_id), e.g. the cascading delete
+    osm_type = db.Column(db.Integer, primary_key=True)
+    osm_id = db.Column(db.BigInteger, primary_key=True)
+    category = db.Column(db.Integer, primary_key=True, index=True)
 
     __table_args__ = (db.ForeignKeyConstraint([osm_type, osm_id], [POIs.osm_type, POIs.osm_id], ondelete="CASCADE"),)
 
@@ -42,10 +42,9 @@ class Tags(db.Model):
     __tablename__ = ops_settings['provider_parameters']['table_name'] + "_tags"
     logger.info(f"Table name for tags: {__tablename__}")
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    osm_type = db.Column(db.Integer, nullable=False, index=True)
-    osm_id = db.Column(db.BigInteger, nullable=False, index=True)
-    key = db.Column(db.Text, nullable=True, index=True)
+    osm_type = db.Column(db.Integer, primary_key=True)
+    osm_id = db.Column(db.BigInteger, primary_key=True)
+    key = db.Column(db.Text, primary_key=True, index=True)
     value = db.Column(db.Text, nullable=True, index=True)
 
     __table_args__ = (db.ForeignKeyConstraint([osm_type, osm_id], [POIs.osm_type, POIs.osm_id], ondelete="CASCADE"),)
