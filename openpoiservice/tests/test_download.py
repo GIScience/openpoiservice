@@ -122,6 +122,36 @@ class TestDownloadMain(unittest.TestCase):
         with open('europe/current-latest.osm.pbf', 'rb') as f:
             self.assertEqual(f.read(), b'new data')
 
+    def test_logs_start_and_end_of_every_process(self):
+        with self.assertLogs(download.logger, 'INFO') as logs:
+            self.run_main(updatable=True)
+
+        messages = [record.getMessage() for record in logs.records]
+        self.assertIn('Starting download of asia/new-latest.osm.pbf', messages)
+        self.assertIn('Finished download of asia/new-latest.osm.pbf: succeeded after 0:00:00', messages)
+        self.assertIn('Starting update of europe/current-latest.osm.pbf', messages)
+        self.assertIn('Finished update of europe/current-latest.osm.pbf: succeeded after 0:00:00', messages)
+
+
+class TestRunLogged(unittest.TestCase):
+
+    def test_logs_failure_as_warning(self):
+        with self.assertLogs(download.logger, 'INFO') as logs:
+            self.assertFalse(download.run_logged('update', 'europe/bremen-latest.osm.pbf', lambda: False))
+
+        self.assertEqual(logs.records[0].getMessage(), 'Starting update of europe/bremen-latest.osm.pbf')
+        self.assertEqual(logs.records[1].levelname, 'WARNING')
+        self.assertEqual(logs.records[1].getMessage(),
+                         'Finished update of europe/bremen-latest.osm.pbf: failed after 0:00:00')
+
+    def test_logs_duration(self):
+        with mock.patch.object(download.time, 'monotonic', side_effect=[100.0, 3825.4]), \
+                self.assertLogs(download.logger, 'INFO') as logs:
+            download.run_logged('download', 'europe/germany-latest.osm.pbf', lambda: True)
+
+        self.assertEqual(logs.records[1].getMessage(),
+                         'Finished download of europe/germany-latest.osm.pbf: succeeded after 1:02:05')
+
 
 class TestIsUpdatable(unittest.TestCase):
 

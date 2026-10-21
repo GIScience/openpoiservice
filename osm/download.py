@@ -2,6 +2,7 @@ import datetime as dt
 import os
 import requests
 import logging
+import time
 
 from osmium.replication.utils import get_replication_header
 from osmium.tools.pyosmium_up_to_date import pyosmium_up_to_date
@@ -100,12 +101,27 @@ def main():
         if file_path and not os.path.exists(file_path):
             os.makedirs(file_path)
         if os.path.exists(file) and is_updatable(file):
-            logger.info(f"Updating {file}")
-            update_file(file)
+            run_logged("update", file, lambda: update_file(file))
         else:
-            logger.info(f"Downloading {file}")
-            download_file(url, file)
+            run_logged("download", file, lambda: download_file(url, file))
     logger.info("Processing completed")
+
+
+def run_logged(process, file, action):
+    """
+    Runs action, logging when the process starts and ends, with its outcome and duration.
+
+    :return: what action returned, True if it succeeded
+    """
+    logger.info(f"Starting {process} of {file}")
+    started = time.monotonic()
+    succeeded = action()
+    duration = dt.timedelta(seconds=round(time.monotonic() - started))
+    if succeeded:
+        logger.info(f"Finished {process} of {file}: succeeded after {duration}")
+    else:
+        logger.warning(f"Finished {process} of {file}: failed after {duration}")
+    return succeeded
 
 
 if __name__ == '__main__':
