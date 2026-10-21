@@ -5,6 +5,7 @@ import logging
 import cProfile
 import functools
 import os
+import queue
 import sys
 import inspect
 import traceback
@@ -43,7 +44,8 @@ def processify(func):
         q = Queue()
         p = Process(target=process_func, args=[q] + list(args), kwargs=kwargs)
         p.start()
-        ret, error = q.get()
+        ret, error = wait_for_result(q, p, func)
+        p.join()
 
         if error:
             ex_type, ex_value, tb_str = error
@@ -52,6 +54,24 @@ def processify(func):
         return ret
 
     return wrapper
+
+
+def wait_for_result(q, p, func, poll_seconds=5):
+    """
+    Waits for the result of a processified function. Raises if the process died without putting a result, e.g.
+    when the OOM killer ended it, instead of waiting forever.
+    """
+    while True:
+        try:
+            return q.get(timeout=poll_seconds)
+        except queue.Empty:
+            if not p.is_alive():
+                break
+    try:
+        # the result may have arrived between the timeout and the liveness check
+        return q.get_nowait()
+    except queue.Empty:
+        raise RuntimeError(f"Process of {func} exited with code {p.exitcode} without a result") from None
 
 
 def get_size(obj, seen=None):
@@ -100,10 +120,12 @@ def profile(func):
 
 def timeit(method):
     def timed(*args, **kw):
-        if len(args) == 1:
-            operation = "Delete operations"
+        if args and isinstance(args[0], str):
+            operation = "File import"
+        elif args and isinstance(args[0], list):
+            operation = f"Batch of {len(args[0])} files"
         else:
-            operation = "File import" if isinstance(args[0], str) else f"Batch of {len(args[0])} files"
+            operation = method.__name__.replace("_", " ").capitalize()
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()

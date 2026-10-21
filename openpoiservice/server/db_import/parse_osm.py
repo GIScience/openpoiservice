@@ -90,11 +90,14 @@ class OsmImporter(object):
         """
         # from node
         osm_type = 1
+        if self.failed:
+            # imposm keeps calling back after a failure; the database session is unusable by now
+            return
         for osmid, tags, refs in osm_nodes:
             try:
                 self.create_poi(osm_type, osmid, [refs[0], refs[1]], tags)
-            except Exception as e:
-                logger.debug(e)
+            except Exception:
+                logger.exception(f"Failed to import node {osmid}")
                 self.failed = True
                 return
 
@@ -283,6 +286,8 @@ class OsmImporter(object):
         :param ways: osm way objects
         :type ways: list of osm ways
         """
+        if self.failed:
+            return
         for osmid, tags, refs in ways:
             if osmid not in self.process_ways_set:
                 continue
@@ -297,33 +302,37 @@ class OsmImporter(object):
                 # from relation
                 osm_type = 3
 
-            # Calculate centroid of way
-            refs = set(refs)
-            sum_lat = 0
-            sum_lng = 0
-            way_valid = True
-            for ref in refs:
-                if ref not in self.nodes_store: # should never ha
-                    way_valid = False
-                    break
-                lat, lng = self.nodes_store.get(ref)
-                if lat is None or lng is None or np.isnan(lat) or np.isnan(lng):
-                    way_valid = False
-                    break
-                sum_lat += lat
-                sum_lng += lng
-            if not way_valid:
+            centroid = self.way_centroid(refs)
+            if centroid is None:
                 continue
 
             self.process_ways_set.remove(osmid)
-            centroid_lat = sum_lat / len(refs)
-            centroid_lng = sum_lng / len(refs)
             try:
-                self.create_poi(osm_type, osmid, [centroid_lat, centroid_lng], tags, categories)
-            except Exception as e:
-                logger.debug(e)
+                self.create_poi(osm_type, osmid, centroid, tags, categories)
+            except Exception:
+                logger.exception(f"Failed to import way {osmid}")
                 self.failed = True
                 return
+
+
+    def way_centroid(self, refs):
+        """
+        Averages the stored coordinates of the way's nodes.
+
+        :return: the averaged coordinates, or None if a node's coordinates are missing
+        """
+        refs = set(refs)
+        sum_lat = 0
+        sum_lng = 0
+        for ref in refs:
+            if ref not in self.nodes_store: # should never ha
+                return None
+            lat, lng = self.nodes_store.get(ref)
+            if lat is None or lng is None or np.isnan(lat) or np.isnan(lng):
+                return None
+            sum_lat += lat
+            sum_lng += lng
+        return [sum_lat / len(refs), sum_lng / len(refs)]
 
 
     def create_poi(self, osm_type, osm_id, lat_lng, tags, categories=None):
