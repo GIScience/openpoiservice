@@ -1,6 +1,8 @@
 # openpoiservice/server/tests/test_download.py
 import datetime as dt
 import importlib.util
+import io
+import logging
 import os
 import tempfile
 import unittest
@@ -59,6 +61,7 @@ class TestDownloadFile(unittest.TestCase):
     def assert_file_contains(self, content):
         with open(self.file, 'rb') as f:
             self.assertEqual(f.read(), content)
+        self.assertFalse(os.path.exists(self.file + '.download'))
         self.assertFalse(os.path.exists(self.file + '.part'))
 
     def test_complete_download_replaces_file(self):
@@ -80,6 +83,26 @@ class TestDownloadFile(unittest.TestCase):
     def test_http_error_keeps_old_file(self):
         self.assertFalse(self.download(FakeResponse([], status_error=download.requests.HTTPError('404'))))
         self.assert_file_contains(b'old data')
+
+    def test_downloads_into_download_file(self):
+        test = self
+
+        class CheckingResponse(FakeResponse):
+            def iter_content(self, chunk_size):
+                yield b'new '
+                test.assertTrue(os.path.exists(test.file + '.download'))
+                yield b'data'
+
+        self.assertTrue(self.download(CheckingResponse([])))
+        self.assert_file_contains(b'new data')
+
+    def test_removes_leftovers_of_downloads_and_updates(self):
+        for suffix in ('.download', '.part'):
+            with open(self.file + suffix, 'wb') as f:
+                f.write(b'leftover')
+
+        self.assertTrue(self.download(FakeResponse([b'new data'])))
+        self.assert_file_contains(b'new data')
 
     def test_interrupted_download_removes_temporary_file(self):
         interrupted = FakeResponse([b'new ', KeyboardInterrupt()])
@@ -139,7 +162,60 @@ class TestDownloadMain(unittest.TestCase):
         self.assertIn('Finished update of europe/current-latest.osm.pbf: succeeded after 0:00:00', messages)
 
 
+class RecordingHandler(logging.Handler):
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+class TestConfigureLogging(unittest.TestCase):
+
+    def setUp(self):
+        self.previous_handlers = logging.root.handlers[:]
+        self.previous_level = logging.root.level
+        self.directory = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        for handler in logging.root.handlers:
+            handler.close()
+        logging.root.handlers = self.previous_handlers
+        logging.root.setLevel(self.previous_level)
+        self.directory.cleanup()
+
+    def test_logs_to_file_and_stdout(self):
+        log_file = os.path.join(self.directory.name, 'download.log')
+        stdout = io.StringIO()
+
+        with mock.patch.object(download.sys, 'stdout', stdout):
+            download.configure_logging(log_file)
+        download.logger.info('Starting update of europe/bremen-latest.osm.pbf')
+
+        with open(log_file) as f:
+            self.assertRegex(f.read(), r' - INFO - Starting update of europe/bremen-latest.osm.pbf\n$')
+        self.assertRegex(stdout.getvalue(), r' - INFO - Starting update of europe/bremen-latest.osm.pbf\n$')
+
+
 class TestRunLogged(unittest.TestCase):
+
+    def test_keeps_logging_when_pyosmium_raises_the_root_level(self):
+        # assertLogs would set the logger's level itself and hide the problem, so record at the root like basicConfig
+        handler = RecordingHandler()
+        logging.root.addHandler(handler)
+        previous_level = logging.root.level
+        logging.root.setLevel(logging.WARNING)  # what pyosmium-up-to-date does without -v
+        try:
+            download.run_logged('update', 'europe/bremen-latest.osm.pbf', lambda: True)
+        finally:
+            logging.root.setLevel(previous_level)
+            logging.root.removeHandler(handler)
+
+        self.assertEqual([record.getMessage() for record in handler.records],
+                         ['Starting update of europe/bremen-latest.osm.pbf',
+                          'Finished update of europe/bremen-latest.osm.pbf: succeeded after 0:00:00'])
 
     def test_logs_failure_as_warning(self):
         with self.assertLogs(download.logger, 'INFO') as logs:
@@ -220,6 +296,7 @@ class TestUpdateFile(unittest.TestCase):
     def assert_file_contains(self, content):
         with open(self.file, 'rb') as f:
             self.assertEqual(f.read(), content)
+        self.assertFalse(os.path.exists(self.file + '.download'))
         self.assertFalse(os.path.exists(self.file + '.part'))
 
     def test_applied_diffs_replace_file(self):
@@ -228,7 +305,7 @@ class TestUpdateFile(unittest.TestCase):
         self.assertTrue(updated)
         self.assert_file_contains(b'new data')
         self.assertEqual(tool.call_args.args[0],
-                         ['--format', 'pbf', '--size', '8192', '-o', self.file + '.part', self.file])
+                         ['-v', '--format', 'pbf', '--size', '8192', '-o', self.file + '.part', self.file])
 
     def test_file_already_up_to_date(self):
         updated, _ = self.update(self.up_to_date_run(0))
@@ -257,11 +334,13 @@ class TestUpdateFile(unittest.TestCase):
         self.assertEqual(tool.call_count, download.max_update_rounds)
         self.assert_file_contains(b'newer data')
 
-    def test_removes_temporary_file_left_by_an_interrupted_run(self):
-        with open(self.file + '.part', 'wb') as f:
-            f.write(b'leftover')
+    def test_removes_temporary_files_left_by_an_interrupted_run(self):
+        for suffix in ('.download', '.part'):
+            with open(self.file + suffix, 'wb') as f:
+                f.write(b'leftover')
 
         def run(args):
+            self.assertFalse(os.path.exists(self.file + '.download'))
             self.assertFalse(os.path.exists(self.file + '.part'))
             return self.up_to_date_run(0, b'new data')(args)
 

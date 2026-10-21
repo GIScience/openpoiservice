@@ -2,12 +2,16 @@ import datetime as dt
 import os
 import requests
 import logging
+import sys
 import time
 
 from osmium.replication.utils import get_replication_header
 from osmium.tools.pyosmium_up_to_date import pyosmium_up_to_date
 
 logger = logging.getLogger(__name__)
+# pyosmium-up-to-date sets the level of the root logger on every call; with a level of its own, this logger
+# doesn't inherit it and keeps logging at INFO
+logger.setLevel(logging.INFO)
 
 # seconds to wait for the connection and for each chunk; a stalled download fails instead of hanging
 request_timeout = 60
@@ -22,6 +26,12 @@ max_update_age = dt.timedelta(days=85)
 # pyosmium-up-to-date returns 1 while the server has more diffs than fit into one round
 max_update_rounds = 10
 
+# temporary files of full downloads and of updates; distinct names show which process is running, and neither ends
+# in .pbf or .osm, so the importer ignores them
+download_suffix = ".download"
+update_suffix = ".part"
+temp_file_suffixes = (download_suffix, update_suffix)
+
 
 def download_file(url, file):
     """
@@ -31,7 +41,7 @@ def download_file(url, file):
 
     :return: True if file was replaced
     """
-    temp_file = temp_file_for(file)
+    temp_file = temp_file_for(file, download_suffix)
     try:
         with requests.get(url, allow_redirects=True, stream=True, timeout=request_timeout) as r:
             r.raise_for_status()
@@ -73,10 +83,11 @@ def update_file(file):
 
     :return: True if file is up to date
     """
-    temp_file = temp_file_for(file)
+    temp_file = temp_file_for(file, update_suffix)
     try:
         for _ in range(max_update_rounds):
-            exit_code = pyosmium_up_to_date(["--format", "pbf", "--size", str(max_diff_size_mb),
+            # -v: the tool sets the root logger to INFO, so its progress lines reach download.log too
+            exit_code = pyosmium_up_to_date(["-v", "--format", "pbf", "--size", str(max_diff_size_mb),
                                              "-o", temp_file, file])
             if exit_code in (0, 1) and os.path.exists(temp_file):
                 os.replace(temp_file, file)
@@ -90,13 +101,14 @@ def update_file(file):
     return exit_code == 0
 
 
-def temp_file_for(file):
+def temp_file_for(file, suffix):
     """
-    Returns the name of file's temporary file, after removing a leftover from an interrupted earlier run.
+    Returns the name of file's temporary file for a download or an update, after removing leftovers of either kind
+    from an interrupted earlier run.
     """
-    temp_file = file + ".part"
-    remove_if_exists(temp_file)
-    return temp_file
+    for leftover_suffix in temp_file_suffixes:
+        remove_if_exists(file + leftover_suffix)
+    return file + suffix
 
 
 def remove_if_exists(file):
@@ -138,7 +150,14 @@ def run_logged(process, file, action):
     return succeeded
 
 
-if __name__ == '__main__':
+def configure_logging(log_file='download.log'):
+    """
+    Logs to log_file and to stdout, in the same format.
+    """
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
-                        filename='download.log')
+                        handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)], force=True)
+
+
+if __name__ == '__main__':
+    configure_logging()
     main()
