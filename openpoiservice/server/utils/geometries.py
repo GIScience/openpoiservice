@@ -1,7 +1,7 @@
 # openpoiservice/server/utils/geometries.py
 
 import pyproj
-from shapely.ops import transform
+import shapely
 
 
 def truncate(f, n):
@@ -58,4 +58,5 @@ class GeomTransformer:
     def transform_geom(geom):
         if GeomTransformer.transformer is None:
             raise RuntimeError("GeomTransformer called before being initialized.")
-        return transform(GeomTransformer.transformer, geom)
+        # interleaved=False passes x and y as separate arrays, as pyproj's transform expects
+        return shapely.transform(geom, GeomTransformer.transformer, interleaved=False)
