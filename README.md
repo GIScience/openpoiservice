@@ -132,6 +132,12 @@ Or updating POI database
 docker-compose -f /path/to/docker-compose.yml up update
 ```
 
+An update re-imports only the files whose modification time changed since the last import (`import-log.json`). Each
+file is copied to staging tables first and then merged into the POI tables in one transaction, which writes only the
+POIs, categories and tags that changed. A file that fails to import leaves the existing data untouched and is retried
+by the next update. Run only one import at a time, and don't add or remove files under `osm/` between updates: that
+requires a full rebuild with `init`.
+
 
 ### Protocol Buffers (protobuf) for imposm.parser 
 
