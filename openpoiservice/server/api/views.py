@@ -7,6 +7,7 @@ from datetime import datetime
 from flask import Blueprint, request, Response
 from openpoiservice.server import categories_tools
 from voluptuous import Schema, Required, Length, Range, Coerce, Any, All, MultipleInvalid, Optional, Boolean
+from shapely.errors import GEOSException
 from shapely.geometry import MultiPoint, shape
 from openpoiservice.server import api_exceptions, ops_settings
 from openpoiservice.server.api.query_builder import QueryBuilder
@@ -229,9 +230,7 @@ def parse_geometries(geometry):
         # This will invoke its __geo_interface__ (https://gist.github.com/sgillies/2217756)
         try:
             g2 = shape(g1)
-        except ValueError as e:
-            raise api_exceptions.InvalidUsage(status_code=400, error_code=4007, message=str(e))
-        except AttributeError as e:
+        except (ValueError, AttributeError, GEOSException) as e:
             raise api_exceptions.InvalidUsage(status_code=400, error_code=4007, message=str(e))
 
         # parse geom if valid
