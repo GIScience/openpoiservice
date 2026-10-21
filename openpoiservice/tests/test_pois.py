@@ -118,8 +118,26 @@ request_poi_missing_geometry_type = dict(
     )
 )
 
+# LINESTRING WITH A SINGLE POINT
+request_poi_single_point_linestring = dict(
+    request='pois',
+    geometry=dict(
+        geojson=dict(
+            type="LineString",
+            coordinates=[[8.807499091203672, 53.07528723347236]]
+        ),
+        buffer=50
+    )
+)
+
 
 class TestPoisBlueprint(BaseTestCase):
+
+    def test_request_poi_single_point_linestring(self):
+        response = self.client.post('/pois', data=json.dumps(request_poi_single_point_linestring),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b'point array must contain 0 or >1 elements', response.data)
 
     def test_request_poi_missing_geom(self):
         response = self.client.post('/pois', data=json.dumps(request_poi_missing_geometry),
