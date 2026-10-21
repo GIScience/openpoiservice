@@ -13,6 +13,7 @@ from openpoiservice.server.db_import import parser
 logging.basicConfig(
     level=logging.DEBUG if os.environ.get('OPS_DEBUG', False) else logging.INFO,
     format='%(asctime)s %(levelname)-8s %(message)s',
+    stream=sys.stdout,
 )
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ def import_data():
     for dir_name, subdir_list, file_list in os.walk(osm_dir):
         if dir_name.endswith("__pycache__"):
             continue
-        logger.info(f"Found directory: {dir_name}")
+        logger.debug(f"Found directory: {dir_name}")
         for filename in file_list:
             if filename.endswith(".pbf") or filename.endswith(".osm"):
                 osm_files.append(os.path.join(dir_name, filename))
@@ -93,7 +94,6 @@ def import_data():
             json.dump(import_log, f, indent=4, sort_keys=True)
             f.close()
 
-    logger.info(f"Starting to import OSM data ({len(osm_files)} files in batch)")
     logger.debug(f"Files in import batch: {osm_files}")
     # parser.run_import(osm_files, import_log, db)
     parser.run_import_new(osm_files, import_log, logfile, db)

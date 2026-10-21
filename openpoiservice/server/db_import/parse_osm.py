@@ -12,6 +12,7 @@ from openpoiservice.server import db
 from openpoiservice.server.db_import.models import POIs, Tags, Categories
 from openpoiservice.server.db_import.node_store import NodeStore
 from openpoiservice.server.db_import.objects import PoiObject, TagsObject
+from openpoiservice.server.db_import.progress import Progress
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +59,16 @@ class WayObject(object):
 class OsmImporter(object):
     """ Class that handles the parsed OSM data. """
 
-    def __init__(self, osm_file_index, update_mode=False):
-        """ Initializes pbf importer class with necessary counters."""
+    def __init__(self, osm_file_index, update_mode=False, label=""):
+        """
+        Initializes pbf importer class with necessary counters.
+
+        :param label: prefix of progress log lines, e.g. "[3/12]"
+        """
+        self.label = label
+        self.poi_progress = Progress(logger, label, "POIs stored", 100_000)
+        self.ways_progress = Progress(logger, label, "ways scanned", 10_000_000)
+        self.coords_progress = Progress(logger, label, "nodes scanned", 50_000_000)
         self.relations_cnt = 0
         self.ways_cnt = 0
         self.nodes_cnt = 0
@@ -253,6 +262,7 @@ class OsmImporter(object):
         :param ways: osm way objects
         :type ways: list of osm ways
         """
+        self.ways_progress.add(len(ways))
         for osmid, tags, refs in ways:
             if len(refs) >= 1000:
                 continue
@@ -271,6 +281,7 @@ class OsmImporter(object):
 
 
     def parse_coords_and_store(self, coords):
+        self.coords_progress.add(len(coords))
         for osmid, lat, lng in coords:
             if osmid in self.nodes_store:
                 self.nodes_store.set(osmid, (lat, lng))
@@ -373,6 +384,7 @@ class OsmImporter(object):
         Appends poi storage objects to buffer for bulk storage to database.
         """
         self.pois_count += 1
+        self.poi_progress.add()
         self.poi_objects.append(POIs(
             osm_type=poi_object.osmtype,
             osm_id=poi_object.osmid,
