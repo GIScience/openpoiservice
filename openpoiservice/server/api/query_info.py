@@ -16,7 +16,7 @@ class QueryInfo(object):
         :type payload: dict
         """
 
-        self.attribution = "openrouteservice.org | OpenStreetMap contributors"
+        self.attribution = "© openpoiservice by HeiGIT | Data from OpenStreetMap"
         self.version = "0.1"
         self.timestamp = int(time.time())
         self.query = payload
