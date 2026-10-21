@@ -25,7 +25,7 @@ services:
  # Don't forget to change the host name inside ops_settings_docker.yml by the one given to docker container.
  # Also port should be set to 5432 (default value) inside the same file since they are on the same network
  db:
-  image: postgis/postgis:16-3.4
+  image: postgis/postgis:18-3.6
   volumes:
    - postgis-data:/var/lib/postgresql
   environment:
@@ -38,7 +38,7 @@ services:
   ports:
    - 5432:5432
   healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 10s
       retries: 10
