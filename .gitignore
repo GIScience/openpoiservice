@@ -132,3 +132,5 @@ backup/*
 *.json
 # output of scripts/ohsome_poi_bench.py
 poi-bench-*/
+# output of scripts/ops_local_bench.py
+ops-bench-*/
