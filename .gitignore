@@ -130,3 +130,5 @@ docker-compose-*.yml
 !docker-compose-standalone.yml
 backup/*
 *.json
+# output of scripts/ohsome_poi_bench.py
+poi-bench-*/
