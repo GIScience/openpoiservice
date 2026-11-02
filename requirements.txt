@@ -26,7 +26,7 @@ numpy==2.4.6
 osmium==4.3.2
 packaging==26.3
 psycopg2-binary==2.9.13
-pyproj==3.7.2
+pyproj==3.8.0
 PyYAML==6.0.3
 referencing==0.37.0
 requests~=2.34.2
