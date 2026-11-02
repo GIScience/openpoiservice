@@ -22,7 +22,7 @@ jsonschema-specifications==2025.9.1
 jsonschema==4.26.0
 MarkupSafe==3.0.4
 mistune==3.4.0
-numpy==2.4.6
+numpy==2.5.4
 osmium==4.3.2
 packaging==26.3
 psycopg2-binary==2.9.13
