@@ -3,7 +3,7 @@ blinker==1.9.0
 certifi==2026.10.19
 charset-normalizer==3.5.2
 click==8.5.0
-coverage==7.16.2
+coverage==7.17.0
 cykhash==2.0.1
 flasgger==0.9.7.1
 Flask-Cors==6.0.5
