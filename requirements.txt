@@ -34,7 +34,7 @@ rpds-py==2026.9.1
 setuptools~=80.10.2
 shapely==2.2.0
 six==1.17.0
-SQLAlchemy==2.0.55
+SQLAlchemy==2.1.8
 typing_extensions==4.16.0
 urllib3==2.8.0
 voluptuous==0.16.0
